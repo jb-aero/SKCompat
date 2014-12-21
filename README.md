@@ -1,7 +1,7 @@
 SKCompat
 ========
 
-An extension to (CommandHelper)[https://github.com/sk89q/CommandHelper] providing access to features of other plugins in the sk89q family. Currently supports WorldEdit and WorldGuard.
+An extension to [CommandHelper](https://github.com/sk89q/CommandHelper) providing access to features of other plugins in the sk89q family. Currently supports WorldEdit and WorldGuard.
 
 Downloads can be found in [the Releases tab](https://github.com/jb-aero/SKCompat/releases).
 
