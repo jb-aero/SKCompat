@@ -2,6 +2,7 @@ SKCompat
 ========
 
 An extension to CommandHelper providing access to features of other plugins in the sk89q family.
+Downloads can be found in [the Releases tab](https://github.com/jb-aero/SKCompat/releases).
 
 ## Functions
 ### SKWorldEdit
