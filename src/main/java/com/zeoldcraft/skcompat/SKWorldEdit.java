@@ -46,7 +46,7 @@ import java.util.logging.Logger;
 public class SKWorldEdit {
 
     public static String docs() {
-        return "Provides various methods for programmatically hooking into WorldEdit.";
+        return "Provides various methods for hooking into WorldEdit.";
     }
 
     @api(environments=CommandHelperEnvironment.class)
@@ -298,9 +298,13 @@ public class SKWorldEdit {
 		@Override
 		public Construct exec(Target t, Environment environment, Construct... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldEdit", t);
-			double xaxis = Static.getInt32(args[0], t),
-					yaxis = Static.getInt32(args[1], t),
-					zaxis = Static.getInt32(args[2], t);
+			double yaxis = Static.getInt32(args[0], t),
+					xaxis = 0D,
+					zaxis = 0D;
+			if (args.length == 3) {
+				xaxis = Static.getInt32(args[1], t);
+				zaxis = Static.getInt32(args[2], t);
+			}
 			try {
 				ClipboardCommands command = new ClipboardCommands(WorldEdit.getInstance());
 				command.rotate(getSKPlayer(t), getLocalSession(t), yaxis, xaxis, zaxis);
@@ -321,12 +325,12 @@ public class SKWorldEdit {
 
 		@Override
 		public Integer[] numArgs() {
-			return new Integer[]{3};
+			return new Integer[]{1, 3};
 		}
 
 		@Override
 		public String docs() {
-			return "void {int x-axis, int y-axis, int z-axis}"
+			return "void {int y-axis[, int x-axis, int z-axis]}"
 					+ " Rotates the clipboard by the given (multiple of 90)"
 					+ " degrees for each corresponding axis. To skip an axis,"
 					+ " simply give it a value of 0.";

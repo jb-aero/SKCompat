@@ -71,7 +71,7 @@ import org.bukkit.entity.EntityType;
 public class SKWorldGuard {
 
     public static String docs() {
-        return "Provides various methods for programmatically hooking into WorldGuard";
+        return "Provides various methods for hooking into WorldGuard";
     }
 	
 	@api
