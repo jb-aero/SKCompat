@@ -25,7 +25,7 @@ public class SKCompat extends AbstractExtension {
 
 	@Override
     public Version getVersion() {
-        return new SimpleVersion("1.0.0");
+        return new SimpleVersion(1, 0, 2);
     }
 	
 	public static abstract class SKFunction extends AbstractFunction {

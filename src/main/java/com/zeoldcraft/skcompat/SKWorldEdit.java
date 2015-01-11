@@ -9,33 +9,32 @@ import com.laytonsmith.annotations.api;
 import com.laytonsmith.commandhelper.SKHandler;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
-import com.laytonsmith.core.constructs.CArray;
-import com.laytonsmith.core.constructs.CInt;
-import com.laytonsmith.core.constructs.CString;
-import com.laytonsmith.core.constructs.CVoid;
-import com.laytonsmith.core.constructs.Construct;
-import com.laytonsmith.core.constructs.Target;
+import com.laytonsmith.core.constructs.*;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
 import com.laytonsmith.core.functions.Exceptions;
 import com.laytonsmith.core.functions.Exceptions.ExceptionType;
-import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.EmptyClipboardException;
-import com.sk89q.worldedit.LocalSession;
-import com.sk89q.worldedit.MaxChangedBlocksException;
-import com.sk89q.worldedit.Vector;
-import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.WorldEditException;
+import com.sk89q.worldedit.*;
 import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.command.ClipboardCommands;
-import com.sk89q.worldedit.command.SchematicCommands;
+import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
+import com.sk89q.worldedit.session.ClipboardHolder;
+import com.sk89q.worldedit.util.io.Closer;
 import com.sk89q.worldedit.util.io.file.FilenameException;
+import com.sk89q.worldedit.world.registry.WorldData;
 import com.zeoldcraft.skcompat.SKCompat.SKFunction;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -215,34 +214,20 @@ public class SKWorldEdit {
 	/******************Clipboard stuff below this line******************/
 
 	// CH's local player, based from console
-	private static ConsoleSKPlayer player;
-	// CH's console-based session
-	private static LocalSession session;
-	// CH's console-based editsession, for logging purposes
-	private static EditSession edits;
+	private static SKConsole console;
 
-	public static ConsoleSKPlayer getSKPlayer(Target t) {
+	public static SKCommandSender getSKPlayer(MCPlayer player, Target t) {
+		SKCommandSender sender;
 		if (player == null) {
-			player = new ConsoleSKPlayer();
+			if (console == null) {
+				console = new SKConsole();
+			}
+			sender = console;
+		} else {
+			sender = new SKPlayer(player);
 		}
-		player.setTarget(t);
-		return player;
-	}
-
-	public static LocalSession getLocalSession(Target t) {
-		if (session == null) {
-			session = WorldEdit.getInstance().getSessionManager().get(getSKPlayer(t));
-		}
-		return session;
-	}
-	
-	public static EditSession getEditSession(boolean fastMode, Target t) {
-		if (edits == null) {
-			edits = WorldEdit.getInstance().getEditSessionFactory()
-					.getEditSession(getSKPlayer(t).getWorld(), -1, null, getSKPlayer(t));
-		}
-		edits.setFastMode(fastMode);
-		return edits;
+		sender.setTarget(t);
+		return sender;
 	}
 
 	@api
@@ -250,21 +235,65 @@ public class SKWorldEdit {
 
 		@Override
 		public ExceptionType[] thrown() {
-			return new ExceptionType[] { ExceptionType.PluginInternalException,
+			return new ExceptionType[] { ExceptionType.PluginInternalException, ExceptionType.PlayerOfflineException,
 				ExceptionType.IOException, ExceptionType.InvalidPluginException
 			};
 		}
 
 		@Override
 		public Construct exec(Target t, Environment environment, Construct... args) throws ConfigRuntimeException {
+			/* Adapted from:
+			 * https://github.com/sk89q/WorldEdit/blob/master/worldedit-core/src/main/java/
+			 * com/sk89q/worldedit/command/SchematicCommands.java#L79-L131
+			 */
 			Static.checkPlugin("WorldEdit", t);
-			// Based on: com.sk89q.worldedit.commands.SchematicCommands.load
+			WorldEdit worldEdit = WorldEdit.getInstance();
 			String filename = args[0].val();
+			MCPlayer player = null;
+			if (args.length == 2) {
+				player = Static.GetPlayer(args[1], t);
+			}
+			SKCommandSender user = getSKPlayer(player, t);
+
+			File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
+			File f;
+
 			try {
-				SchematicCommands command = new SchematicCommands(WorldEdit.getInstance());
-				command.load(getSKPlayer(t), getLocalSession(t), "schematic", filename);
-			} catch (FilenameException e) {
-				throw new ConfigRuntimeException(e.getMessage(), Exceptions.ExceptionType.PluginInternalException, t);
+				f = worldEdit.getSafeOpenFile(user, dir, filename, "schematic", "schematic");
+			} catch (FilenameException fne) {
+				throw new ConfigRuntimeException(fne.getMessage(), ExceptionType.IOException, t);
+			}
+
+			if (!f.exists()) {
+				throw new ConfigRuntimeException("Schematic " + filename + " does not exist!",
+						ExceptionType.IOException, t);
+			}
+
+			Closer closer = Closer.create();
+			try {
+				String filePath = f.getCanonicalPath();
+				String dirPath = dir.getCanonicalPath();
+
+				if (!filePath.substring(0, dirPath.length()).equals(dirPath)) {
+					throw new ConfigRuntimeException("Clipboard file could not read or it does not exist.",
+							ExceptionType.IOException, t);
+				} else {
+					FileInputStream fis = closer.register(new FileInputStream(f));
+					BufferedInputStream bis = closer.register(new BufferedInputStream(fis));
+					ClipboardReader reader = ClipboardFormat.SCHEMATIC.getReader(bis);
+
+					WorldData worldData = user.getWorld().getWorldData();
+					Clipboard clipboard = reader.read(worldData);
+					user.getLocalSession().setClipboard(new ClipboardHolder(clipboard, worldData));
+				}
+			} catch (IOException e) {
+				throw new ConfigRuntimeException("Schematic could not read or it does not exist: " + e.getMessage(),
+						ExceptionType.IOException, t);
+			} finally {
+				try {
+					closer.close();
+				} catch (IOException ignored) {
+				}
 			}
 			return CVoid.VOID;
 		}
@@ -276,13 +305,14 @@ public class SKWorldEdit {
 
 		@Override
 		public Integer[] numArgs() {
-			return new Integer[]{1};
+			return new Integer[]{1, 2};
 		}
 
 		@Override
 		public String docs() {
-			return "void {filename} Loads a schematic into the clipboard from file."
-					+ " It will use the directory specified in WorldEdit's config.";
+			return "void {filename, [player]} Loads a schematic into the clipboard from file."
+					+ " It will use the directory specified in WorldEdit's config."
+					+ " By default it will use the console's clipboard, but will use a player's if specified.";
 		}
 	}
 
@@ -291,23 +321,37 @@ public class SKWorldEdit {
 
 		@Override
 		public Exceptions.ExceptionType[] thrown() {
-			return new Exceptions.ExceptionType[]{Exceptions.ExceptionType.RangeException, Exceptions.ExceptionType.NotFoundException,
-					Exceptions.ExceptionType.InvalidPluginException, Exceptions.ExceptionType.CastException};
+			return new Exceptions.ExceptionType[]{ExceptionType.InvalidPluginException,
+					Exceptions.ExceptionType.NotFoundException, ExceptionType.PlayerOfflineException,
+					ExceptionType.RangeException, Exceptions.ExceptionType.CastException};
 		}
 
 		@Override
 		public Construct exec(Target t, Environment environment, Construct... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldEdit", t);
-			double yaxis = Static.getInt32(args[0], t),
-					xaxis = 0D,
-					zaxis = 0D;
-			if (args.length == 3) {
-				xaxis = Static.getInt32(args[1], t);
-				zaxis = Static.getInt32(args[2], t);
+			int yaxis = 0,
+					xaxis = 0,
+					zaxis = 0;
+			MCPlayer plyr = null;
+			switch (args.length) {
+				case 3:
+					xaxis = Static.getInt32(args[1], t);
+					zaxis = Static.getInt32(args[2], t);
+				case 1:
+					yaxis = Static.getInt32(args[0], t);
+					break;
+				case 4:
+					xaxis = Static.getInt32(args[2], t);
+					zaxis = Static.getInt32(args[3], t);
+				case 2:
+					yaxis = Static.getInt32(args[1], t);
+					plyr = Static.GetPlayer(args[0], t);
+					break;
 			}
 			try {
 				ClipboardCommands command = new ClipboardCommands(WorldEdit.getInstance());
-				command.rotate(getSKPlayer(t), getLocalSession(t), yaxis, xaxis, zaxis);
+				SKCommandSender user = getSKPlayer(plyr, t);
+				command.rotate(user, user.getLocalSession(), (double) yaxis, (double) xaxis, (double) zaxis);
 			} catch (EmptyClipboardException e) {
 				throw new ConfigRuntimeException("The clipboard is empty, copy something to it first!",
 						Exceptions.ExceptionType.NotFoundException, t);
@@ -325,15 +369,15 @@ public class SKWorldEdit {
 
 		@Override
 		public Integer[] numArgs() {
-			return new Integer[]{1, 3};
+			return new Integer[]{1, 2, 3, 4};
 		}
 
 		@Override
 		public String docs() {
-			return "void {int y-axis[, int x-axis, int z-axis]}"
-					+ " Rotates the clipboard by the given (multiple of 90)"
-					+ " degrees for each corresponding axis. To skip an axis,"
-					+ " simply give it a value of 0.";
+			return "void {[player,] int y-axis, [int x-axis, int z-axis]}"
+					+ " Rotates the clipboard by the given (multiple of 90) degrees for each corresponding axis."
+					+ " To skip an axis, simply give it a value of 0. If a player is supplied, theirs will be rotated,"
+					+ " otherwise the console will be used.";
 		}
 	}
 
@@ -342,7 +386,7 @@ public class SKWorldEdit {
 
 		@Override
 		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ ExceptionType.InvalidWorldException,
+			return new ExceptionType[]{ ExceptionType.InvalidWorldException, ExceptionType.FormatException,
 				ExceptionType.NotFoundException, ExceptionType.RangeException,
 				ExceptionType.CastException, ExceptionType.InvalidPluginException
 			};
@@ -352,36 +396,36 @@ public class SKWorldEdit {
 		public Construct exec(Target t, Environment environment, Construct... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldEdit", t);
 			boolean airless = false,
-					fastmode = false,
+					fastMode = false,
 					origin = false,
 					select = false;
+			SKCommandSender user = null;
+			if (args[0] instanceof CArray) {
+				user = getSKPlayer(null, t);
+				user.setLocation(ObjectGenerator.GetGenerator().location(args[0], null, t));
+			} else {
+				user = getSKPlayer(Static.GetPlayer(args[0], t), t);
+			}
 			if (args.length >= 2) {
-				if (args[1] instanceof CArray) {
-					CArray options = (CArray) args[1];
-					if (options.containsKey("airless")) {
-						airless = Static.getBoolean(options.get("airless", t));
-					}
-					if (options.containsKey("fastmode")) {
-						fastmode = Static.getBoolean(options.get("fastmode", t));
-					}
-					if (options.containsKey("origin")) {
-						origin = Static.getBoolean(options.get("origin", t));
-					}
-					if (options.containsKey("select")) {
-						select = Static.getBoolean(options.get("select", t));
-					}
-				} else {
-					throw new Exceptions.FormatException("Arg 2 of "
-							+ getName() + " expected an array.", t);
+				CArray options = Static.getArray(args[1], t);
+				if (options.containsKey("airless")) {
+					airless = Static.getBoolean(options.get("airless", t));
+				}
+				if (options.containsKey("fastmode")) {
+					fastMode = Static.getBoolean(options.get("fastmode", t));
+				}
+				if (options.containsKey("origin")) {
+					origin = Static.getBoolean(options.get("origin", t));
+				}
+				if (options.containsKey("select")) {
+					select = Static.getBoolean(options.get("select", t));
 				}
 			}
-			MCLocation loc = ObjectGenerator.GetGenerator().location(args[0], null, t);
-			getSKPlayer(t).setLocation(loc);
-			EditSession editor = getEditSession(fastmode, t);
+			EditSession editor = user.getEditSession(fastMode);
 
 			try {
 				ClipboardCommands command = new ClipboardCommands(WorldEdit.getInstance());
-				command.paste(getSKPlayer(t), getLocalSession(t), editor, airless, origin, select);
+				command.paste(user, user.getLocalSession(), editor, airless, origin, select);
 			} catch (MaxChangedBlocksException e) {
 				throw new ConfigRuntimeException("Attempted to change more blocks than allowed.",
 						Exceptions.ExceptionType.RangeException, t);
@@ -407,8 +451,9 @@ public class SKWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {location, [array]}"
-					+ " Pastes a schematic from the clipboard as if a player was standing at the location,"
+			return "void {location, [array] | player, [array]}"
+					+ " Pastes a schematic from the player's clipboard if a player is provided,"
+					+ " or from the console's clipboard if a location is given, as if a player was standing there."
 					+ " An associative array of options can be provided, all of which default to false."
 					+ " If 'airless' is true, air blocks from the schematic will not replace blocks in the world."
 					+ " If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste."
