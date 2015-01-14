@@ -21,6 +21,61 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<addMavenDescriptor>false</addMavenDescriptor>
+						<manifest>
+							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+					</archive>
+				</configuration>
+				<version>2.4</version>
+			</plugin>
+			<plugin>
+				<groupId>org.bsc.maven</groupId>
+				<artifactId>maven-processor-plugin</artifactId>
+				<version>2.2.4</version>
+				<executions>
+					<execution>
+						<id>process</id>
+						<phase>process-classes</phase>
+						<goals>
+							<goal>process</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<outputDirectory>src/main/generated</outputDirectory>
+					<processors>
+						<processor>com.laytonsmith.core.extensions.ExtensionAnnotationProcessor</processor>
+					</processors>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<id>cache-annotations</id>
+						<phase>process-classes</phase>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>com.laytonsmith.PureUtilities.ClassLoading.Annotations.CacheAnnotations</mainClass>
+					<arguments>
+						<argument>${basedir}/target/classes</argument>
+						<argument>${basedir}/target/classes</argument>
+					</arguments>
+				</configuration>
+			</plugin>
         </plugins>
     </build>
     <properties>
@@ -32,6 +87,14 @@
 			<id>sk89q-mvn2</id>
 			<url>http://mvn2.sk89q.com/repo</url>
 		</repository>
+		<repository>
+			<id>spigot-repo</id>
+			<url>http://repo.md-5.net/content/repositories/snapshots/</url>
+		</repository>
+		<repository>
+			<id>maven-central</id>
+			<url>http://repo1.maven.org/maven2/</url>
+		</repository>
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -40,9 +103,9 @@
 			<version>3.3.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>com.sk89q</groupId>
-			<artifactId>worldedit</artifactId>
-			<version>6.0.0-SNAPSHOT</version>
+			<groupId>com.sk89q.worldedit</groupId>
+			<artifactId>worldedit-bukkit</artifactId>
+			<version>6.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sk89q</groupId>
