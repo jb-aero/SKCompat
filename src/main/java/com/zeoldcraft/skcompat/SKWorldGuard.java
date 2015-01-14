@@ -55,6 +55,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.zeoldcraft.skcompat.SKCompat.SKFunction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -277,7 +278,7 @@ public class SKWorldGuard {
 		@Override
         public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
             String region1 = args[1].val();
-            List<ProtectedRegion> checkRegions = new ArrayList<>();
+            Collection<ProtectedRegion> checkRegions = new ArrayList<>();
             Static.checkPlugin("WorldGuard", t);
             World world = Bukkit.getServer().getWorld(args[0].val());
             if (world == null) {
@@ -348,7 +349,7 @@ public class SKWorldGuard {
 		@Override
         public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
             String region1 = args[1].val();
-            List<ProtectedRegion> checkRegions = new ArrayList<>();
+            Collection<ProtectedRegion> checkRegions = new ArrayList<>();
 			List<ProtectedRegion> getRegions;
 			CArray listRegions = new CArray(t);
 
