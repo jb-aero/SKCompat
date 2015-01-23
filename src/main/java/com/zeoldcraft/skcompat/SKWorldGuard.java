@@ -5,6 +5,7 @@ import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
+import com.laytonsmith.abstraction.MVector3D;
 import com.laytonsmith.abstraction.bukkit.BukkitMCCommandSender;
 import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.laytonsmith.abstraction.bukkit.BukkitMCPlayer;
@@ -885,7 +886,7 @@ public class SKWorldGuard {
 
 		@Override
         public String docs() {
-            return "void {[world], name, array(locationArrayPos1, locationArrayPos2, [[locationArrayPosN]...])} Updates the location of a given region to the new location. Other properties of the region, like owners, members, priority, etc are unaffected.";
+            return "void {[world], name, array(vectorArrayPos1, vectorArrayPos2, [[vectorArrayPosN]...])} Updates the location of a given region to the new location. Other properties of the region, like owners, members, priority, etc are unaffected.";
         }
 
 		@Override
@@ -949,24 +950,20 @@ public class SKWorldGuard {
             CArray arg = (CArray) args[args.length - 1];
 
             for (int i = 0; i < arg.size(); i++) {
-                MCLocation point = ObjectGenerator.GetGenerator().location(arg.get(i, t), null, t);
+                MVector3D vec = ObjectGenerator.GetGenerator().vector(arg.get(i, t), t);
 
-                int x = point.getBlockX();
-                int y = point.getBlockY();
-                int z = point.getBlockZ();
-
-                if (arg.size() == 2) {
-                    points.add(new BlockVector(x, y, z));
+               if (arg.size() == 2) {
+                    points.add(new BlockVector(vec.x, vec.y, vec.z));
                 } else {
-                    points2D.add(new BlockVector2D(x, z));
+                    points2D.add(new BlockVector2D(vec.x, vec.z));
 
                     if (i == 0) {
-                        minY = maxY = y;
+                        minY = maxY = (int) vec.y;
                     } else {
-                        if (y < minY) {
-                            minY = y;
-                        } else if (y > maxY) {
-                            maxY = y;
+                        if (vec.y < minY) {
+                            minY = (int) vec.y;
+                        } else if (vec.y > maxY) {
+                            maxY = (int) vec.y;
                         }
                     }
                 }
