@@ -2,6 +2,7 @@ package com.zeoldcraft.skcompat;
 
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
+import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.StaticLayer;
 import com.laytonsmith.core.constructs.Target;
 import com.sk89q.worldedit.EditSession;
@@ -35,14 +36,21 @@ public class SKPlayer extends SKCommandSender {
 	}
 
 	@Override
+	public MCWorld getMCWorld() {
+		return player.getWorld();
+	}
+
+	@Override
 	public int getItemInHand() {
 		return player.getItemInHand() == null ? 0 : player.getItemInHand().getTypeId();
 	}
 
+	@Override
 	public LocalSession getLocalSession() {
 		return WorldEdit.getInstance().getSessionManager().get(this);
 	}
 
+	@Override
 	public EditSession getEditSession(boolean fastMode) {
 		EditSession editor = WorldEdit.getInstance().getEditSessionFactory().getEditSession(getWorld(), -1, null, this);
 		editor.setFastMode(fastMode);

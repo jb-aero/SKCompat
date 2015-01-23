@@ -15,11 +15,14 @@ Sets the player's point 1, or returns it if the array to set isn't specified. If
 #### mixed sk\_pos2([player], array | [player]):
 Sets the player's point 2, or returns it if the array to set isn't specified
 
+#### void sk\_setblock([player], pattern):
+Sets a selection of blocks according to the provided pattern, a normal array of associative arrays. If the array is empty, the entire selection will be set to air. The inner arrays consist of a required 'name' field, an optional 'data' field, and an optional decimal 'weight' field. If data is not given it defaults to 0, and if weight is not given it defaults to 1. The weight represents that blocktype's chance of being selected for the next random block setting.
+
 #### void skcb\_load(filename, [player]):
 Loads a schematic into the clipboard from file. It will use the directory specified in WorldEdit's config. By default it will use the console's clipboard, but will use a player's if specified.
 
 #### void skcb\_paste(location, [array] | player, [array]):
-Pastes a schematic from the player's clipboard if a player is provided, or from the console's clipboard if a location is given, as if a player was standing there. An associative array of options can be provided, all of which default to false. If 'airless' is true, air blocks from the schematic will not replace blocks in the world. If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste. If 'origin' is true, *TEST*. If 'select' is true, the pasted blocks will be automatically selected. Both ignoreAir and entities default to false.
+Pastes a schematic from the player's clipboard if a player is provided, or from the console's clipboard if a location is given, as if a player was standing there. An associative array of options can be provided, all of which default to false. If 'airless' is true, air blocks from the schematic will not replace blocks in the world. If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste. If 'origin' is true, the schematic will be pasted at the original location it was copied from. If 'select' is true, the pasted blocks will be automatically selected. Both ignoreAir and entities default to false.
 
 #### void skcb\_rotate([player,] int y-axis, [int x-axis, int z-axis]):
 Rotates the clipboard by the given (multiple of 90) degrees for each corresponding axis. To skip an axis, simply give it a value of 0. If a player is supplied, theirs will be rotated, otherwise the console will be used.
@@ -64,4 +67,3 @@ Returns the volume of the given region in the given world.
 
 #### mixed sk\_regions\_at(Locationarray):
 Returns a list of regions at the specified location. If regions are found, an array of region names are returned, otherwise, an empty array is returned.
-

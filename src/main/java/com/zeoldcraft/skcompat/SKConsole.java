@@ -27,6 +27,7 @@ public class SKConsole extends SKCommandSender {
 
 	public SKConsole() {
 		console = Static.getServer().getConsole();
+		setLocation(Static.getServer().getWorlds().get(0).getSpawnLocation());
 	}
 
 	@Override
@@ -38,18 +39,31 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public void setLocation(MCLocation loc) {
 		location = loc;
+		console.sendMessage("World has been set to " + location.getWorld().getName());
+	}
+
+	@Override
+	public MCWorld getMCWorld() {
+		return location == null ? null : location.getWorld();
 	}
 
 	@Override
 	public World getWorld() {
 		if (location != null) {
+			console.sendMessage("Console world is " + location.getWorld().getName());
 			for ( World w : WorldEdit.getInstance().getServer().getWorlds() ) {
+				console.sendMessage("Found world " + w.getName());
 				if (w.getName().equals(location.getWorld().getName())) {
+					console.sendMessage("World matched: " + w.getName());
 					return w;
 				}
 			}
+		} else {
+			console.sendMessage("Location has not been set.");
 		}
-		return WorldEdit.getInstance().getServer().getWorlds().get(0);
+		World ret = WorldEdit.getInstance().getServer().getWorlds().get(0);
+		console.sendMessage("Could not find world, defaulting to " + ret.getName());
+		return ret;
 	}
 
 	public void setWorld(MCWorld w) {
@@ -62,6 +76,7 @@ public class SKConsole extends SKCommandSender {
 		return console.getName();
 	}
 
+	@Override
 	public LocalSession getLocalSession() {
 		if (localSession == null) {
 			localSession = WorldEdit.getInstance().getSessionManager().get(this);
@@ -69,6 +84,7 @@ public class SKConsole extends SKCommandSender {
 		return localSession;
 	}
 
+	@Override
 	public EditSession getEditSession(boolean fastMode) {
 		if (editSession == null) {
 			editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(getWorld(), -1, null, this);

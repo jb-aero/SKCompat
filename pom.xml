@@ -4,7 +4,7 @@
 
 	<groupId>com.zeoldcraft</groupId>
 	<artifactId>SKCompat</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.4</version>
 	<packaging>jar</packaging>
 	
 	<name>SKCompat</name>
@@ -19,6 +19,47 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.bsc.maven</groupId>
+                <artifactId>maven-processor-plugin</artifactId>
+                <version>2.2.4</version>
+                <executions>
+                    <execution>
+                        <id>process</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <outputDirectory>src/main/generated</outputDirectory>
+                    <processors>
+                        <processor>com.laytonsmith.core.extensions.ExtensionAnnotationProcessor</processor>
+                    </processors>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <id>cache-annotations</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>com.laytonsmith.PureUtilities.ClassLoading.Annotations.CacheAnnotations</mainClass>
+                    <arguments>
+                        <argument>${basedir}/target/classes</argument>
+                        <argument>${basedir}/target/classes</argument>
+                    </arguments>
                 </configuration>
             </plugin>
         </plugins>
@@ -40,9 +81,9 @@
 			<version>3.3.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>com.sk89q</groupId>
-			<artifactId>worldedit</artifactId>
-			<version>6.0.0-SNAPSHOT</version>
+			<groupId>com.sk89q.worldedit</groupId>
+			<artifactId>worldedit-core</artifactId>
+			<version>6.0.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sk89q</groupId>

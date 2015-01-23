@@ -33,12 +33,12 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 
 	@Override
 	public void printDebug(String string) {
-		CHLog.GetLogger().Log(CHLog.Tags.RUNTIME, LogLevel.DEBUG, string, t);
+		CHLog.GetLogger().Log(CHLog.Tags.RUNTIME, LogLevel.VERBOSE, string, t);
 	}
 
 	@Override
 	public void print(String string) {
-		CHLog.GetLogger().Log(CHLog.Tags.RUNTIME, LogLevel.VERBOSE, string, t);
+		// Do nothing
 	}
 
 	@Override
@@ -66,6 +66,8 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 	}
 
 	public abstract void setLocation(MCLocation loc);
+
+	public abstract MCWorld getMCWorld();
 
 	public abstract LocalSession getLocalSession();
 

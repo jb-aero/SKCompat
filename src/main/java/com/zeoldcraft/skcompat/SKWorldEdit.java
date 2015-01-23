@@ -1,40 +1,45 @@
 package com.zeoldcraft.skcompat;
 
-import com.laytonsmith.abstraction.MCLocation;
+import com.laytonsmith.abstraction.MCCommandSender;
+import com.laytonsmith.abstraction.MCConsoleCommandSender;
 import com.laytonsmith.abstraction.MCPlayer;
-import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
-import com.laytonsmith.abstraction.bukkit.BukkitMCPlayer;
-import com.laytonsmith.abstraction.bukkit.BukkitMCWorld;
+import com.laytonsmith.abstraction.MVector3D;
 import com.laytonsmith.annotations.api;
-import com.laytonsmith.commandhelper.SKHandler;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
-import com.laytonsmith.core.constructs.*;
+import com.laytonsmith.core.constructs.CArray;
+import com.laytonsmith.core.constructs.CInt;
+import com.laytonsmith.core.constructs.CNull;
+import com.laytonsmith.core.constructs.CString;
+import com.laytonsmith.core.constructs.CVoid;
+import com.laytonsmith.core.constructs.Construct;
+import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
 import com.laytonsmith.core.functions.Exceptions;
 import com.laytonsmith.core.functions.Exceptions.ExceptionType;
-import com.sk89q.worldedit.*;
-import com.sk89q.worldedit.bukkit.BukkitUtil;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.EmptyClipboardException;
+import com.sk89q.worldedit.MaxChangedBlocksException;
+import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.WorldEditException;
+import com.sk89q.worldedit.blocks.BaseBlock;
+import com.sk89q.worldedit.blocks.BlockType;
 import com.sk89q.worldedit.command.ClipboardCommands;
-import com.sk89q.worldedit.extent.clipboard.Clipboard;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
+import com.sk89q.worldedit.command.RegionCommands;
+import com.sk89q.worldedit.command.SchematicCommands;
+import com.sk89q.worldedit.function.pattern.BlockPattern;
+import com.sk89q.worldedit.function.pattern.Pattern;
+import com.sk89q.worldedit.function.pattern.RandomPattern;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
-import com.sk89q.worldedit.session.ClipboardHolder;
-import com.sk89q.worldedit.util.io.Closer;
 import com.sk89q.worldedit.util.io.file.FilenameException;
-import com.sk89q.worldedit.world.registry.WorldData;
 import com.zeoldcraft.skcompat.SKCompat.SKFunction;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,6 +52,80 @@ public class SKWorldEdit {
     public static String docs() {
         return "Provides various methods for hooking into WorldEdit.";
     }
+
+	// reserved LocalPlayer for the Console
+	private static SKConsole console;
+
+	public static SKCommandSender getSKPlayer(MCCommandSender sender, Target t) {
+		SKCommandSender ret;
+		if (sender == null || sender instanceof MCConsoleCommandSender) {
+			if (console == null) {
+				console = new SKConsole();
+			}
+			ret = console;
+		} else if (sender instanceof MCPlayer) {
+			ret = new SKPlayer((MCPlayer) sender);
+		} else {
+			throw new ConfigRuntimeException("Sender type not yet supported: " + sender.getClass().getName(),
+					ExceptionType.CastException, t);
+		}
+		ret.setTarget(t);
+		return ret;
+	}
+
+	public static Vector vtov(MVector3D vec) {
+		return new Vector(vec.x, vec.y, vec.z);
+	}
+
+	public static MVector3D vtov(Vector vec) {
+		return new MVector3D(vec.getX(), vec.getY(), vec.getZ());
+	}
+
+	public static WeightedBlockPattern generateBlockPattern(Construct source, Target t) {
+		CArray src = Static.getArray(source, t);
+
+		if (src.containsKey("name")) {
+			int data = 0;
+			double weight = 1D;
+			if (src.containsKey("data")) {
+				data = Static.getInt32(src.get("data", t), t);
+			}
+			if (src.containsKey("weight")) {
+				weight = Static.getDouble(src.get("weight", t), t);
+			}
+			BlockType type = BlockType.lookup(src.get("name", t).val());
+			if (type == null) {
+				throw new ConfigRuntimeException("Could not determine blocktype from " + src.get("name", t).val(),
+						ExceptionType.NotFoundException, t);
+			} else {
+				return new WeightedBlockPattern(new BaseBlock(type.getID(), data), weight);
+			}
+		} else {
+			throw new ConfigRuntimeException("Block name required", ExceptionType.FormatException, t);
+		}
+	}
+
+	public static WeightedBlockPattern generateBlockPattern(String source, Target t) {
+		try {
+			int data = 0;
+			double weight = 1D;
+			String[] typeInfo;
+			String[] weightedType = source.split("%");
+			if (weightedType.length == 1) {
+				typeInfo = weightedType[0].split(":");
+			} else {
+				weight = Double.valueOf(weightedType[0]);
+				typeInfo = weightedType[1].split(":");
+			}
+			BlockType type = BlockType.lookup(typeInfo[0]);
+			if (typeInfo.length > 1) {
+				data = Integer.valueOf(typeInfo[1]);
+			}
+			return new WeightedBlockPattern(new BaseBlock(type.getID(), data), weight);
+		} catch (NumberFormatException e) {
+			throw new ConfigRuntimeException(e.getMessage(), ExceptionType.CastException, t);
+		}
+	}
 
     @api(environments=CommandHelperEnvironment.class)
     public static class sk_pos1 extends SKFunction {
@@ -74,45 +153,44 @@ public class SKWorldEdit {
 
 		@Override
         public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            MCPlayer m = null;
-            MCLocation l = null;
+            MCCommandSender m = null;
+            MVector3D v = null;
             Static.checkPlugin("WorldEdit", t);
+			WorldEdit worldEdit = WorldEdit.getInstance();
 
             if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
                 m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
             }
             if (args.length == 2) {
-                m = Static.GetPlayer(args[0].val(), t);
-                l = ObjectGenerator.GetGenerator().location(args[1], m.getWorld(), t);
+				m = SKCompat.myGetPlayer(args[0], t);
+                v = ObjectGenerator.GetGenerator().vector(args[1], t);
             } else if (args.length == 1) {
                 if (args[0] instanceof CArray) {
-                    l = ObjectGenerator.GetGenerator().location(args[0], ( m == null ? null : m.getWorld() ), t);
+                    v = ObjectGenerator.GetGenerator().vector(args[0], t);
                 } else {
                     m = Static.GetPlayer(args[0].val(), t);
                 }
             }
 
-            if (m == null) {
-                throw new ConfigRuntimeException(this.getName() + " needs a player", ExceptionType.PlayerOfflineException, t);
-            }
+            SKCommandSender user = getSKPlayer(m, t);
 
-            RegionSelector sel = SKHandler.getWorldEditPlugin(t).getSession(( (BukkitMCPlayer) m )._Player()).getRegionSelector(BukkitUtil.getLocalWorld(( (BukkitMCWorld) m.getWorld() ).__World()));
+            RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
             if (!( sel instanceof CuboidRegionSelector )) {
-                throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(), ExceptionType.PluginInternalException, t);
+                throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
+						ExceptionType.PluginInternalException, t);
             }
-            if (l != null) {
-				sel.selectPrimary(BukkitUtil.toVector(( (BukkitMCLocation) l )._Location()), null);
+            if (v != null) {
+				sel.selectPrimary(vtov(v), null);
                 return CVoid.VOID;
             } else {
                 Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos1();
                 if (pt == null) {
-                    throw new ConfigRuntimeException("Point in " + this.getName() + "undefined", ExceptionType.PluginInternalException, t);
+                    throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
+							ExceptionType.PluginInternalException, t);
                 }
-                return new CArray(t,
-                        new CInt(pt.getBlockX(), t),
-                        new CInt(pt.getBlockY(), t),
-                        new CInt(pt.getBlockZ(), t),
-                        new CString(m.getWorld().getName(), t));
+				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
+				ret.push(new CString(user.getMCWorld().getName(), t));
+				return ret;
             }
         }
     }
@@ -142,46 +220,44 @@ public class SKWorldEdit {
 
 		@Override
         public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            MCPlayer m = null;
-            MCLocation l = null;
+            MCCommandSender m = null;
+            MVector3D v = null;
             Static.checkPlugin("WorldEdit", t);
 
             if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
                 m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
             }
             if (args.length == 2) {
-                m = Static.GetPlayer(args[0].val(), t);
-                l = ObjectGenerator.GetGenerator().location(args[1], m.getWorld(), t);
+				m = SKCompat.myGetPlayer(args[0], t);
+				v = ObjectGenerator.GetGenerator().vector(args[1], t);
             } else if (args.length == 1) {
                 if (args[0] instanceof CArray) {
-                    l = ObjectGenerator.GetGenerator().location(args[0], ( m == null ? null : m.getWorld() ), t);
+                    v = ObjectGenerator.GetGenerator().vector(args[0], t);
                 } else {
                     m = Static.GetPlayer(args[0].val(), t);
                 }
             }
 
-            if (m == null) {
-                throw new ConfigRuntimeException(this.getName() + " needs a player", ExceptionType.PlayerOfflineException, t);
-            }
+            SKCommandSender user = getSKPlayer(m, t);
 
-            RegionSelector sel = SKHandler.getWorldEditPlugin(t).getSession(( (BukkitMCPlayer) m )._Player()).getRegionSelector(BukkitUtil.getLocalWorld(( (BukkitMCWorld) m.getWorld() ).__World()));
+            RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
             if (!( sel instanceof CuboidRegionSelector )) {
-                throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(), ExceptionType.PluginInternalException, t);
+                throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
+						ExceptionType.PluginInternalException, t);
             }
 
-            if (l != null) {
-                sel.selectSecondary(BukkitUtil.toVector(( (BukkitMCLocation) l )._Location()), null);
+            if (v != null) {
+                sel.selectSecondary(new Vector(v.x, v.y, v.z), null);
                 return CVoid.VOID;
             } else {
                 Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos2();
                 if (pt == null) {
-                    throw new ConfigRuntimeException("Point in " + this.getName() + "undefined", ExceptionType.PluginInternalException, t);
+                    throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
+							ExceptionType.PluginInternalException, t);
                 }
-                return new CArray(t,
-                        new CInt(pt.getBlockX(), t),
-                        new CInt(pt.getBlockY(), t),
-                        new CInt(pt.getBlockZ(), t),
-                        new CString(m.getWorld().getName(), t));
+				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
+				ret.push(new CString(user.getMCWorld().getName(), t));
+                return ret;
             }
         }
     }
@@ -210,24 +286,93 @@ public class SKWorldEdit {
 //            return CVoid.VOID;
 //        }
 //    }
-	
-	/******************Clipboard stuff below this line******************/
 
-	// CH's local player, based from console
-	private static SKConsole console;
+	@api(environments=CommandHelperEnvironment.class)
+	public static class sk_setblock extends SKFunction {
 
-	public static SKCommandSender getSKPlayer(MCPlayer player, Target t) {
-		SKCommandSender sender;
-		if (player == null) {
-			if (console == null) {
-				console = new SKConsole();
-			}
-			sender = console;
-		} else {
-			sender = new SKPlayer(player);
+		@Override
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ ExceptionType.InvalidPluginException, ExceptionType.PluginInternalException,
+					ExceptionType.PlayerOfflineException, ExceptionType.FormatException, ExceptionType.CastException };
 		}
-		sender.setTarget(t);
-		return sender;
+
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws ConfigRuntimeException {
+
+			Static.checkPlugin("WorldEdit", t);
+			WorldEdit worldEdit = WorldEdit.getInstance();
+
+			MCPlayer player = null;
+			Construct pat = null;
+			if (args.length == 2) {
+				if (!(args[0] instanceof CNull)) {
+					player = Static.GetPlayer(args[0], t);
+				}
+				pat = Static.getArray(args[1], t);
+			} else {
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					player = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
+				pat = Static.getArray(args[0], t);
+			}
+			SKCommandSender user = getSKPlayer(player, t);
+
+			Pattern pattern;
+			if (pat instanceof CArray) {
+				CArray pata = (CArray) pat;
+				if (pata.size() == 0) {
+					pattern = new BlockPattern(new BaseBlock(0));
+				} else if (pata.size() == 1) {
+					CArray singleBlock = Static.getArray(pata.get(0, t), t);
+					pattern = generateBlockPattern(pata.get(0, t), t);
+				} else {
+					pattern = new RandomPattern();
+					for (Construct entry : pata.asList()) {
+						WeightedBlockPattern temp = generateBlockPattern(entry, t);
+						((RandomPattern) pattern).add(temp, temp.getWeight());
+					}
+				}
+			} else {
+				String[] multi = pat.val().split(",");
+				if (multi.length > 1) {
+					pattern = new RandomPattern();
+					for (String type : multi) {
+						WeightedBlockPattern temp = generateBlockPattern(type, t);
+						((RandomPattern) pattern).add(temp, temp.getWeight());
+					}
+				} else {
+					pattern = generateBlockPattern(multi[0], t);
+				}
+			}
+
+			try {
+				new RegionCommands(worldEdit).set(user, user.getLocalSession(), user.getEditSession(false), pattern);
+			} catch (WorldEditException wee) {
+				throw new ConfigRuntimeException(wee.getMessage(), ExceptionType.PluginInternalException, t);
+			}
+
+			return CVoid.VOID;
+		}
+
+		@Override
+		public String getName() {
+			return "sk_setblock";
+		}
+
+		@Override
+		public Integer[] numArgs() {
+			return new Integer[]{1, 2};
+		}
+
+		@Override
+		public String docs() {
+			return "void {[player], pattern} Sets a selection of blocks according to the provided pattern,"
+					+ " a normal array of associative arrays. If the array is empty, the entire selection will be"
+					+ " set to air. The inner arrays consist of a required 'name' field, an optional 'data' field,"
+					+ " and an optional decimal 'weight' field. If data is not given it defaults to 0,"
+					+ " and if weight is not given it defaults to 1. The weight represents that blocktype's chance"
+					+ " of being selected for the next random block setting.";
+		}
 	}
 
 	@api
@@ -242,10 +387,7 @@ public class SKWorldEdit {
 
 		@Override
 		public Construct exec(Target t, Environment environment, Construct... args) throws ConfigRuntimeException {
-			/* Adapted from:
-			 * https://github.com/sk89q/WorldEdit/blob/master/worldedit-core/src/main/java/
-			 * com/sk89q/worldedit/command/SchematicCommands.java#L79-L131
-			 */
+
 			Static.checkPlugin("WorldEdit", t);
 			WorldEdit worldEdit = WorldEdit.getInstance();
 			String filename = args[0].val();
@@ -255,45 +397,10 @@ public class SKWorldEdit {
 			}
 			SKCommandSender user = getSKPlayer(player, t);
 
-			File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
-			File f;
-
 			try {
-				f = worldEdit.getSafeOpenFile(user, dir, filename, "schematic", "schematic");
+				new SchematicCommands(worldEdit).load(user, user.getLocalSession(), "schematic", filename);
 			} catch (FilenameException fne) {
-				throw new ConfigRuntimeException(fne.getMessage(), ExceptionType.IOException, t);
-			}
-
-			if (!f.exists()) {
-				throw new ConfigRuntimeException("Schematic " + filename + " does not exist!",
-						ExceptionType.IOException, t);
-			}
-
-			Closer closer = Closer.create();
-			try {
-				String filePath = f.getCanonicalPath();
-				String dirPath = dir.getCanonicalPath();
-
-				if (!filePath.substring(0, dirPath.length()).equals(dirPath)) {
-					throw new ConfigRuntimeException("Clipboard file could not read or it does not exist.",
-							ExceptionType.IOException, t);
-				} else {
-					FileInputStream fis = closer.register(new FileInputStream(f));
-					BufferedInputStream bis = closer.register(new BufferedInputStream(fis));
-					ClipboardReader reader = ClipboardFormat.SCHEMATIC.getReader(bis);
-
-					WorldData worldData = user.getWorld().getWorldData();
-					Clipboard clipboard = reader.read(worldData);
-					user.getLocalSession().setClipboard(new ClipboardHolder(clipboard, worldData));
-				}
-			} catch (IOException e) {
-				throw new ConfigRuntimeException("Schematic could not read or it does not exist: " + e.getMessage(),
-						ExceptionType.IOException, t);
-			} finally {
-				try {
-					closer.close();
-				} catch (IOException ignored) {
-				}
+				throw new ConfigRuntimeException(fne.getMessage(), ExceptionType.PluginInternalException, t);
 			}
 			return CVoid.VOID;
 		}
@@ -457,7 +564,7 @@ public class SKWorldEdit {
 					+ " An associative array of options can be provided, all of which default to false."
 					+ " If 'airless' is true, air blocks from the schematic will not replace blocks in the world."
 					+ " If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste."
-					+ " If 'origin' is true, *TEST*."
+					+ " If 'origin' is true, the schematic will be pasted at the original location it was copied from."
 					+ " If 'select' is true, the pasted blocks will be automatically selected."
 					+ " Both ignoreAir and entities default to false.";
 		}
