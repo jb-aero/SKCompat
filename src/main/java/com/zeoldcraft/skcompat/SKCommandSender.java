@@ -1,24 +1,22 @@
 package com.zeoldcraft.skcompat;
 
-import com.laytonsmith.abstraction.MCConsoleCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCWorld;
-import com.laytonsmith.abstraction.StaticLayer;
 import com.laytonsmith.core.CHLog;
 import com.laytonsmith.core.LogLevel;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
 import com.laytonsmith.core.functions.Exceptions;
-import com.sk89q.worldedit.*;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.LocalSession;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.WorldVector;
 import com.sk89q.worldedit.blocks.BaseItem;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.extension.platform.AbstractPlayerActor;
 import com.sk89q.worldedit.extent.inventory.BlockBag;
 import com.sk89q.worldedit.extent.inventory.BlockBagException;
 import com.sk89q.worldedit.session.SessionKey;
-import com.sk89q.worldedit.util.Location;
-import com.sk89q.worldedit.world.World;
-import java.util.UUID;
 
 /**
  *
@@ -71,7 +69,11 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 
 	public abstract LocalSession getLocalSession();
 
-	public abstract EditSession getEditSession(boolean fastMode);
+	public EditSession getEditSession(boolean fastMode) {
+		EditSession editor = WorldEdit.getInstance().getEditSessionFactory().getEditSession(getWorld(), -1, null, this);
+		editor.setFastMode(fastMode);
+		return editor;
+	}
 
 	@Override
 	public BaseEntity getState() {

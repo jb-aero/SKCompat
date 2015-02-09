@@ -51,13 +51,6 @@ public class SKPlayer extends SKCommandSender {
 	}
 
 	@Override
-	public EditSession getEditSession(boolean fastMode) {
-		EditSession editor = WorldEdit.getInstance().getEditSessionFactory().getEditSession(getWorld(), -1, null, this);
-		editor.setFastMode(fastMode);
-		return editor;
-	}
-
-	@Override
 	public double getPitch() {
 		return player.getLocation().getPitch();
 	}

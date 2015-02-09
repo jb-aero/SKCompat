@@ -23,7 +23,6 @@ public class SKConsole extends SKCommandSender {
 	private final MCConsoleCommandSender console;
 	private MCLocation location;
 	private LocalSession localSession;
-	private EditSession editSession;
 
 	public SKConsole() {
 		console = Static.getServer().getConsole();
@@ -39,7 +38,6 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public void setLocation(MCLocation loc) {
 		location = loc;
-		console.sendMessage("World has been set to " + location.getWorld().getName());
 	}
 
 	@Override
@@ -50,19 +48,13 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public World getWorld() {
 		if (location != null) {
-			console.sendMessage("Console world is " + location.getWorld().getName());
 			for ( World w : WorldEdit.getInstance().getServer().getWorlds() ) {
-				console.sendMessage("Found world " + w.getName());
 				if (w.getName().equals(location.getWorld().getName())) {
-					console.sendMessage("World matched: " + w.getName());
 					return w;
 				}
 			}
-		} else {
-			console.sendMessage("Location has not been set.");
 		}
 		World ret = WorldEdit.getInstance().getServer().getWorlds().get(0);
-		console.sendMessage("Could not find world, defaulting to " + ret.getName());
 		return ret;
 	}
 
@@ -82,15 +74,6 @@ public class SKConsole extends SKCommandSender {
 			localSession = WorldEdit.getInstance().getSessionManager().get(this);
 		}
 		return localSession;
-	}
-
-	@Override
-	public EditSession getEditSession(boolean fastMode) {
-		if (editSession == null) {
-			editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(getWorld(), -1, null, this);
-		}
-		editSession.setFastMode(fastMode);
-		return editSession;
 	}
 
 	@Override

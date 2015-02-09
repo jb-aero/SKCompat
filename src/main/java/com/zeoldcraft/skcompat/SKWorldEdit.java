@@ -8,7 +8,6 @@ import com.laytonsmith.annotations.api;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
 import com.laytonsmith.core.constructs.CArray;
-import com.laytonsmith.core.constructs.CInt;
 import com.laytonsmith.core.constructs.CNull;
 import com.laytonsmith.core.constructs.CString;
 import com.laytonsmith.core.constructs.CVoid;
@@ -30,16 +29,25 @@ import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.blocks.BlockType;
 import com.sk89q.worldedit.command.ClipboardCommands;
 import com.sk89q.worldedit.command.RegionCommands;
-import com.sk89q.worldedit.command.SchematicCommands;
+import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.function.pattern.BlockPattern;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.function.pattern.RandomPattern;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
+import com.sk89q.worldedit.session.ClipboardHolder;
+import com.sk89q.worldedit.util.io.Closer;
 import com.sk89q.worldedit.util.io.file.FilenameException;
+import com.sk89q.worldedit.world.registry.WorldData;
 import com.zeoldcraft.skcompat.SKCompat.SKFunction;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -374,7 +382,7 @@ public class SKWorldEdit {
 					+ " of being selected for the next random block setting.";
 		}
 	}
-
+//https://github.com/sk89q/WorldEdit/blob/7192780251dc71f5c70f2460d74eaee6a992333f/worldedit-core/src/main/java/com/sk89q/worldedit/command/SchematicCommands.java#L79-L131
 	@api
 	public static class skcb_load extends SKFunction {
 
@@ -397,10 +405,45 @@ public class SKWorldEdit {
 			}
 			SKCommandSender user = getSKPlayer(player, t);
 
+			File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
+			File f;
+
 			try {
-				new SchematicCommands(worldEdit).load(user, user.getLocalSession(), "schematic", filename);
+				f = worldEdit.getSafeOpenFile(user, dir, filename, "schematic", "schematic");
 			} catch (FilenameException fne) {
-				throw new ConfigRuntimeException(fne.getMessage(), ExceptionType.PluginInternalException, t);
+				throw new ConfigRuntimeException(fne.getMessage(), ExceptionType.IOException, t);
+			}
+
+			if (!f.exists()) {
+				throw new ConfigRuntimeException("Schematic " + filename + " does not exist!",
+						ExceptionType.IOException, t);
+			}
+
+			Closer closer = Closer.create();
+			try {
+				String filePath = f.getCanonicalPath();
+				String dirPath = dir.getCanonicalPath();
+
+				if (!filePath.substring(0, dirPath.length()).equals(dirPath)) {
+					throw new ConfigRuntimeException("Clipboard file could not read or it does not exist.",
+							ExceptionType.IOException, t);
+				} else {
+					FileInputStream fis = closer.register(new FileInputStream(f));
+					BufferedInputStream bis = closer.register(new BufferedInputStream(fis));
+					ClipboardReader reader = ClipboardFormat.SCHEMATIC.getReader(bis);
+
+					WorldData worldData = user.getWorld().getWorldData();
+					Clipboard clipboard = reader.read(worldData);
+					user.getLocalSession().setClipboard(new ClipboardHolder(clipboard, worldData));
+				}
+			} catch (IOException e) {
+				throw new ConfigRuntimeException("Schematic could not read or it does not exist: " + e.getMessage(),
+						ExceptionType.IOException, t);
+			} finally {
+				try {
+					closer.close();
+				} catch (IOException ignored) {
+				}
 			}
 			return CVoid.VOID;
 		}
