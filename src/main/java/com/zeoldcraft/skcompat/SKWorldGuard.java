@@ -11,7 +11,6 @@ import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.laytonsmith.abstraction.bukkit.BukkitMCPlayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCWorld;
 import com.laytonsmith.annotations.api;
-import com.laytonsmith.commandhelper.SKHandler;
 import com.laytonsmith.core.CHVersion;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
@@ -120,6 +119,7 @@ public class SKWorldGuard {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
 			try {
 				String regionName = args[0].val();
 				String worldName = args[1].val();
@@ -139,7 +139,7 @@ public class SKWorldGuard {
 				if (world == null) {
 					throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
 				}
-				RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+				RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 				ProtectedRegion region = mgr.getRegion(regionName);
 				if (region == null) {
 					throw new ConfigRuntimeException("Region could not be found!", ExceptionType.PluginInternalException, t);
@@ -294,7 +294,7 @@ public class SKWorldGuard {
             if (world == null) {
                 throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
             }
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
             if (args[2] instanceof CArray) {
                 CArray arg = (CArray) args[2];
                 for (int i = 0; i < arg.size(); i++) {
@@ -369,7 +369,7 @@ public class SKWorldGuard {
                 throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
             }
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
 			if (args.length == 2) {
 				 checkRegions.addAll(mgr.getRegions().values());
@@ -457,7 +457,7 @@ public class SKWorldGuard {
                 checkWorlds = Bukkit.getServer().getWorlds();
             }
             for (World world : checkWorlds) {
-                for (String region : SKHandler.getWorldGuardPlugin(t).getRegionManager(world).getRegions().keySet()) {
+                for (String region : WorldGuardPlugin.inst().getRegionManager(world).getRegions().keySet()) {
                     arr.push(new CString(region, t));
                 }
             }
@@ -515,7 +515,7 @@ public class SKWorldGuard {
 
             world = Bukkit.getServer().getWorld(m.getWorld().getName());
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
             Vector pt = new Vector(m.getLocation().getBlockX(), m.getLocation().getBlockY(), m.getLocation().getBlockZ());
             ApplicableRegionSet set = mgr.getApplicableRegions(pt);
 
@@ -601,7 +601,7 @@ public class SKWorldGuard {
 
             world = Bukkit.getServer().getWorld(loc.getWorld().getName());
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
             Vector pt = new Vector(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
             ApplicableRegionSet set = mgr.getApplicableRegions(pt);
 
@@ -670,7 +670,7 @@ public class SKWorldGuard {
 
             world = Bukkit.getServer().getWorld(args[1].val());
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion region = mgr.getRegion(args[0].val());
 
@@ -819,7 +819,7 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("No world specified.", ExceptionType.InvalidWorldException, t);
 			}
 
-			RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(((BukkitMCWorld) w).__World());
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(((BukkitMCWorld) w).__World());
 
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -937,7 +937,7 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("You cannot change position of __global__ region.", ExceptionType.PluginInternalException, t);
 			}
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion oldRegion = mgr.getRegion(region);
 
@@ -1074,7 +1074,7 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("You cannot change name of any region to __global__.", ExceptionType.PluginInternalException, t);
 			}
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion oldRegion = mgr.getRegion(oldRegionName);
 
@@ -1169,7 +1169,7 @@ public class SKWorldGuard {
                 throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
             }
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -1241,7 +1241,7 @@ public class SKWorldGuard {
                 throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
             }
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -1333,7 +1333,7 @@ public class SKWorldGuard {
                 throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
             }
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -1440,7 +1440,7 @@ public class SKWorldGuard {
                 throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
             }
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -1606,7 +1606,7 @@ public class SKWorldGuard {
                 throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
             }
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -1713,7 +1713,7 @@ public class SKWorldGuard {
                 throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
             }
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -1775,7 +1775,7 @@ public class SKWorldGuard {
 			if (world == null) {
 				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
 			}
-			RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 			ProtectedRegion region = mgr.getRegion(regionName);
 			if (region == null) {
 				throw new ConfigRuntimeException("Region could not be found!", ExceptionType.PluginInternalException, t);
@@ -1845,7 +1845,7 @@ public class SKWorldGuard {
 				flagValue = args[3].val();
 			}
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion region = mgr.getRegion(regionName);
 
@@ -1879,7 +1879,7 @@ public class SKWorldGuard {
 				}
 
 				try {
-					groupValue = groupFlag.parseInput(SKHandler.getWorldGuardPlugin(t), new BukkitMCCommandSender(env.getEnv(CommandHelperEnvironment.class).GetCommandSender())._CommandSender(), group);
+					groupValue = groupFlag.parseInput(WorldGuardPlugin.inst(), new BukkitMCCommandSender(env.getEnv(CommandHelperEnvironment.class).GetCommandSender())._CommandSender(), group);
 				} catch (InvalidFlagFormat e) {
 					throw new ConfigRuntimeException(String.format("Unknown group (%s).", group), ExceptionType.PluginInternalException, t);
 				}
@@ -1926,7 +1926,7 @@ public class SKWorldGuard {
 		private <V> void setFlag(Target t, ProtectedRegion region,
 				Flag<V> flag, CommandSender sender, String value)
 						throws InvalidFlagFormat {
-			region.setFlag(flag, flag.parseInput(SKHandler.getWorldGuardPlugin(t), sender, value));
+			region.setFlag(flag, flag.parseInput(WorldGuardPlugin.inst(), sender, value));
 		}
     }
 
@@ -1994,7 +1994,7 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException(String.format("Unknown flag specified: (%s).", args[1].val()), ExceptionType.PluginInternalException, t);
 			}
 
-			RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(Bukkit.getServer().getWorld(l.getWorld().getName()));
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(Bukkit.getServer().getWorld(l.getWorld().getName()));
 
 			ApplicableRegionSet set = mgr.getApplicableRegions(((BukkitMCLocation) l)._Location());
 
@@ -2002,7 +2002,7 @@ public class SKWorldGuard {
 				if (p == null) {
 					return CBoolean.get(set.allows((StateFlag) foundFlag));
 				} else {
-					return CBoolean.get(set.allows((StateFlag) foundFlag, SKHandler.getWorldGuardPlugin(t).wrapPlayer(((BukkitMCPlayer) p)._Player())));
+					return CBoolean.get(set.allows((StateFlag) foundFlag, WorldGuardPlugin.inst().wrapPlayer(((BukkitMCPlayer) p)._Player())));
 				}
 			} else {
 				Object getFlag;
@@ -2010,7 +2010,7 @@ public class SKWorldGuard {
 				if (p == null) {
 					getFlag = set.getFlag((Flag) foundFlag);
 				} else {
-					getFlag = set.getFlag((Flag) foundFlag, SKHandler.getWorldGuardPlugin(t).wrapPlayer(((BukkitMCPlayer) p)._Player()));
+					getFlag = set.getFlag((Flag) foundFlag, WorldGuardPlugin.inst().wrapPlayer(((BukkitMCPlayer) p)._Player()));
 				}
 
 				if (foundFlag instanceof BooleanFlag) {
@@ -2158,7 +2158,7 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("The region cannot be named __global__.", ExceptionType.PluginInternalException, t);
 			}
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -2221,7 +2221,7 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("You cannot set parents for a __global__ cuboid.", ExceptionType.PluginInternalException, t);
 			}
 
-            RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
             ProtectedRegion child = mgr.getRegion(regionName);
 
@@ -2285,7 +2285,7 @@ public class SKWorldGuard {
 				p = Static.GetPlayer(args[0], t);
 				loc = ObjectGenerator.GetGenerator().location(args[1], p.getWorld(), t);
 			}
-			return CBoolean.get(SKHandler.getWorldGuardPlugin(t).canBuild(((BukkitMCPlayer) p)._Player(),
+			return CBoolean.get(WorldGuardPlugin.inst().canBuild(((BukkitMCPlayer) p)._Player(),
 					((BukkitMCLocation) loc)._Location()));
 		}
 
