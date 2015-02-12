@@ -189,7 +189,7 @@ public class SKWorldGuard {
 						players.push(new CString(member.toString(), t));
 					}
 					for (String member : ownersGroups) {
-						groups.push(new CString("*" + member, t));
+						groups.push(new CString(member, t));
 					}
 					ownerSet.set("players", players, t);
 					ownerSet.set("groups", groups, t);
@@ -210,7 +210,7 @@ public class SKWorldGuard {
 						players.push(new CString(member.toString(), t));
 					}
 					for (String member : membersGroups) {
-						groups.push(new CString("*" + member, t));
+						groups.push(new CString(member, t));
 					}
 					memberSet.set("players", players, t);
 					memberSet.set("groups", groups, t);
@@ -1518,7 +1518,7 @@ public class SKWorldGuard {
 				players.push(new CString(owner.toString(), t));
 			}
 			for (String owner : ownersGroups) {
-				groups.push(new CString("*" + owner, t));
+				groups.push(new CString(owner, t));
 			}
 			owners.set("players", players, t);
 			owners.set("groups", groups, t);
@@ -1791,7 +1791,7 @@ public class SKWorldGuard {
 				players.push(new CString(member.toString(), t));
 			}
 			for (String member : membersGroups) {
-				groups.push(new CString("*" + member, t));
+				groups.push(new CString(member, t));
 			}
 			members.set("players", players, t);
 			members.set("groups", groups, t);
