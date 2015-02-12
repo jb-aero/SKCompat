@@ -33,6 +33,7 @@ import com.laytonsmith.core.functions.Exceptions.ExceptionType;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.BlockVector2D;
 import com.sk89q.worldedit.Vector;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.flags.BooleanFlag;
@@ -60,6 +61,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -174,36 +177,43 @@ public class SKWorldGuard {
 				}
 
 				if (index == 1 || index == -1) {
-					List<String> ownersPlayers = new ArrayList<>();
+					List<UUID> ownersPlayers = new ArrayList<>();
 					List<String> ownersGroups = new ArrayList<>();
-					ownersPlayers.addAll(region.getOwners().getPlayers());
+					ownersPlayers.addAll(region.getOwners().getUniqueIds());
 					ownersGroups.addAll(region.getOwners().getGroups());
 
-					CArray ownerSet = new CArray(t);
-					for (String owner : ownersPlayers) {
-						ownerSet.push(new CString(owner, t));
+					CArray ownerSet = CArray.GetAssociativeArray(t);
+					CArray players = new CArray(t);
+					CArray groups = new CArray(t);
+					for (UUID member : ownersPlayers) {
+						players.push(new CString(member.toString(), t));
 					}
-					for (String owner : ownersGroups) {
-						ownerSet.push(new CString("*" + owner, t));
+					for (String member : ownersGroups) {
+						groups.push(new CString("*" + member, t));
 					}
+					ownerSet.set("players", players, t);
+					ownerSet.set("groups", groups, t);
 
 					ret.push(ownerSet);
 				}
 
 				if (index == 2 || index == -1) {
-					List<String> membersPlayers = new ArrayList<>();
+					List<UUID> membersPlayers = new ArrayList<>();
 					List<String> membersGroups = new ArrayList<>();
-					membersPlayers.addAll(region.getMembers().getPlayers());
+					membersPlayers.addAll(region.getMembers().getUniqueIds());
 					membersGroups.addAll(region.getMembers().getGroups());
 
-					CArray memberSet = new CArray(t);
-					for (String member : membersPlayers) {
-						memberSet.push(new CString(member, t));
+					CArray memberSet = CArray.GetAssociativeArray(t);
+					CArray players = new CArray(t);
+					CArray groups = new CArray(t);
+					for (UUID member : membersPlayers) {
+						players.push(new CString(member.toString(), t));
 					}
 					for (String member : membersGroups) {
-						memberSet.push(new CString("*" + member, t));
+						groups.push(new CString("*" + member, t));
 					}
-
+					memberSet.set("players", players, t);
+					memberSet.set("groups", groups, t);
 					ret.push(memberSet);
 				}
 
@@ -1483,36 +1493,36 @@ public class SKWorldGuard {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws ConfigRuntimeException {
-			try {
-				String regionName = args[0].val();
-				String worldName = args[1].val();
-				List<String> ownersPlayers = new ArrayList<>();
-				List<String> ownersGroups = new ArrayList<>();
-				World world = Bukkit.getServer().getWorld(worldName);
-				if (world == null) {
-					throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
-				}
-				RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
-				ProtectedRegion region = mgr.getRegion(regionName);
-				if (region == null) {
-					throw new ConfigRuntimeException("Region could not be found!", ExceptionType.PluginInternalException, t);
-				}
-
-				ownersPlayers.addAll(region.getOwners().getPlayers());
-				ownersGroups.addAll(region.getOwners().getGroups());
-
-				CArray owners = new CArray(t);
-				for (String owner : ownersPlayers) {
-					owners.push(new CString(owner, t));
-				}
-				for (String owner : ownersGroups) {
-					owners.push(new CString("*" + owner, t));
-				}
-				return owners;
-
-			} catch (NoClassDefFoundError e) {
-				throw new ConfigRuntimeException("It does not appear as though the WorldEdit or WorldGuard plugin is loaded properly. Execution of " + this.getName() + " cannot continue.", ExceptionType.InvalidPluginException, t, e);
+			Static.checkPlugin("WorldGuard", t);
+			String regionName = args[0].val();
+			String worldName = args[1].val();
+			List<UUID> ownersPlayers = new ArrayList<>();
+			List<String> ownersGroups = new ArrayList<>();
+			World world = Bukkit.getServer().getWorld(worldName);
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
 			}
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			ProtectedRegion region = mgr.getRegion(regionName);
+			if (region == null) {
+				throw new ConfigRuntimeException("Region could not be found!", ExceptionType.PluginInternalException, t);
+			}
+
+			ownersPlayers.addAll(region.getOwners().getUniqueIds());
+			ownersGroups.addAll(region.getOwners().getGroups());
+
+			CArray owners = CArray.GetAssociativeArray(t);
+			CArray players = new CArray(t);
+			CArray groups = new CArray(t);
+			for (UUID owner : ownersPlayers) {
+				players.push(new CString(owner.toString(), t));
+			}
+			for (String owner : ownersGroups) {
+				groups.push(new CString("*" + owner, t));
+			}
+			owners.set("players", players, t);
+			owners.set("groups", groups, t);
+			return owners;
 		}
 	}
 
@@ -1756,36 +1766,36 @@ public class SKWorldGuard {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws ConfigRuntimeException {
-			try {
-				String regionName = args[0].val();
-				String worldName = args[1].val();
-				List<String> membersPlayers = new ArrayList<>();
-				List<String> membersGroups = new ArrayList<>();
-				World world = Bukkit.getServer().getWorld(worldName);
-				if (world == null) {
-					throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
-				}
-				RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
-				ProtectedRegion region = mgr.getRegion(regionName);
-				if (region == null) {
-					throw new ConfigRuntimeException("Region could not be found!", ExceptionType.PluginInternalException, t);
-				}
-
-				membersPlayers.addAll(region.getMembers().getPlayers());
-				membersGroups.addAll(region.getMembers().getGroups());
-
-				CArray members = new CArray(t);
-				for (String member : membersPlayers) {
-					members.push(new CString(member, t));
-				}
-				for (String member : membersGroups) {
-					members.push(new CString("*" + member, t));
-				}
-				return members;
-
-			} catch (NoClassDefFoundError e) {
-				throw new ConfigRuntimeException("It does not appear as though the WorldEdit or WorldGuard plugin is loaded properly. Execution of " + this.getName() + " cannot continue.", ExceptionType.InvalidPluginException, t, e);
+			Static.checkPlugin("WorldGuard", t);
+			String regionName = args[0].val();
+			String worldName = args[1].val();
+			List<UUID> membersPlayers = new ArrayList<>();
+			List<String> membersGroups = new ArrayList<>();
+			World world = Bukkit.getServer().getWorld(worldName);
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
 			}
+			RegionManager mgr = SKHandler.getWorldGuardPlugin(t).getRegionManager(world);
+			ProtectedRegion region = mgr.getRegion(regionName);
+			if (region == null) {
+				throw new ConfigRuntimeException("Region could not be found!", ExceptionType.PluginInternalException, t);
+			}
+
+			membersPlayers.addAll(region.getMembers().getUniqueIds());
+			membersGroups.addAll(region.getMembers().getGroups());
+
+			CArray members = CArray.GetAssociativeArray(t);
+			CArray players = new CArray(t);
+			CArray groups = new CArray(t);
+			for (UUID member : membersPlayers) {
+				players.push(new CString(member.toString(), t));
+			}
+			for (String member : membersGroups) {
+				groups.push(new CString("*" + member, t));
+			}
+			members.set("players", players, t);
+			members.set("groups", groups, t);
+			return members;
 		}
 	}
 
