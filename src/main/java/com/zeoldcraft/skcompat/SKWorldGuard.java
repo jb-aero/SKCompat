@@ -1347,7 +1347,7 @@ public class SKWorldGuard {
 			}
 
 			for (String owner : owners) {
-				regionExists.getOwners().addPlayer(owner);
+				regionExists.getOwners().addPlayer(((org.bukkit.OfflinePlayer) com.laytonsmith.PureUtilities.Common.ReflectionUtils.get(com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op")).getUniqueId());
 			}
 
 			try {
@@ -1449,7 +1449,7 @@ public class SKWorldGuard {
             }
 
 			for (String owner : owners) {
-				regionExists.getOwners().removePlayer(owner);
+				regionExists.getOwners().removePlayer(((org.bukkit.OfflinePlayer) com.laytonsmith.PureUtilities.Common.ReflectionUtils.get(com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op")).getUniqueId());
 			}
 
 			try {
@@ -1620,7 +1620,7 @@ public class SKWorldGuard {
 			}
 
 			for (String member : members) {
-				regionExists.getMembers().addPlayer(member);
+				regionExists.getMembers().addPlayer(((org.bukkit.OfflinePlayer) com.laytonsmith.PureUtilities.Common.ReflectionUtils.get(com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op")).getUniqueId());
 			}
 
 			try {
@@ -1722,7 +1722,7 @@ public class SKWorldGuard {
             }
 
 			for (String member : members) {
-				regionExists.getMembers().removePlayer(member);
+				regionExists.getMembers().removePlayer(((org.bukkit.OfflinePlayer) com.laytonsmith.PureUtilities.Common.ReflectionUtils.get(com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op")).getUniqueId());
 			}
 
 			try {
