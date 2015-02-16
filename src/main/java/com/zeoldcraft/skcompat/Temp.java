@@ -81,7 +81,7 @@ public class Temp {
 			}
 		} catch (IllegalArgumentException iae) {
 			throw new ConfigRuntimeException("A UUID length string was given, but was not a valid UUID.",
-					ExceptionType.IllegalArgumentException, t);
+					ExceptionType.FormatException, t);
 		}
 	}
 	public static MCOfflinePlayer GetUser(Construct search, Target t) {

@@ -1,5 +1,6 @@
 package com.zeoldcraft.skcompat;
 
+import com.laytonsmith.PureUtilities.Common.ReflectionUtils;
 import com.laytonsmith.PureUtilities.Version;
 import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
@@ -8,6 +9,7 @@ import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.MVector3D;
 import com.laytonsmith.abstraction.bukkit.BukkitMCCommandSender;
 import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
+import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCPlayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCWorld;
 import com.laytonsmith.annotations.api;
@@ -64,6 +66,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
@@ -1347,7 +1350,8 @@ public class SKWorldGuard {
 			}
 
 			for (String owner : owners) {
-				regionExists.getOwners().addPlayer(((org.bukkit.OfflinePlayer) com.laytonsmith.PureUtilities.Common.ReflectionUtils.get(com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op")).getUniqueId());
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op");
+				regionExists.getOwners().addPlayer(o.getUniqueId());
 			}
 
 			try {
@@ -1449,7 +1453,8 @@ public class SKWorldGuard {
             }
 
 			for (String owner : owners) {
-				regionExists.getOwners().removePlayer(((org.bukkit.OfflinePlayer) com.laytonsmith.PureUtilities.Common.ReflectionUtils.get(com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op")).getUniqueId());
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op");
+				regionExists.getOwners().removePlayer(o.getUniqueId());
 			}
 
 			try {
@@ -1620,7 +1625,8 @@ public class SKWorldGuard {
 			}
 
 			for (String member : members) {
-				regionExists.getMembers().addPlayer(((org.bukkit.OfflinePlayer) com.laytonsmith.PureUtilities.Common.ReflectionUtils.get(com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op")).getUniqueId());
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op");
+				regionExists.getMembers().addPlayer(o.getUniqueId());
 			}
 
 			try {
@@ -1710,7 +1716,7 @@ public class SKWorldGuard {
             }
 
             if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
             }
 
             RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
@@ -1722,7 +1728,8 @@ public class SKWorldGuard {
             }
 
 			for (String member : members) {
-				regionExists.getMembers().removePlayer(((org.bukkit.OfflinePlayer) com.laytonsmith.PureUtilities.Common.ReflectionUtils.get(com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op")).getUniqueId());
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op");
+				regionExists.getMembers().removePlayer(o.getUniqueId());
 			}
 
 			try {
