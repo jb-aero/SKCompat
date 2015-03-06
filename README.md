@@ -5,65 +5,81 @@ An extension to [CommandHelper](https://github.com/sk89q/CommandHelper) providin
 
 Downloads can be found in [the Releases tab](https://github.com/jb-aero/SKCompat/releases).
 
-## Functions
-### SKWorldEdit
-Provides various methods for hooking into WorldEdit.
+## Documentation
+**CommandHelper's documentation generator does not work, and people keep asking why I removed functions just because they were not listed here. I did not remove any functions. So now you have to check yourself.**
 
-#### mixed sk\_pos1([player], locationArray | [player]):
-Sets the player's point 1, or returns it if the array to set isn't specified. If the location is returned, it is returned as a 4 index array:(x, y, z, world)
+Add the following to main.ms to give yourself a /docs command that tabcompletes with functionnames and classes. For example, "/docs SKWorldGuard" will return a list of all the WorldGuard functions, but you can see all functions containing "sk" by typing "/docs sk" and hitting tab. "/docs sk_region_addmember" will give you the documentation for the sk_region_addmember function.
 
-#### mixed sk\_pos2([player], array | [player]):
-Sets the player's point 2, or returns it if the array to set isn't specified
-
-#### void sk\_setblock([player], pattern):
-Sets a selection of blocks according to the provided pattern, a normal array of associative arrays. If the array is empty, the entire selection will be set to air. The inner arrays consist of a required 'name' field, an optional 'data' field, and an optional decimal 'weight' field. If data is not given it defaults to 0, and if weight is not given it defaults to 1. The weight represents that blocktype's chance of being selected for the next random block setting.
-
-#### void skcb\_load(filename, [player]):
-Loads a schematic into the clipboard from file. It will use the directory specified in WorldEdit's config. By default it will use the console's clipboard, but will use a player's if specified.
-
-#### void skcb\_paste(location, [array] | player, [array]):
-Pastes a schematic from the player's clipboard if a player is provided, or from the console's clipboard if a location is given, as if a player was standing there. An associative array of options can be provided, all of which default to false. If 'airless' is true, air blocks from the schematic will not replace blocks in the world. If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste. If 'origin' is true, the schematic will be pasted at the original location it was copied from. If 'select' is true, the pasted blocks will be automatically selected. Both ignoreAir and entities default to false.
-
-#### void skcb\_rotate([player,] int y-axis, [int x-axis, int z-axis]):
-Rotates the clipboard by the given (multiple of 90) degrees for each corresponding axis. To skip an axis, simply give it a value of 0. If a player is supplied, theirs will be rotated, otherwise the console will be used.
-
-### SKWorldGuard
-Provides various methods for hooking into WorldGuard
-
-#### array sk\_all\_regions([world]):
-Returns all the regions in all worlds, or just the one world, if specified.
-
-#### boolean sk\_can\_build([player,] locationArray):
-Returns whether or not player can build at the location, according to WorldGuard. If player is not given, the current player is used.
-
-#### mixed sk\_current\_regions([player]):
-Returns the list regions that player is in. If no player specified, then the current player is used. If region is found, an array of region names are returned, else an empty array is returned
-
-#### mixed sk\_region\_check\_flag(locationArray, flagName, [player]):
-Check state of selected flag in defined location. FlagName should be any supported flag from [this list](http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags). Player defaults to the current player.
-
-#### void sk\_region\_exists([world], name):
-Check if a given region exists.
-
-#### array sk\_region\_info(region, world, [value]):
-Given a region name, returns an array of information about that region.
-
-If value is set, it should be an integer of one of the following indexes, and only that information for that index will be returned. Otherwise if value is not specified (or is -1), it returns an array of information with the following pieces of information in the specified index:<ul> <li>0 - An array of points that define this region</li> <li>1 - An array of owners of this region</li> <li>2 - An array of members of this region</li> <li>3 - An array of arrays of this region's flags, where each array is: array(flag_name, value)</li> <li>4 - This region's priority</li> <li>5 - The volume of this region (in meters cubed)</li></ul>If the region cannot be found, a PluginInternalException is thrown.
-
-#### array sk\_region\_intersect(world, region1, [array(region2, [regionN...])]):
-Returns an array of regions names which intersect with defined region. You can pass an array of regions to verify or omit this parameter and all regions in selected world will be checked.
-
-#### array sk\_region\_members(region, world):
-Returns an array of members of this region. If the world or region cannot be found, a PluginInternalException is thrown.
-
-#### boolean sk\_region\_overlaps(world, region1, array(region2, [regionN...])):
-Returns true or false whether or not the specified regions overlap.
-
-#### array sk\_region\_owners(region, world):
-Returns an array of owners of this region. If the world or region cannot be found, a PluginInternalException is thrown.
-
-#### int sk\_region\_volume(region, world):
-Returns the volume of the given region in the given world.
-
-#### mixed sk\_regions\_at(Locationarray):
-Returns a list of regions at the specified location. If regions are found, an array of region names are returned, otherwise, an empty array is returned.
+The below can also be found on the [forums](http://forum.enginehub.org/threads/jb_aeros-scripts.9347/#post-19243).
+```
+# I do this as a cache because there are a lot of functions,
+# this way I only have to use get_functions() once
+@gfuncs = get_functions()
+export('gfuncs', @gfuncs)
+export('funclasses', array_keys(@gfuncs))
+@funcs = array()
+foreach(@gfuncs, @fc, @fa,
+    foreach(@fa, @f,
+        array_push(@funcs, @f)
+    )
+)
+export('funcs', @funcs)
+ 
+register_command('docs', array(
+    description: 'Shows the documentation for a given CommandHelper function',
+    permission: 'commandhelper.*',
+    noPermMsg: color(c).'This is not the command you are looking for',
+    usage: colorize('&aUsage&f: /docs [FunctionType|function_name]\n&aExample&f: /docs\n&aExample&f: /docs PlayerManagement\n&aExample&f: /docs ploc'),
+    aliases: array('doc', 'func', 'funcs'),
+    executor: closure(@al, @p, @args, @cmd,
+        @gfuncs = import('gfuncs')
+        @fcs = import('funclasses')
+        @funcs = import('funcs')
+        if(array_size(@args) == 0) {
+            tmsg(@p, colorize('&aFunctionTypes&f: &e'.array_implode(@fcs, '&f, &e')))
+            return(false)
+        } else if (array_size(@args) == 1) {
+            @choice = to_lower(@args[0])
+            foreach(@fcs, @fc,
+                if (@choice == to_lower(@fc)) {
+                    tmsg(@p, colorize('&6'.@fc.'&f: &b'.array_implode(@gfuncs[@fc], '&f, &b')))
+                    return(true)
+                }
+            )
+            if (array_contains(@funcs, @choice)) {
+                tmsg(@p, colorize('&2'.@choice.'&f:'))
+                tmsg(@p, colorize('&aReturn&f: '.reflect_docs(@choice, return)))
+                tmsg(@p, colorize('&aArgs&f: '.reflect_docs(@choice, args)))
+                tmsg(@p, colorize('&aDescription&f: '.reflect_docs(@choice, description)))
+            } else {
+                tmsg(@p, 'You entered \''.@choice.'\'')
+                tmsg(@p, 'Use \'/docs\' to get a list of valid function names')
+            }
+        } else {
+            return(false)
+        }
+    ),
+    tabcompleter: closure(@al, @p, @args, @cmd,
+        @funcs = import('funcs')
+        @gfuncs = import('gfuncs')
+        @fcs = import('funclasses')
+        if(array_size(@args) == 1) {
+            @c = to_lower(@args[0])
+            @returnable = array()
+            foreach(@fcs, @fc,
+                if(string_position(to_lower(@fc), @c) != -1) {
+                    array_push(@returnable, @fc)
+                }
+            )
+            foreach(@funcs, @f,
+                if(string_position(@f, @c) != -1) {
+                    array_push(@returnable, @f)
+                }
+            )
+            return(@returnable)
+        } else {
+            return(array())
+        }
+    )
+))
+```
