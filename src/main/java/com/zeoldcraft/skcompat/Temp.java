@@ -42,7 +42,7 @@ public class Temp {
 	public static MCOfflinePlayer getOfflinePlayer(String player) {
 		return ReflectionUtils.newInstance(
 				BukkitMCOfflinePlayer.class,
-				new Class[]{MCOfflinePlayer.class},
+				new Class[]{OfflinePlayer.class},
 				new Object[]{Bukkit.getServer().getOfflinePlayer(player)}
 		);
 	}
@@ -50,7 +50,7 @@ public class Temp {
 	public static MCOfflinePlayer getOfflinePlayer(UUID uuid) {
 		return ReflectionUtils.newInstance(
 				BukkitMCOfflinePlayer.class,
-				new Class[]{MCOfflinePlayer.class},
+				new Class[]{OfflinePlayer.class},
 				new Object[]{Bukkit.getServer().getOfflinePlayer(uuid)}
 		);
 	}
