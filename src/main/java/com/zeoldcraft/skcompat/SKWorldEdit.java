@@ -9,7 +9,6 @@ import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
 import com.laytonsmith.core.constructs.CArray;
 import com.laytonsmith.core.constructs.CNull;
-import com.laytonsmith.core.constructs.CString;
 import com.laytonsmith.core.constructs.CVoid;
 import com.laytonsmith.core.constructs.Construct;
 import com.laytonsmith.core.constructs.Target;
@@ -155,8 +154,8 @@ public class SKWorldEdit {
 
 		@Override
         public String docs() {
-            return "mixed {[player], locationArray | [player]} Sets the player's point 1, or returns it if the array to set isn't specified. If"
-                    + " the location is returned, it is returned as a 4 index array:(x, y, z, world)";
+            return "mixed {[player], array | [player]} Sets the player's point 1, or returns it if the array to set isn't specified." +
+    				"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
         }
 
 		@Override
@@ -164,7 +163,6 @@ public class SKWorldEdit {
             MCCommandSender m = null;
             MVector3D v = null;
             Static.checkPlugin("WorldEdit", t);
-			WorldEdit worldEdit = WorldEdit.getInstance();
 
             if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
                 m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
@@ -197,7 +195,17 @@ public class SKWorldEdit {
 							ExceptionType.PluginInternalException, t);
                 }
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
-				ret.push(new CString(user.getMCWorld().getName(), t));
+				
+				// Return null when the position is not set (Coordinates 0,0,0).
+				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f && Float.parseFloat(ret.get("y", t).getValue()) == 0f && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+					return CNull.NULL;
+				}
+				
+				// Set the x,y,z values to indices 0,1,2 (for backwards compatibility).
+				ret.set("0", ret.get("x", t), t);
+				ret.set("1", ret.get("y", t), t);
+				ret.set("2", ret.get("z", t), t);
+				
 				return ret;
             }
         }
@@ -218,7 +226,8 @@ public class SKWorldEdit {
 
 		@Override
         public String docs() {
-            return "mixed {[player], array | [player]} Sets the player's point 2, or returns it if the array to set isn't specified";
+			return "mixed {[player], array | [player]} Sets the player's point 2, or returns it if the array to set isn't specified." +
+    				"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
         }
 
 		@Override
@@ -263,9 +272,19 @@ public class SKWorldEdit {
                     throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
 							ExceptionType.PluginInternalException, t);
                 }
-				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
-				ret.push(new CString(user.getMCWorld().getName(), t));
-                return ret;
+                CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
+				
+				// Return null when the position is not set (Coordinates 0,0,0).
+				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f && Float.parseFloat(ret.get("y", t).getValue()) == 0f && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+					return CNull.NULL;
+				}
+				
+				// Set the x,y,z values to indices 0,1,2 (for backwards compatibility).
+				ret.set("0", ret.get("x", t), t);
+				ret.set("1", ret.get("y", t), t);
+				ret.set("2", ret.get("z", t), t);
+				
+				return ret;
             }
         }
     }
