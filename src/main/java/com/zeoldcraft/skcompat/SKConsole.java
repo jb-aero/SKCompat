@@ -5,7 +5,6 @@ import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.StaticLayer;
 import com.laytonsmith.core.Static;
-import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
@@ -48,7 +47,7 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public World getWorld() {
 		if (location != null) {
-			for ( World w : WorldEdit.getInstance().getServer().getWorlds() ) {
+			for (World w : WorldEdit.getInstance().getServer().getWorlds()) {
 				if (w.getName().equals(location.getWorld().getName())) {
 					return w;
 				}
