@@ -20,12 +20,15 @@ import com.laytonsmith.core.functions.Exceptions;
 import com.laytonsmith.core.functions.Exceptions.ExceptionType;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.EmptyClipboardException;
+import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.blocks.BlockType;
+import com.sk89q.worldedit.bukkit.CUIChannelListener;
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.command.ClipboardCommands;
 import com.sk89q.worldedit.command.RegionCommands;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
@@ -153,22 +156,21 @@ public class SKWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[player], array | [player]} Sets the player's point 1, or returns it if the array to set"
-				   + " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
-				   + " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+			return "mixed {[player], array | [player]} Sets the player's point 1, or returns it if the array to set isn't specified." +
+					"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
 		}
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCCommandSender m = null;
+			MCPlayer m = null;
 			MVector3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
-			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
+				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
 			}
-			if (args.length == 2) {
-				m = SKCompat.myGetPlayer(args[0], t);
+			if (args.length == 2) { // If sk_posX(player, locationArray).
+				m = Static.GetPlayer(args[0].val(), t);
 				v = ObjectGenerator.GetGenerator().vector(args[1], t);
 			} else if (args.length == 1) {
 				if (args[0] instanceof CArray) {
@@ -186,8 +188,18 @@ public class SKWorldEdit {
 						ExceptionType.PluginInternalException, t);
 			}
 			if (v != null) {
-				sel.selectPrimary(vtov(v), null);
+				
+				// Set the new point.
+				Vector vInt = new Vector((int) (v.x+0.5), (int) (v.y+0.5), (int) (v.z+0.5)); // Round to int (CUI would accept doubles and select half blocks).
+				sel.selectPrimary(vInt, null);
+				
+				// Update WorldEdit CUI.
+				String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
+				m.sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+				
+				// Return void as a new point has been selected.
 				return CVoid.VOID;
+				
 			} else {
 				Vector pt = ((CuboidRegion) sel.getIncompleteRegion()).getPos1();
 				if (pt == null) {
@@ -195,19 +207,20 @@ public class SKWorldEdit {
 							ExceptionType.PluginInternalException, t);
 				}
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
-
+				
 				// Return null when the position is not set (Coordinates 0,0,0).
-				if (Float.parseFloat(ret.get("x", t).getValue()) == 0f
-					&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
-					&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f
+                        && Float.parseFloat(ret.get("y", t).getValue()) == 0f
+                        && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
 					return CNull.NULL;
 				}
-
+				
 				// Set the x,y,z values to indices 0,1,2 (for backwards compatibility).
 				ret.set("0", ret.get("x", t), t);
 				ret.set("1", ret.get("y", t), t);
 				ret.set("2", ret.get("z", t), t);
-
+				
+				// Return the point coordinates.
 				return ret;
 			}
 		}
@@ -228,9 +241,8 @@ public class SKWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[player], array | [player]} Sets the player's point 2, or returns it if the array to set"
-				   + " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
-				   + " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+			return "mixed {[player], array | [player]} Sets the player's point 2, or returns it if the array to set isn't specified." +
+					"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
 		}
 
 		@Override
@@ -240,7 +252,7 @@ public class SKWorldEdit {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCCommandSender m = null;
+			MCPlayer m = null;
 			MVector3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
@@ -248,7 +260,7 @@ public class SKWorldEdit {
 				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
 			}
 			if (args.length == 2) {
-				m = SKCompat.myGetPlayer(args[0], t);
+				m = Static.GetPlayer(args[0].val(), t);
 				v = ObjectGenerator.GetGenerator().vector(args[1], t);
 			} else if (args.length == 1) {
 				if (args[0] instanceof CArray) {
@@ -267,8 +279,18 @@ public class SKWorldEdit {
 			}
 
 			if (v != null) {
-				sel.selectSecondary(new Vector(v.x, v.y, v.z), null);
+				
+				// Set the new point.
+				Vector vInt = new Vector((int) (v.x+0.5), (int) (v.y+0.5), (int) (v.z+0.5)); // Round to int (CUI would accept doubles and select half blocks).
+				sel.selectPrimary(vInt, null);
+				
+				// Update WorldEdit CUI.
+				String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
+				m.sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+				
+				// Return void as a new point has been selected.
 				return CVoid.VOID;
+				
 			} else {
 				Vector pt = ((CuboidRegion) sel.getIncompleteRegion()).getPos2();
 				if (pt == null) {
@@ -276,55 +298,55 @@ public class SKWorldEdit {
 							ExceptionType.PluginInternalException, t);
 				}
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
-
+				
 				// Return null when the position is not set (Coordinates 0,0,0).
-				if (Float.parseFloat(ret.get("x", t).getValue()) == 0f
-					&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
-					&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f
+                        && Float.parseFloat(ret.get("y", t).getValue()) == 0f
+                        && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
 					return CNull.NULL;
 				}
-
+				
 				// Set the x,y,z values to indices 0,1,2 (for backwards compatibility).
 				ret.set("0", ret.get("x", t), t);
 				ret.set("1", ret.get("y", t), t);
 				ret.set("2", ret.get("z", t), t);
-
+				
 				return ret;
 			}
 		}
 	}
 
-//    public static class sk_points extends SKFunction {
+//	public static class sk_points extends SKFunction {
 //
-//        public String getName() {
-//            return "sk_points";
-//        }
+//		public String getName() {
+//			return "sk_points";
+//		}
 //
-//        public Integer[] numArgs() {
-//            return new Integer[]{0, 1, 2};
-//        }
+//		public Integer[] numArgs() {
+//			return new Integer[]{0, 1, 2};
+//		}
 //
-//        public String docs() {
-//            return "mixed {[player], arrayOfArrays | [player]} Sets a series of points, or returns the poly selection for this player, if one is specified."
-//                    + " The array should be an array of arrays, and the arrays should be array(x, y, z)";
-//        }
+//		public String docs() {
+//			return "mixed {[player], arrayOfArrays | [player]} Sets a series of points, or returns the poly selection for this player, if one is specified."
+//					+ " The array should be an array of arrays, and the arrays should be array(x, y, z)";
+//		}
 //
-//        public ExceptionType[] thrown() {
-//            return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
-//        }
+//		public ExceptionType[] thrown() {
+//			return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
+//		}
 //
-//        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-//            Static.checkPlugin("WorldEdit", t);
-//            return CVoid.VOID;
-//        }
-//    }
+//		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+//			Static.checkPlugin("WorldEdit", t);
+//			return CVoid.VOID;
+//		}
+//	}
 
 	@api(environments = CommandHelperEnvironment.class)
 	public static class sk_setblock extends SKFunction {
 
 		@Override
 		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ExceptionType.InvalidPluginException, ExceptionType.PluginInternalException,
+			return new ExceptionType[]{ ExceptionType.InvalidPluginException, ExceptionType.PluginInternalException,
 					ExceptionType.PlayerOfflineException, ExceptionType.FormatException, ExceptionType.CastException};
 		}
 
@@ -355,7 +377,6 @@ public class SKWorldEdit {
 				if (pata.size() == 0) {
 					pattern = new BlockPattern(new BaseBlock(0));
 				} else if (pata.size() == 1) {
-					CArray singleBlock = Static.getArray(pata.get(0, t), t);
 					pattern = generateBlockPattern(pata.get(0, t), t);
 				} else {
 					pattern = new RandomPattern();
@@ -399,11 +420,11 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "void {[player], pattern} Sets a selection of blocks according to the provided pattern,"
-				   + " a normal array of associative arrays. If the array is empty, the entire selection will be"
-				   + " set to air. The inner arrays consist of a required 'name' field, an optional 'data' field,"
-				   + " and an optional decimal 'weight' field. If data is not given it defaults to 0,"
-				   + " and if weight is not given it defaults to 1. The weight represents that blocktype's chance"
-				   + " of being selected for the next random block setting.";
+					+ " a normal array of associative arrays. If the array is empty, the entire selection will be"
+					+ " set to air. The inner arrays consist of a required 'name' field, an optional 'data' field,"
+					+ " and an optional decimal 'weight' field. If data is not given it defaults to 0,"
+					+ " and if weight is not given it defaults to 1. The weight represents that blocktype's chance"
+					+ " of being selected for the next random block setting.";
 		}
 	}
 
@@ -486,8 +507,8 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "void {filename, [player]} Loads a schematic into the clipboard from file."
-				   + " It will use the directory specified in WorldEdit's config."
-				   + " By default it will use the console's clipboard, but will use a player's if specified.";
+					+ " It will use the directory specified in WorldEdit's config."
+					+ " By default it will use the console's clipboard, but will use a player's if specified.";
 		}
 	}
 
@@ -550,9 +571,9 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "void {[player,] int y-axis, [int x-axis, int z-axis]}"
-				   + " Rotates the clipboard by the given (multiple of 90) degrees for each corresponding axis."
-				   + " To skip an axis, simply give it a value of 0. If a player is supplied, theirs will be rotated,"
-				   + " otherwise the console will be used.";
+					+ " Rotates the clipboard by the given (multiple of 90) degrees for each corresponding axis."
+					+ " To skip an axis, simply give it a value of 0. If a player is supplied, theirs will be rotated,"
+					+ " otherwise the console will be used.";
 		}
 	}
 
@@ -627,14 +648,14 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "void {location, [array] | player, [array]}"
-				   + " Pastes a schematic from the player's clipboard if a player is provided,"
-				   + " or from the console's clipboard if a location is given, as if a player was standing there."
-				   + " An associative array of options can be provided, all of which default to false."
-				   + " If 'airless' is true, air blocks from the schematic will not replace blocks in the world."
-				   + " If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste."
-				   + " If 'origin' is true, the schematic will be pasted at the original location it was copied from."
-				   + " If 'select' is true, the pasted blocks will be automatically selected."
-				   + " Both ignoreAir and entities default to false.";
+					+ " Pastes a schematic from the player's clipboard if a player is provided,"
+					+ " or from the console's clipboard if a location is given, as if a player was standing there."
+					+ " An associative array of options can be provided, all of which default to false."
+					+ " If 'airless' is true, air blocks from the schematic will not replace blocks in the world."
+					+ " If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste."
+					+ " If 'origin' is true, the schematic will be pasted at the original location it was copied from."
+					+ " If 'select' is true, the pasted blocks will be automatically selected."
+					+ " Both ignoreAir and entities default to false.";
 		}
 	}
 }
