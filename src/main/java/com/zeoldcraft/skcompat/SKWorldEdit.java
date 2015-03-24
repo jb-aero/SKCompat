@@ -61,9 +61,9 @@ import org.bukkit.entity.Player;
  */
 public class SKWorldEdit {
 
-	public static String docs() {
-		return "Provides various methods for hooking into WorldEdit.";
-	}
+    public static String docs() {
+        return "Provides various methods for hooking into WorldEdit.";
+    }
 
 	// reserved LocalPlayer for the Console
 	private static SKConsole console;
@@ -139,60 +139,60 @@ public class SKWorldEdit {
 		}
 	}
 
-	@api(environments=CommandHelperEnvironment.class)
-	public static class sk_pos1 extends SKFunction {
+    @api(environments=CommandHelperEnvironment.class)
+    public static class sk_pos1 extends SKFunction {
 
 		@Override
-		public String getName() {
-			return "sk_pos1";
-		}
+        public String getName() {
+            return "sk_pos1";
+        }
 
 		@Override
-		public Integer[] numArgs() {
-			return new Integer[]{0, 1, 2};
-		}
+        public Integer[] numArgs() {
+            return new Integer[]{0, 1, 2};
+        }
 
 		@Override
-		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
-		}
+        public ExceptionType[] thrown() {
+            return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
+        }
 
 		@Override
-		public String docs() {
-			return "mixed {[player], array | [player]} Sets the player's point 1, or returns it if the array to set isn't specified." +
-					"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
-		}
+        public String docs() {
+            return "mixed {[player], array | [player]} Sets the player's point 1, or returns it if the array to set isn't specified." +
+    				"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+        }
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCCommandSender m = null;
-			MVector3D v = null;
-			Static.checkPlugin("WorldEdit", t);
+        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+            MCCommandSender m = null;
+            MVector3D v = null;
+            Static.checkPlugin("WorldEdit", t);
 
-			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
-				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
-			}
-			if (args.length == 2) { // If sk_posX(player, locationArray).
+            if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
+                m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
+            }
+            if (args.length == 2) { // If sk_posX(player, locationArray).
 				m = SKCompat.myGetPlayer(args[0], t);
-				v = ObjectGenerator.GetGenerator().vector(args[1], t);
-			} else if (args.length == 1) {
-				if (args[0] instanceof CArray) {
-					v = ObjectGenerator.GetGenerator().vector(args[0], t);
-				} else {
-					m = Static.GetPlayer(args[0].val(), t);
-				}
-			}
+                v = ObjectGenerator.GetGenerator().vector(args[1], t);
+            } else if (args.length == 1) {
+                if (args[0] instanceof CArray) {
+                    v = ObjectGenerator.GetGenerator().vector(args[0], t);
+                } else {
+                    m = Static.GetPlayer(args[0].val(), t);
+                }
+            }
 
-			SKCommandSender user = getSKPlayer(m, t);
+            SKCommandSender user = getSKPlayer(m, t);
 
-			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
-			if (!( sel instanceof CuboidRegionSelector )) {
-				throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
+            RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
+            if (!( sel instanceof CuboidRegionSelector )) {
+                throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
 						ExceptionType.PluginInternalException, t);
-			}
-			if (v != null) {
-				
-				// Set the new point.
+            }
+            if (v != null) {
+            	
+            	// Set the new point.
 				sel.selectPrimary(new Vector(v.x, v.y, v.z), null);
 				
 				// Get instances to update WorldEdit CUI.
@@ -209,12 +209,12 @@ public class SKWorldEdit {
 				// Return void as a new point has been selected.
 				return CVoid.VOID;
 				
-			} else {
-				Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos1();
-				if (pt == null) {
-					throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
+            } else {
+                Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos1();
+                if (pt == null) {
+                    throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
 							ExceptionType.PluginInternalException, t);
-				}
+                }
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
 				
 				// Return null when the position is not set (Coordinates 0,0,0).
@@ -229,68 +229,68 @@ public class SKWorldEdit {
 				
 				// Return the point coordinates.
 				return ret;
-			}
-		}
-	}
+            }
+        }
+    }
 
-	@api(environments=CommandHelperEnvironment.class)
-	public static class sk_pos2 extends SKFunction {
-
-		@Override
-		public String getName() {
-			return "sk_pos2";
-		}
+    @api(environments=CommandHelperEnvironment.class)
+    public static class sk_pos2 extends SKFunction {
 
 		@Override
-		public Integer[] numArgs() {
-			return new Integer[]{0, 1, 2};
-		}
+        public String getName() {
+            return "sk_pos2";
+        }
 
 		@Override
-		public String docs() {
+        public Integer[] numArgs() {
+            return new Integer[]{0, 1, 2};
+        }
+
+		@Override
+        public String docs() {
 			return "mixed {[player], array | [player]} Sets the player's point 2, or returns it if the array to set isn't specified." +
-					"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
-		}
+    				"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+        }
 
 		@Override
-		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
-		}
+        public ExceptionType[] thrown() {
+            return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
+        }
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCCommandSender m = null;
-			MVector3D v = null;
-			Static.checkPlugin("WorldEdit", t);
+        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+            MCCommandSender m = null;
+            MVector3D v = null;
+            Static.checkPlugin("WorldEdit", t);
 
-			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-			}
-			if (args.length == 2) {
+            if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+                m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+            }
+            if (args.length == 2) {
 				m = SKCompat.myGetPlayer(args[0], t);
 				v = ObjectGenerator.GetGenerator().vector(args[1], t);
-			} else if (args.length == 1) {
-				if (args[0] instanceof CArray) {
-					v = ObjectGenerator.GetGenerator().vector(args[0], t);
-				} else {
-					m = Static.GetPlayer(args[0].val(), t);
-				}
-			}
+            } else if (args.length == 1) {
+                if (args[0] instanceof CArray) {
+                    v = ObjectGenerator.GetGenerator().vector(args[0], t);
+                } else {
+                    m = Static.GetPlayer(args[0].val(), t);
+                }
+            }
 
-			SKCommandSender user = getSKPlayer(m, t);
+            SKCommandSender user = getSKPlayer(m, t);
 
-			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
-			if (!( sel instanceof CuboidRegionSelector )) {
-				throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
+            RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
+            if (!( sel instanceof CuboidRegionSelector )) {
+                throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
 						ExceptionType.PluginInternalException, t);
-			}
+            }
 
-			if (v != null) {
-				
-				// Set the new point.
-				sel.selectSecondary(new Vector(v.x, v.y, v.z), null);
-				
-				// Get instances to update WorldEdit CUI.
+            if (v != null) {
+            	
+            	// Set the new point.
+                sel.selectSecondary(new Vector(v.x, v.y, v.z), null);
+                
+                // Get instances to update WorldEdit CUI.
 				WorldEditPlugin worldEditPlugin = (WorldEditPlugin) Static.getServer().getPluginManager().getPlugin("WorldEdit").getHandle();
 				
 				Player player = (Player) m.getHandle(); // The bukkit player, required for player.sendPluginMessage().
@@ -304,13 +304,13 @@ public class SKWorldEdit {
 				// Return void as a new point has been selected.
 				return CVoid.VOID;
 				
-			} else {
-				Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos2();
-				if (pt == null) {
-					throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
+            } else {
+                Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos2();
+                if (pt == null) {
+                    throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
 							ExceptionType.PluginInternalException, t);
-				}
-				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
+                }
+                CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
 				
 				// Return null when the position is not set (Coordinates 0,0,0).
 				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f && Float.parseFloat(ret.get("y", t).getValue()) == 0f && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
@@ -323,34 +323,34 @@ public class SKWorldEdit {
 				ret.set("2", ret.get("z", t), t);
 				
 				return ret;
-			}
-		}
-	}
+            }
+        }
+    }
 
-//	public static class sk_points extends SKFunction {
+//    public static class sk_points extends SKFunction {
 //
-//		public String getName() {
-//			return "sk_points";
-//		}
+//        public String getName() {
+//            return "sk_points";
+//        }
 //
-//		public Integer[] numArgs() {
-//			return new Integer[]{0, 1, 2};
-//		}
+//        public Integer[] numArgs() {
+//            return new Integer[]{0, 1, 2};
+//        }
 //
-//		public String docs() {
-//			return "mixed {[player], arrayOfArrays | [player]} Sets a series of points, or returns the poly selection for this player, if one is specified."
-//					+ " The array should be an array of arrays, and the arrays should be array(x, y, z)";
-//		}
+//        public String docs() {
+//            return "mixed {[player], arrayOfArrays | [player]} Sets a series of points, or returns the poly selection for this player, if one is specified."
+//                    + " The array should be an array of arrays, and the arrays should be array(x, y, z)";
+//        }
 //
-//		public ExceptionType[] thrown() {
-//			return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
-//		}
+//        public ExceptionType[] thrown() {
+//            return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
+//        }
 //
-//		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-//			Static.checkPlugin("WorldEdit", t);
-//			return CVoid.VOID;
-//		}
-//	}
+//        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+//            Static.checkPlugin("WorldEdit", t);
+//            return CVoid.VOID;
+//        }
+//    }
 
 	@api(environments=CommandHelperEnvironment.class)
 	public static class sk_setblock extends SKFunction {
