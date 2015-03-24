@@ -190,7 +190,7 @@ public class SKWorldEdit {
 			if (v != null) {
 				
 				// Set the new point.
-				Vector vInt = new Vector((int) (v.x+0.5), (int) (v.y+0.5), (int) (v.z+0.5)); // Round to int (CUI would accept doubles and select half blocks).
+				Vector vInt = new Vector((int) v.x, (int) v.y, (int) v.z); // Floor to int (CUI would accept doubles and select half blocks).
 				sel.selectPrimary(vInt, null);
 				
 				// Update WorldEdit CUI.
@@ -281,7 +281,7 @@ public class SKWorldEdit {
 			if (v != null) {
 				
 				// Set the new point.
-				Vector vInt = new Vector((int) (v.x+0.5), (int) (v.y+0.5), (int) (v.z+0.5)); // Round to int (CUI would accept doubles and select half blocks).
+				Vector vInt = new Vector((int) v.x, (int) v.y, (int) v.z); // Floor to int (CUI would accept doubles and select half blocks).
 				sel.selectPrimary(vInt, null);
 				
 				// Update WorldEdit CUI.
