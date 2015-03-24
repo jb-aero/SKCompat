@@ -20,12 +20,15 @@ import com.laytonsmith.core.functions.Exceptions;
 import com.laytonsmith.core.functions.Exceptions.ExceptionType;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.EmptyClipboardException;
+import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.blocks.BlockType;
+import com.sk89q.worldedit.bukkit.BukkitPlayer;
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.command.ClipboardCommands;
 import com.sk89q.worldedit.command.RegionCommands;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
@@ -49,6 +52,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.bukkit.entity.Player;
 
 /**
  *
@@ -164,10 +169,10 @@ public class SKWorldEdit {
             MVector3D v = null;
             Static.checkPlugin("WorldEdit", t);
 
-            if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+            if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
+                m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
             }
-            if (args.length == 2) {
+            if (args.length == 2) { // If sk_posX(player, locationArray).
 				m = SKCompat.myGetPlayer(args[0], t);
                 v = ObjectGenerator.GetGenerator().vector(args[1], t);
             } else if (args.length == 1) {
@@ -186,8 +191,24 @@ public class SKWorldEdit {
 						ExceptionType.PluginInternalException, t);
             }
             if (v != null) {
-				sel.selectPrimary(vtov(v), null);
-                return CVoid.VOID;
+            	
+            	// Set the new point.
+				sel.selectPrimary(new Vector(v.x, v.y, v.z), null);
+				
+				// Get instances to update WorldEdit CUI.
+				WorldEditPlugin worldEditPlugin = (WorldEditPlugin) Static.getServer().getPluginManager().getPlugin("WorldEdit").getHandle();
+				
+				Player player = (Player) m.getHandle(); // The bukkit player, required for player.sendPluginMessage().
+				BukkitPlayer bukkitPlayer = new BukkitPlayer(worldEditPlugin, worldEditPlugin.getServerInterface(), player); // Has an implementation for dispatchCUIEvent(CUIEvent event).
+				LocalSession localSession = user.getLocalSession();
+				
+				// Update WorldEdit CUI.
+				localSession.setCUISupport(true);
+				localSession.dispatchCUISetup(bukkitPlayer);
+				
+				// Return void as a new point has been selected.
+				return CVoid.VOID;
+				
             } else {
                 Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos1();
                 if (pt == null) {
@@ -206,6 +227,7 @@ public class SKWorldEdit {
 				ret.set("1", ret.get("y", t), t);
 				ret.set("2", ret.get("z", t), t);
 				
+				// Return the point coordinates.
 				return ret;
             }
         }
@@ -264,8 +286,24 @@ public class SKWorldEdit {
             }
 
             if (v != null) {
+            	
+            	// Set the new point.
                 sel.selectSecondary(new Vector(v.x, v.y, v.z), null);
-                return CVoid.VOID;
+                
+                // Get instances to update WorldEdit CUI.
+				WorldEditPlugin worldEditPlugin = (WorldEditPlugin) Static.getServer().getPluginManager().getPlugin("WorldEdit").getHandle();
+				
+				Player player = (Player) m.getHandle(); // The bukkit player, required for player.sendPluginMessage().
+				BukkitPlayer bukkitPlayer = new BukkitPlayer(worldEditPlugin, worldEditPlugin.getServerInterface(), player); // Has an implementation for dispatchCUIEvent(CUIEvent event).
+				LocalSession localSession = user.getLocalSession();
+				
+				// Update WorldEdit CUI.
+				localSession.setCUISupport(true);
+				localSession.dispatchCUISetup(bukkitPlayer);
+				
+				// Return void as a new point has been selected.
+				return CVoid.VOID;
+				
             } else {
                 Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos2();
                 if (pt == null) {
@@ -350,7 +388,7 @@ public class SKWorldEdit {
 				if (pata.size() == 0) {
 					pattern = new BlockPattern(new BaseBlock(0));
 				} else if (pata.size() == 1) {
-					CArray singleBlock = Static.getArray(pata.get(0, t), t);
+//					CArray singleBlock = Static.getArray(pata.get(0, t), t);
 					pattern = generateBlockPattern(pata.get(0, t), t);
 				} else {
 					pattern = new RandomPattern();
