@@ -27,7 +27,7 @@ import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.blocks.BlockType;
-import com.sk89q.worldedit.bukkit.BukkitPlayer;
+import com.sk89q.worldedit.bukkit.CUIChannelListener;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.command.ClipboardCommands;
 import com.sk89q.worldedit.command.RegionCommands;
@@ -53,10 +53,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.bukkit.entity.Player;
-
 /**
- *
  * @author jb_aero
  */
 public class SKWorldEdit {
@@ -139,7 +136,7 @@ public class SKWorldEdit {
 		}
 	}
 
-	@api(environments=CommandHelperEnvironment.class)
+	@api(environments = CommandHelperEnvironment.class)
 	public static class sk_pos1 extends SKFunction {
 
 		@Override
@@ -165,7 +162,7 @@ public class SKWorldEdit {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCCommandSender m = null;
+			MCPlayer m = null;
 			MVector3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
@@ -173,7 +170,7 @@ public class SKWorldEdit {
 				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
 			}
 			if (args.length == 2) { // If sk_posX(player, locationArray).
-				m = SKCompat.myGetPlayer(args[0], t);
+				m = Static.GetPlayer(args[0].val(), t);
 				v = ObjectGenerator.GetGenerator().vector(args[1], t);
 			} else if (args.length == 1) {
 				if (args[0] instanceof CArray) {
@@ -186,31 +183,25 @@ public class SKWorldEdit {
 			SKCommandSender user = getSKPlayer(m, t);
 
 			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
-			if (!( sel instanceof CuboidRegionSelector )) {
+			if (!(sel instanceof CuboidRegionSelector)) {
 				throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
 						ExceptionType.PluginInternalException, t);
 			}
 			if (v != null) {
 				
 				// Set the new point.
-				sel.selectPrimary(new Vector(v.x, v.y, v.z), null);
-				
-				// Get instances to update WorldEdit CUI.
-				WorldEditPlugin worldEditPlugin = (WorldEditPlugin) Static.getServer().getPluginManager().getPlugin("WorldEdit").getHandle();
-				
-				Player player = (Player) m.getHandle(); // The bukkit player, required for player.sendPluginMessage().
-				BukkitPlayer bukkitPlayer = new BukkitPlayer(worldEditPlugin, worldEditPlugin.getServerInterface(), player); // Has an implementation for dispatchCUIEvent(CUIEvent event).
-				LocalSession localSession = user.getLocalSession();
+				Vector vInt = new Vector((int) (v.x+0.5), (int) (v.y+0.5), (int) (v.z+0.5)); // Round to int (CUI would accept doubles and select half blocks).
+				sel.selectPrimary(vInt, null);
 				
 				// Update WorldEdit CUI.
-				localSession.setCUISupport(true);
-				localSession.dispatchCUISetup(bukkitPlayer);
+				String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
+				m.sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
 				
 				// Return void as a new point has been selected.
 				return CVoid.VOID;
 				
 			} else {
-				Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos1();
+				Vector pt = ((CuboidRegion) sel.getIncompleteRegion()).getPos1();
 				if (pt == null) {
 					throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
 							ExceptionType.PluginInternalException, t);
@@ -218,7 +209,9 @@ public class SKWorldEdit {
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
 				
 				// Return null when the position is not set (Coordinates 0,0,0).
-				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f && Float.parseFloat(ret.get("y", t).getValue()) == 0f && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f
+                        && Float.parseFloat(ret.get("y", t).getValue()) == 0f
+                        && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
 					return CNull.NULL;
 				}
 				
@@ -233,7 +226,7 @@ public class SKWorldEdit {
 		}
 	}
 
-	@api(environments=CommandHelperEnvironment.class)
+	@api(environments = CommandHelperEnvironment.class)
 	public static class sk_pos2 extends SKFunction {
 
 		@Override
@@ -259,7 +252,7 @@ public class SKWorldEdit {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCCommandSender m = null;
+			MCPlayer m = null;
 			MVector3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
@@ -267,7 +260,7 @@ public class SKWorldEdit {
 				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
 			}
 			if (args.length == 2) {
-				m = SKCompat.myGetPlayer(args[0], t);
+				m = Static.GetPlayer(args[0].val(), t);
 				v = ObjectGenerator.GetGenerator().vector(args[1], t);
 			} else if (args.length == 1) {
 				if (args[0] instanceof CArray) {
@@ -280,7 +273,7 @@ public class SKWorldEdit {
 			SKCommandSender user = getSKPlayer(m, t);
 
 			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
-			if (!( sel instanceof CuboidRegionSelector )) {
+			if (!(sel instanceof CuboidRegionSelector)) {
 				throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
 						ExceptionType.PluginInternalException, t);
 			}
@@ -288,24 +281,18 @@ public class SKWorldEdit {
 			if (v != null) {
 				
 				// Set the new point.
-				sel.selectSecondary(new Vector(v.x, v.y, v.z), null);
-				
-				// Get instances to update WorldEdit CUI.
-				WorldEditPlugin worldEditPlugin = (WorldEditPlugin) Static.getServer().getPluginManager().getPlugin("WorldEdit").getHandle();
-				
-				Player player = (Player) m.getHandle(); // The bukkit player, required for player.sendPluginMessage().
-				BukkitPlayer bukkitPlayer = new BukkitPlayer(worldEditPlugin, worldEditPlugin.getServerInterface(), player); // Has an implementation for dispatchCUIEvent(CUIEvent event).
-				LocalSession localSession = user.getLocalSession();
+				Vector vInt = new Vector((int) (v.x+0.5), (int) (v.y+0.5), (int) (v.z+0.5)); // Round to int (CUI would accept doubles and select half blocks).
+				sel.selectPrimary(vInt, null);
 				
 				// Update WorldEdit CUI.
-				localSession.setCUISupport(true);
-				localSession.dispatchCUISetup(bukkitPlayer);
+				String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
+				m.sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
 				
 				// Return void as a new point has been selected.
 				return CVoid.VOID;
 				
 			} else {
-				Vector pt = ( (CuboidRegion) sel.getIncompleteRegion() ).getPos2();
+				Vector pt = ((CuboidRegion) sel.getIncompleteRegion()).getPos2();
 				if (pt == null) {
 					throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
 							ExceptionType.PluginInternalException, t);
@@ -313,7 +300,9 @@ public class SKWorldEdit {
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
 				
 				// Return null when the position is not set (Coordinates 0,0,0).
-				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f && Float.parseFloat(ret.get("y", t).getValue()) == 0f && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f
+                        && Float.parseFloat(ret.get("y", t).getValue()) == 0f
+                        && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
 					return CNull.NULL;
 				}
 				
@@ -352,13 +341,13 @@ public class SKWorldEdit {
 //		}
 //	}
 
-	@api(environments=CommandHelperEnvironment.class)
+	@api(environments = CommandHelperEnvironment.class)
 	public static class sk_setblock extends SKFunction {
 
 		@Override
 		public ExceptionType[] thrown() {
 			return new ExceptionType[]{ ExceptionType.InvalidPluginException, ExceptionType.PluginInternalException,
-					ExceptionType.PlayerOfflineException, ExceptionType.FormatException, ExceptionType.CastException };
+					ExceptionType.PlayerOfflineException, ExceptionType.FormatException, ExceptionType.CastException};
 		}
 
 		@Override
@@ -388,7 +377,6 @@ public class SKWorldEdit {
 				if (pata.size() == 0) {
 					pattern = new BlockPattern(new BaseBlock(0));
 				} else if (pata.size() == 1) {
-//					CArray singleBlock = Static.getArray(pata.get(0, t), t);
 					pattern = generateBlockPattern(pata.get(0, t), t);
 				} else {
 					pattern = new RandomPattern();
@@ -439,14 +427,15 @@ public class SKWorldEdit {
 					+ " of being selected for the next random block setting.";
 		}
 	}
-//https://github.com/sk89q/WorldEdit/blob/7192780251dc71f5c70f2460d74eaee6a992333f/worldedit-core/src/main/java/com/sk89q/worldedit/command/SchematicCommands.java#L79-L131
+
+	//https://github.com/sk89q/WorldEdit/blob/7192780251dc71f5c70f2460d74eaee6a992333f/worldedit-core/src/main/java/com/sk89q/worldedit/command/SchematicCommands.java#L79-L131
 	@api
 	public static class skcb_load extends SKFunction {
 
 		@Override
 		public ExceptionType[] thrown() {
-			return new ExceptionType[] { ExceptionType.PluginInternalException, ExceptionType.PlayerOfflineException,
-				ExceptionType.IOException, ExceptionType.InvalidPluginException
+			return new ExceptionType[]{ExceptionType.PluginInternalException, ExceptionType.PlayerOfflineException,
+					ExceptionType.IOException, ExceptionType.InvalidPluginException
 			};
 		}
 
@@ -593,9 +582,9 @@ public class SKWorldEdit {
 
 		@Override
 		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ ExceptionType.InvalidWorldException, ExceptionType.FormatException,
-				ExceptionType.NotFoundException, ExceptionType.RangeException,
-				ExceptionType.CastException, ExceptionType.InvalidPluginException
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.FormatException,
+					ExceptionType.NotFoundException, ExceptionType.RangeException,
+					ExceptionType.CastException, ExceptionType.InvalidPluginException
 			};
 		}
 
