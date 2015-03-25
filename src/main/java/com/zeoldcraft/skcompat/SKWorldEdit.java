@@ -20,7 +20,6 @@ import com.laytonsmith.core.functions.Exceptions;
 import com.laytonsmith.core.functions.Exceptions.ExceptionType;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.EmptyClipboardException;
-import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
@@ -162,7 +161,7 @@ public class SKWorldEdit {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCPlayer m = null;
+			MCCommandSender m = null;
 			MVector3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
@@ -170,7 +169,7 @@ public class SKWorldEdit {
 				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
 			}
 			if (args.length == 2) { // If sk_posX(player, locationArray).
-				m = Static.GetPlayer(args[0].val(), t);
+				m = SKCompat.myGetPlayer(args[0], t);
 				v = ObjectGenerator.GetGenerator().vector(args[1], t);
 			} else if (args.length == 1) {
 				if (args[0] instanceof CArray) {
@@ -194,8 +193,10 @@ public class SKWorldEdit {
 				sel.selectPrimary(vInt, null);
 				
 				// Update WorldEdit CUI.
-				String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
-				m.sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+				if(m instanceof MCPlayer) {
+					String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
+					((MCPlayer) m).sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+				}
 				
 				// Return void as a new point has been selected.
 				return CVoid.VOID;
@@ -252,15 +253,15 @@ public class SKWorldEdit {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCPlayer m = null;
+			MCCommandSender m = null;
 			MVector3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
-			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
+				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
 			}
-			if (args.length == 2) {
-				m = Static.GetPlayer(args[0].val(), t);
+			if (args.length == 2) { // If sk_posX(player, locationArray).
+				m = SKCompat.myGetPlayer(args[0], t);
 				v = ObjectGenerator.GetGenerator().vector(args[1], t);
 			} else if (args.length == 1) {
 				if (args[0] instanceof CArray) {
@@ -282,11 +283,13 @@ public class SKWorldEdit {
 				
 				// Set the new point.
 				Vector vInt = new Vector((int) v.x, (int) v.y, (int) v.z); // Floor to int (CUI would accept doubles and select half blocks).
-				sel.selectPrimary(vInt, null);
+				sel.selectSecondary(vInt, null);
 				
 				// Update WorldEdit CUI.
-				String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
-				m.sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+				if(m instanceof MCPlayer) {
+					String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
+					((MCPlayer) m).sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+				}
 				
 				// Return void as a new point has been selected.
 				return CVoid.VOID;
