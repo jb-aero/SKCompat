@@ -26,8 +26,6 @@ import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.blocks.BlockType;
-import com.sk89q.worldedit.bukkit.CUIChannelListener;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.command.ClipboardCommands;
 import com.sk89q.worldedit.command.RegionCommands;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
@@ -49,6 +47,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -195,7 +194,7 @@ public class SKWorldEdit {
 				// Update WorldEdit CUI.
 				if(m instanceof MCPlayer) {
 					String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
-					((MCPlayer) m).sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+					((MCPlayer) m).sendPluginMessage("WECUI", CUImessage.getBytes(Charset.forName("UTF-8")));
 				}
 				
 				// Return void as a new point has been selected.
@@ -287,8 +286,8 @@ public class SKWorldEdit {
 				
 				// Update WorldEdit CUI.
 				if(m instanceof MCPlayer) {
-					String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
-					((MCPlayer) m).sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+					String CUImessage = "p|1|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
+					((MCPlayer) m).sendPluginMessage("WECUI", CUImessage.getBytes(Charset.forName("UTF-8")));
 				}
 				
 				// Return void as a new point has been selected.
