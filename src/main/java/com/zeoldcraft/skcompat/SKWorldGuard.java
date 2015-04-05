@@ -10,8 +10,8 @@ import com.laytonsmith.abstraction.MVector3D;
 import com.laytonsmith.abstraction.bukkit.BukkitMCCommandSender;
 import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
-import com.laytonsmith.abstraction.bukkit.BukkitMCPlayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCWorld;
+import com.laytonsmith.abstraction.bukkit.entities.BukkitMCPlayer;
 import com.laytonsmith.annotations.api;
 import com.laytonsmith.core.CHVersion;
 import com.laytonsmith.core.ObjectGenerator;
@@ -101,17 +101,17 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "array {region, world, [value]} Given a region name, returns an array of information about that region."
-				   + " ---- If value is set, it should be an integer of one of the following indexes, and only that information for that index"
-				   + " will be returned. Otherwise if value is not specified (or is -1), it returns an array of"
-				   + " information with the following pieces of information in the specified index:<ul>"
-				   + " <li>0 - An array of points that define this region</li>"
-				   + " <li>1 - An array of owners of this region</li>"
-				   + " <li>2 - An array of members of this region</li>"
-				   + " <li>3 - An array of arrays of this region's flags, where each array is: array(flag_name, value)</li>"
-				   + " <li>4 - This region's priority</li>"
-				   + " <li>5 - The volume of this region (in meters cubed)</li>"
-				   + "</ul>"
-				   + "If the region cannot be found, a PluginInternalException is thrown.";
+					+ " ---- If value is set, it should be an integer of one of the following indexes, and only that information for that index"
+					+ " will be returned. Otherwise if value is not specified (or is -1), it returns an array of"
+					+ " information with the following pieces of information in the specified index:<ul>"
+					+ " <li>0 - An array of points that define this region</li>"
+					+ " <li>1 - An array of owners of this region</li>"
+					+ " <li>2 - An array of members of this region</li>"
+					+ " <li>3 - An array of arrays of this region's flags, where each array is: array(flag_name, value)</li>"
+					+ " <li>4 - This region's priority</li>"
+					+ " <li>5 - The volume of this region (in meters cubed)</li>"
+					+ "</ul>"
+					+ "If the region cannot be found, a PluginInternalException is thrown.";
 		}
 
 		@Override
@@ -258,7 +258,7 @@ public class SKWorldGuard {
 			} catch (NoClassDefFoundError e) {
 				throw new ConfigRuntimeException(
 						"It does not appear as though the WorldEdit or WorldGuard plugin is loaded properly. Execution of "
-						+ this.getName() + " cannot continue.", ExceptionType.InvalidPluginException, t, e);
+								+ this.getName() + " cannot continue.", ExceptionType.InvalidPluginException, t, e);
 			}
 		}
 	}
@@ -307,7 +307,7 @@ public class SKWorldGuard {
 					ProtectedRegion region = mgr.getRegion(arg.get(i, t).val());
 					if (region == null) {
 						throw new ConfigRuntimeException("Region " + arg.get(i, t).val()
-														 + " could not be found!", ExceptionType.PluginInternalException, t);
+								+ " could not be found!", ExceptionType.PluginInternalException, t);
 					}
 					checkRegions.add(region);
 				}
@@ -356,7 +356,7 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "array {world, region1, [array(region2, [regionN...])]} Returns an array of regions names which intersect with defined region."
-				   + " You can pass an array of regions to verify or omit this parameter and all regions in selected world will be checked.";
+					+ " You can pass an array of regions to verify or omit this parameter and all regions in selected world will be checked.";
 		}
 
 		@Override
@@ -495,7 +495,7 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "mixed {[player]} Returns the list regions that player is in. If no player specified, then the current player is used."
-				   + " If region is found, an array of region names are returned, else an empty array is returned";
+					+ " If region is found, an array of region names are returned, else an empty array is returned";
 		}
 
 		@Override
@@ -579,7 +579,7 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "mixed {Locationarray} Returns a list of regions at the specified location. "
-				   + "If regions are found, an array of region names are returned, otherwise, an empty array is returned.";
+					+ "If regions are found, an array of region names are returned, otherwise, an empty array is returned.";
 		}
 
 		@Override
@@ -709,7 +709,7 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "void {[world], name, array(locationArrayPos1, locationArrayPos2, [[locationArrayPosN]...])|[world], '__global__'}"
-				   + " Create region of the given name in the given world. You can omit list of points if you want to create a __global__ region.";
+					+ " Create region of the given name in the given world. You can omit list of points if you want to create a __global__ region.";
 		}
 
 		@Override
@@ -733,7 +733,7 @@ public class SKWorldGuard {
 
 				if (w == null) {
 					throw new ConfigRuntimeException("The specified world \"" + args[0].val()
-													 + "\" is not a valid world.", ExceptionType.InvalidWorldException, t);
+							+ "\" is not a valid world.", ExceptionType.InvalidWorldException, t);
 				}
 			} else {
 				region = args[0].val();
@@ -813,7 +813,7 @@ public class SKWorldGuard {
 									if (!w.equals(world)) {
 										throw new ConfigRuntimeException(String.format(
 												"Conflicting worlds in LocationArrays."
-												+ " (%s) & (%s)", w.getName(), world.getName()), ExceptionType.InvalidWorldException, t);
+														+ " (%s) & (%s)", w.getName(), world.getName()), ExceptionType.InvalidWorldException, t);
 									}
 								}
 							}
@@ -838,7 +838,7 @@ public class SKWorldGuard {
 
 			if (regionExists != null) {
 				throw new ConfigRuntimeException(String.format("The region (%s) already exists in world (%s),"
-															   + " and cannot be created again.", region, w.getName()), ExceptionType.PluginInternalException, t);
+						+ " and cannot be created again.", region, w.getName()), ExceptionType.PluginInternalException, t);
 			}
 
 			ProtectedRegion newRegion;
@@ -1360,7 +1360,7 @@ public class SKWorldGuard {
 			}
 
 			for (String owner : owners) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op");
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(owner, t), "op");
 				regionExists.getOwners().addPlayer(o.getUniqueId());
 			}
 
@@ -1463,7 +1463,7 @@ public class SKWorldGuard {
 			}
 
 			for (String owner : owners) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op");
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(owner, t), "op");
 				regionExists.getOwners().removePlayer(o.getUniqueId());
 			}
 
@@ -1498,7 +1498,7 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "array {region, world} Returns an array of owners of this region. If the world"
-				   + " or region cannot be found, a PluginInternalException is thrown.";
+					+ " or region cannot be found, a PluginInternalException is thrown.";
 		}
 
 		@Override
@@ -1635,7 +1635,7 @@ public class SKWorldGuard {
 			}
 
 			for (String member : members) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op");
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(member, t), "op");
 				regionExists.getMembers().addPlayer(o.getUniqueId());
 			}
 
@@ -1738,7 +1738,7 @@ public class SKWorldGuard {
 			}
 
 			for (String member : members) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op");
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(member, t), "op");
 				regionExists.getMembers().removePlayer(o.getUniqueId());
 			}
 
@@ -1773,7 +1773,7 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "array {region, world} Returns an array of members of this region. If the world"
-				   + " or region cannot be found, a PluginInternalException is thrown.";
+					+ " or region cannot be found, a PluginInternalException is thrown.";
 		}
 
 		@Override
@@ -1832,10 +1832,10 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "void {world, region, flagName, flagValue, [group]} Add/change/remove flag for selected region. FlagName should be any"
-				   + " supported flag from [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags this list]. For the flagValue, use types which"
-				   + " are supported by WorldGuard. Add group argument if you want to add WorldGuard group flag (read more about group"
-				   + " flag types [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags#Group here]). Set flagValue as null (and don't set"
-				   + " group) to delete the flag from the region.";
+					+ " supported flag from [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags this list]. For the flagValue, use types which"
+					+ " are supported by WorldGuard. Add group argument if you want to add WorldGuard group flag (read more about group"
+					+ " flag types [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags#Group here]). Set flagValue as null (and don't set"
+					+ " group) to delete the flag from the region.";
 		}
 
 		@Override
@@ -1963,8 +1963,8 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "mixed {locationArray, flagName, [player]} Check state of selected flag in defined location."
-				   + " FlagName should be any supported flag from [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags this list]."
-				   + " Player defaults to the current player.";
+					+ " FlagName should be any supported flag from [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags this list]."
+					+ " Player defaults to the current player.";
 		}
 
 		@Override
@@ -2319,7 +2319,7 @@ public class SKWorldGuard {
 		@Override
 		public String docs() {
 			return "boolean {[player,] locationArray} Returns whether or not player can build at the location,"
-				   + " according to WorldGuard. If player is not given, the current player is used.";
+					+ " according to WorldGuard. If player is not given, the current player is used.";
 		}
 	}
 }

@@ -154,8 +154,8 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "mixed {[player], array | [player]} Sets the player's point 1, or returns it if the array to set"
-				   + " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
-				   + " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+					+ " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
+					+ " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
 		}
 
 		@Override
@@ -198,8 +198,8 @@ public class SKWorldEdit {
 
 				// Return null when the position is not set (Coordinates 0,0,0).
 				if (Float.parseFloat(ret.get("x", t).getValue()) == 0f
-					&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
-					&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+						&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
+						&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
 					return CNull.NULL;
 				}
 
@@ -229,8 +229,8 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "mixed {[player], array | [player]} Sets the player's point 2, or returns it if the array to set"
-				   + " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
-				   + " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+					+ " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
+					+ " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
 		}
 
 		@Override
@@ -279,8 +279,8 @@ public class SKWorldEdit {
 
 				// Return null when the position is not set (Coordinates 0,0,0).
 				if (Float.parseFloat(ret.get("x", t).getValue()) == 0f
-					&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
-					&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+						&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
+						&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
 					return CNull.NULL;
 				}
 
@@ -399,11 +399,11 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "void {[player], pattern} Sets a selection of blocks according to the provided pattern,"
-				   + " a normal array of associative arrays. If the array is empty, the entire selection will be"
-				   + " set to air. The inner arrays consist of a required 'name' field, an optional 'data' field,"
-				   + " and an optional decimal 'weight' field. If data is not given it defaults to 0,"
-				   + " and if weight is not given it defaults to 1. The weight represents that blocktype's chance"
-				   + " of being selected for the next random block setting.";
+					+ " a normal array of associative arrays. If the array is empty, the entire selection will be"
+					+ " set to air. The inner arrays consist of a required 'name' field, an optional 'data' field,"
+					+ " and an optional decimal 'weight' field. If data is not given it defaults to 0,"
+					+ " and if weight is not given it defaults to 1. The weight represents that blocktype's chance"
+					+ " of being selected for the next random block setting.";
 		}
 	}
 
@@ -486,8 +486,8 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "void {filename, [player]} Loads a schematic into the clipboard from file."
-				   + " It will use the directory specified in WorldEdit's config."
-				   + " By default it will use the console's clipboard, but will use a player's if specified.";
+					+ " It will use the directory specified in WorldEdit's config."
+					+ " By default it will use the console's clipboard, but will use a player's if specified.";
 		}
 	}
 
@@ -550,9 +550,9 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "void {[player,] int y-axis, [int x-axis, int z-axis]}"
-				   + " Rotates the clipboard by the given (multiple of 90) degrees for each corresponding axis."
-				   + " To skip an axis, simply give it a value of 0. If a player is supplied, theirs will be rotated,"
-				   + " otherwise the console will be used.";
+					+ " Rotates the clipboard by the given (multiple of 90) degrees for each corresponding axis."
+					+ " To skip an axis, simply give it a value of 0. If a player is supplied, theirs will be rotated,"
+					+ " otherwise the console will be used.";
 		}
 	}
 
@@ -627,14 +627,14 @@ public class SKWorldEdit {
 		@Override
 		public String docs() {
 			return "void {location, [array] | player, [array]}"
-				   + " Pastes a schematic from the player's clipboard if a player is provided,"
-				   + " or from the console's clipboard if a location is given, as if a player was standing there."
-				   + " An associative array of options can be provided, all of which default to false."
-				   + " If 'airless' is true, air blocks from the schematic will not replace blocks in the world."
-				   + " If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste."
-				   + " If 'origin' is true, the schematic will be pasted at the original location it was copied from."
-				   + " If 'select' is true, the pasted blocks will be automatically selected."
-				   + " Both ignoreAir and entities default to false.";
+					+ " Pastes a schematic from the player's clipboard if a player is provided,"
+					+ " or from the console's clipboard if a location is given, as if a player was standing there."
+					+ " An associative array of options can be provided, all of which default to false."
+					+ " If 'airless' is true, air blocks from the schematic will not replace blocks in the world."
+					+ " If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste."
+					+ " If 'origin' is true, the schematic will be pasted at the original location it was copied from."
+					+ " If 'select' is true, the pasted blocks will be automatically selected."
+					+ " Both ignoreAir and entities default to false.";
 		}
 	}
 }

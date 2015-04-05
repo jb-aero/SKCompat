@@ -81,14 +81,14 @@ public class SKPlayer extends SKCommandSender {
 	}
 
 	@Override
-	public Location getLocation() {
-		return new Location(getWorld(), player.getLocation().getX(), player.getLocation().getY(),
-				player.getLocation().getZ(), player.getLocation().getYaw(), player.getLocation().getPitch());
+	public UUID getUniqueId() {
+		return player.getUniqueId();
 	}
 
 	@Override
-	public UUID getUniqueId() {
-		return player.getUniqueId();
+	public Location getLocation() {
+		return new Location(getWorld(), player.getLocation().getX(), player.getLocation().getY(),
+				player.getLocation().getZ(), player.getLocation().getYaw(), player.getLocation().getPitch());
 	}
 
 	@Override

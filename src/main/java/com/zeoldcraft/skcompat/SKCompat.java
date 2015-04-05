@@ -16,6 +16,7 @@ import com.laytonsmith.core.functions.AbstractFunction;
  */
 @MSExtension("SKCompat")
 public class SKCompat extends AbstractExtension {
+
 	@Override
 	public void onStartup() {
 		System.out.println("SKCompat " + getVersion() + " loaded.");
