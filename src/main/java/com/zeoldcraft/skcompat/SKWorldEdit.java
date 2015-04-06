@@ -27,8 +27,6 @@ import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.blocks.BlockType;
-import com.sk89q.worldedit.bukkit.CUIChannelListener;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.command.ClipboardCommands;
 import com.sk89q.worldedit.command.RegionCommands;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
@@ -37,6 +35,8 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.function.pattern.BlockPattern;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.function.pattern.RandomPattern;
+import com.sk89q.worldedit.math.transform.AffineTransform;
+import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
@@ -663,6 +663,104 @@ public class SKWorldEdit {
 					+ " If 'origin' is true, the schematic will be pasted at the original location it was copied from."
 					+ " If 'select' is true, the pasted blocks will be automatically selected."
 					+ " Both ignoreAir and entities default to false.";
+		}
+	}
+	
+	@api
+	public static class sk_clipboard_info extends SKFunction {
+		
+		@Override
+		public String getName() {
+			return "sk_clipboard_info";
+		}
+		
+		@Override
+		public Integer[] numArgs() {
+			return new Integer[]{0, 1};
+		}
+		
+		@Override
+		public String docs() {
+			return "array {[player]} Returns an array with selection info of the give players clipboard (or null when the clipboard is empty)."
+					+ "The returned array is in format: {origin:{x,y,z}, dimensions:{x,y,z}, minPoints{original:{x,y,z}, relative:{x,y,z}}"
+					+ ", maxPoints{original:{x,y,z}, relative:{x,y,z}}}.";
+		}
+		
+		@Override
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ ExceptionType.PlayerOfflineException };
+		}
+		
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			MCPlayer player = null;
+			Static.checkPlugin("WorldEdit", t);
+			
+			if (args.length == 0) {
+				player = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+			} else {
+				player = Static.GetPlayer(args[0].val(), t);
+			}
+			
+			SKCommandSender user = getSKPlayer(player, t);
+			
+			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
+			if (!( sel instanceof CuboidRegionSelector )) {
+				throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
+						ExceptionType.PluginInternalException, t);
+			}
+			
+			LocalSession localSession = user.getLocalSession();
+			ClipboardHolder clipHolder = null;
+			try {
+				clipHolder = localSession.getClipboard();
+			} catch (EmptyClipboardException e) {
+				return CNull.NULL; // Return null as the given player has an empty clipboard.
+			}
+			Clipboard clip = clipHolder.getClipboard();
+			Transform transform = clipHolder.getTransform();
+			
+			// Create return array.
+			CArray ret = new CArray(t);
+			CArray origin            = ObjectGenerator.GetGenerator().vector(vtov(clip.getOrigin())      , t);
+			CArray dimensions        = ObjectGenerator.GetGenerator().vector(vtov(clip.getDimensions())  , t);
+			CArray minPointOriginal  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMinimumPoint()), t);
+			CArray maxPointOriginal  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMaximumPoint()), t);
+			CArray minPointRelative  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMinimumPoint().subtract(clip.getOrigin())), t);
+			CArray maxPointRelative  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMaximumPoint().subtract(clip.getOrigin())), t);
+			CArray minPoint = new CArray(t);
+			CArray maxPoint = new CArray(t);
+			minPoint.set("original", minPointOriginal, t); // Original copy region world coords (//paste -o).
+			maxPoint.set("original", maxPointOriginal, t); // Original copy region world coords (//paste -o).
+			minPoint.set("relative", minPointRelative, t); // Initialize to non-rotated/flipped region.
+			maxPoint.set("relative", maxPointRelative, t); // Initialize to non-rotated/flipped region.
+			
+			ret.set("origin"    , origin    , t);
+			ret.set("dimensions", dimensions, t);
+			ret.set("minPoint"  , minPoint  , t);
+			ret.set("maxPoint"  , maxPoint  , t);
+			
+			if (!(transform instanceof AffineTransform)) {
+				return ret; // Return here, as we can't add any rotation and paste data.
+			}
+			AffineTransform affineTransform = (AffineTransform) transform;
+			
+			Vector minPointOriginalVec = affineTransform.apply(clip.getMinimumPoint().subtract(clip.getOrigin())).add(clip.getOrigin());
+			Vector maxPointOriginalVec = affineTransform.apply(clip.getMaximumPoint().subtract(clip.getOrigin())).add(clip.getOrigin());
+			Vector minPointRelativeVec = affineTransform.apply(clip.getMinimumPoint().subtract(clip.getOrigin()));
+			Vector maxPointRelativeVec = affineTransform.apply(clip.getMaximumPoint().subtract(clip.getOrigin()));
+			
+			CArray minPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointOriginalVec), t);
+			CArray maxPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointOriginalVec), t);
+			CArray minPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointRelativeVec), t);
+			CArray maxPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointRelativeVec), t);
+			
+			minPoint.set("original", minPointOriginalCVec, t); // 'Original' copy region world coords (//paste -o) inc rotation & flip.
+			maxPoint.set("original", maxPointOriginalCVec, t); // 'Original' copy region world coords (//paste -o) inc rotation & flip.
+			minPoint.set("relative", minPointRelativeCVec, t); // Relative copy selection world coords inc rotation & flip (//paste).
+			maxPoint.set("relative", maxPointRelativeCVec, t); // Relative copy selection world coords inc rotation & flip (//paste).
+			
+			return ret;
 		}
 	}
 }
