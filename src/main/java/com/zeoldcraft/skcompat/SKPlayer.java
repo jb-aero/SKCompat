@@ -4,12 +4,9 @@ import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.StaticLayer;
-import com.laytonsmith.core.constructs.Target;
-import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.entity.Player;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.world.World;
 
@@ -21,13 +18,14 @@ import java.util.UUID;
 public class SKPlayer extends SKCommandSender {
 
 	MCPlayer player;
+
 	public SKPlayer(MCPlayer player) {
 		this.player = player;
 	}
 
 	@Override
 	public World getWorld() {
-		for ( World w : WorldEdit.getInstance().getServer().getWorlds() ) {
+		for (World w : WorldEdit.getInstance().getServer().getWorlds()) {
 			if (w.getName().equals(player.getWorld().getName())) {
 				return w;
 			}
@@ -83,14 +81,14 @@ public class SKPlayer extends SKCommandSender {
 	}
 
 	@Override
-	public Location getLocation() {
-		return new Location(getWorld(), player.getLocation().getX(), player.getLocation().getY(),
-				player.getLocation().getZ(), player.getLocation().getYaw(), player.getLocation().getPitch());
+	public UUID getUniqueId() {
+		return player.getUniqueId();
 	}
 
 	@Override
-	public UUID getUniqueId() {
-		return player.getUniqueId();
+	public Location getLocation() {
+		return new Location(getWorld(), player.getLocation().getX(), player.getLocation().getY(),
+				player.getLocation().getZ(), player.getLocation().getYaw(), player.getLocation().getPitch());
 	}
 
 	@Override

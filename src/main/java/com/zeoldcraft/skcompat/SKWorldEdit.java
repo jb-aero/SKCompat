@@ -50,6 +50,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -156,13 +157,14 @@ public class SKWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[player], array | [player]} Sets the player's point 1, or returns it if the array to set isn't specified." +
-					"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+			return "mixed {[player], array | [player]} Sets the player's point 1, or returns it if the array to set"
+					+ " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
+					+ " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
 		}
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCPlayer m = null;
+			MCCommandSender m = null;
 			MVector3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
@@ -170,7 +172,7 @@ public class SKWorldEdit {
 				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
 			}
 			if (args.length == 2) { // If sk_posX(player, locationArray).
-				m = Static.GetPlayer(args[0].val(), t);
+				m = SKCompat.myGetPlayer(args[0], t);
 				v = ObjectGenerator.GetGenerator().vector(args[1], t);
 			} else if (args.length == 1) {
 				if (args[0] instanceof CArray) {
@@ -190,12 +192,14 @@ public class SKWorldEdit {
 			if (v != null) {
 				
 				// Set the new point.
-				Vector vInt = new Vector((int) (v.x+0.5), (int) (v.y+0.5), (int) (v.z+0.5)); // Round to int (CUI would accept doubles and select half blocks).
+				Vector vInt = new Vector((int) v.x, (int) v.y, (int) v.z); // Floor to int (CUI would accept doubles and select half blocks).
 				sel.selectPrimary(vInt, null);
 				
 				// Update WorldEdit CUI.
-				String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
-				m.sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+				if(m instanceof MCPlayer) {
+					String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
+					((MCPlayer) m).sendPluginMessage("WECUI", CUImessage.getBytes(Charset.forName("UTF-8")));
+				}
 				
 				// Return void as a new point has been selected.
 				return CVoid.VOID;
@@ -209,9 +213,9 @@ public class SKWorldEdit {
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
 				
 				// Return null when the position is not set (Coordinates 0,0,0).
-				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f
-                        && Float.parseFloat(ret.get("y", t).getValue()) == 0f
-                        && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+				if (Float.parseFloat(ret.get("x", t).getValue()) == 0f
+						&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
+						&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
 					return CNull.NULL;
 				}
 				
@@ -241,8 +245,9 @@ public class SKWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[player], array | [player]} Sets the player's point 2, or returns it if the array to set isn't specified." +
-					"Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue, y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+			return "mixed {[player], array | [player]} Sets the player's point 2, or returns it if the array to set"
+					+ " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
+					+ " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
 		}
 
 		@Override
@@ -252,15 +257,15 @@ public class SKWorldEdit {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCPlayer m = null;
+			MCCommandSender m = null;
 			MVector3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
-			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
+				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
 			}
-			if (args.length == 2) {
-				m = Static.GetPlayer(args[0].val(), t);
+			if (args.length == 2) { // If sk_posX(player, locationArray).
+				m = SKCompat.myGetPlayer(args[0], t);
 				v = ObjectGenerator.GetGenerator().vector(args[1], t);
 			} else if (args.length == 1) {
 				if (args[0] instanceof CArray) {
@@ -281,12 +286,14 @@ public class SKWorldEdit {
 			if (v != null) {
 				
 				// Set the new point.
-				Vector vInt = new Vector((int) (v.x+0.5), (int) (v.y+0.5), (int) (v.z+0.5)); // Round to int (CUI would accept doubles and select half blocks).
-				sel.selectPrimary(vInt, null);
+				Vector vInt = new Vector((int) v.x, (int) v.y, (int) v.z); // Floor to int (CUI would accept doubles and select half blocks).
+				sel.selectSecondary(vInt, null);
 				
 				// Update WorldEdit CUI.
-				String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
-				m.sendPluginMessage(WorldEditPlugin.CUI_PLUGIN_CHANNEL, CUImessage.getBytes(CUIChannelListener.UTF_8_CHARSET));
+				if(m instanceof MCPlayer) {
+					String CUImessage = "p|1|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
+					((MCPlayer) m).sendPluginMessage("WECUI", CUImessage.getBytes(Charset.forName("UTF-8")));
+				}
 				
 				// Return void as a new point has been selected.
 				return CVoid.VOID;
@@ -300,9 +307,9 @@ public class SKWorldEdit {
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
 				
 				// Return null when the position is not set (Coordinates 0,0,0).
-				if(Float.parseFloat(ret.get("x", t).getValue()) == 0f
-                        && Float.parseFloat(ret.get("y", t).getValue()) == 0f
-                        && Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
+				if (Float.parseFloat(ret.get("x", t).getValue()) == 0f
+						&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
+						&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
 					return CNull.NULL;
 				}
 				

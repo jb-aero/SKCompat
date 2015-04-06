@@ -47,7 +47,7 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public World getWorld() {
 		if (location != null) {
-			for ( World w : WorldEdit.getInstance().getServer().getWorlds() ) {
+			for (World w : WorldEdit.getInstance().getServer().getWorlds()) {
 				if (w.getName().equals(location.getWorld().getName())) {
 					return w;
 				}

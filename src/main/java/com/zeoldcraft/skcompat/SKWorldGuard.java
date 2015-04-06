@@ -10,8 +10,8 @@ import com.laytonsmith.abstraction.MVector3D;
 import com.laytonsmith.abstraction.bukkit.BukkitMCCommandSender;
 import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
-import com.laytonsmith.abstraction.bukkit.BukkitMCPlayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCWorld;
+import com.laytonsmith.abstraction.bukkit.entities.BukkitMCPlayer;
 import com.laytonsmith.annotations.api;
 import com.laytonsmith.core.CHVersion;
 import com.laytonsmith.core.ObjectGenerator;
@@ -36,7 +36,6 @@ import com.sk89q.worldedit.BlockVector2D;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.flags.BooleanFlag;
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.flags.DoubleFlag;
@@ -51,11 +50,19 @@ import com.sk89q.worldguard.protection.flags.SetFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StringFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.regions.GlobalProtectedRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.zeoldcraft.skcompat.SKCompat.SKFunction;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.EntityType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -64,22 +71,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.EntityType;
-
 /**
  *
  */
 public class SKWorldGuard {
 
-    public static String docs() {
-        return "Provides various methods for hooking into WorldGuard";
-    }
-	
+	public static String docs() {
+		return "Provides various methods for hooking into WorldGuard";
+	}
+
 	@api
 	public static class sk_region_info extends SKFunction {
 
@@ -89,9 +89,9 @@ public class SKWorldGuard {
 		}
 
 		@Override
-        public Version since() {
-            return CHVersion.V3_2_0;
-        }
+		public Version since() {
+			return CHVersion.V3_2_0;
+		}
 
 		@Override
 		public Integer[] numArgs() {
@@ -117,7 +117,7 @@ public class SKWorldGuard {
 		@Override
 		public ExceptionType[] thrown() {
 			return new ExceptionType[]{ExceptionType.PluginInternalException,
-				ExceptionType.CastException, ExceptionType.RangeException};
+					ExceptionType.CastException, ExceptionType.RangeException};
 		}
 
 		@Override
@@ -134,7 +134,8 @@ public class SKWorldGuard {
 
 				int maxIndex = 5;
 				if (index < -1 || index > maxIndex) {
-					throw new ConfigRuntimeException(this.getName() + " expects the index to be between -1 and " + maxIndex,
+					throw new ConfigRuntimeException(
+							this.getName() + " expects the index to be between -1 and " + maxIndex,
 							ExceptionType.RangeException, t);
 				}
 
@@ -255,127 +256,131 @@ public class SKWorldGuard {
 				return ret;
 
 			} catch (NoClassDefFoundError e) {
-				throw new ConfigRuntimeException("It does not appear as though the WorldEdit or WorldGuard plugin is loaded properly. Execution of " + this.getName() + " cannot continue.", ExceptionType.InvalidPluginException, t, e);
+				throw new ConfigRuntimeException(
+						"It does not appear as though the WorldEdit or WorldGuard plugin is loaded properly. Execution of "
+								+ this.getName() + " cannot continue.", ExceptionType.InvalidPluginException, t, e);
 			}
 		}
 	}
 
-    @api
-    public static class sk_region_overlaps extends SKFunction {
+	@api
+	public static class sk_region_overlaps extends SKFunction {
 
 		@Override
-        public String getName() {
-            return "sk_region_overlaps";
-        }
+		public String getName() {
+			return "sk_region_overlaps";
+		}
 
 		@Override
-        public Version since() {
-            return CHVersion.V3_2_0;
-        }
+		public Version since() {
+			return CHVersion.V3_2_0;
+		}
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{3};
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{3};
+		}
 
 		@Override
-        public String docs() {
-            return "boolean {world, region1, array(region2, [regionN...])} Returns true or false whether or not the specified regions overlap.";
-        }
+		public String docs() {
+			return "boolean {world, region1, array(region2, [regionN...])} Returns true or false whether or not the specified regions overlap.";
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.PluginInternalException};
-        }
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.PluginInternalException};
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            String region1 = args[1].val();
-            List<ProtectedRegion> checkRegions = new ArrayList<>();
-            Static.checkPlugin("WorldGuard", t);
-            World world = Bukkit.getServer().getWorld(args[0].val());
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
-            }
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
-            if (args[2] instanceof CArray) {
-                CArray arg = (CArray) args[2];
-                for (int i = 0; i < arg.size(); i++) {
-                    ProtectedRegion region = mgr.getRegion(arg.get(i, t).val());
-                    if (region == null) {
-                        throw new ConfigRuntimeException("Region " + arg.get(i, t).val() + " could not be found!", ExceptionType.PluginInternalException, t);
-                    }
-                    checkRegions.add(region);
-                }
-            } else {
-                ProtectedRegion region = mgr.getRegion(args[2].val());
-                if (region == null) {
-                    throw new ConfigRuntimeException("Region " + args[2] + " could not be found!", ExceptionType.PluginInternalException, t);
-                }
-                checkRegions.add(region);
-            }
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			String region1 = args[1].val();
+			List<ProtectedRegion> checkRegions = new ArrayList<>();
+			Static.checkPlugin("WorldGuard", t);
+			World world = Bukkit.getServer().getWorld(args[0].val());
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
+			}
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			if (args[2] instanceof CArray) {
+				CArray arg = (CArray) args[2];
+				for (int i = 0; i < arg.size(); i++) {
+					ProtectedRegion region = mgr.getRegion(arg.get(i, t).val());
+					if (region == null) {
+						throw new ConfigRuntimeException("Region " + arg.get(i, t).val()
+								+ " could not be found!", ExceptionType.PluginInternalException, t);
+					}
+					checkRegions.add(region);
+				}
+			} else {
+				ProtectedRegion region = mgr.getRegion(args[2].val());
+				if (region == null) {
+					throw new ConfigRuntimeException(
+							"Region " + args[2] + " could not be found!", ExceptionType.PluginInternalException, t);
+				}
+				checkRegions.add(region);
+			}
 
-            ProtectedRegion region = mgr.getRegion(region1);
-            if (region == null) {
-                throw new ConfigRuntimeException("Region could not be found!", ExceptionType.PluginInternalException, t);
-            }
+			ProtectedRegion region = mgr.getRegion(region1);
+			if (region == null) {
+				throw new ConfigRuntimeException("Region could not be found!", ExceptionType.PluginInternalException, t);
+			}
 
-            try {
-                if (!region.getIntersectingRegions(checkRegions).isEmpty()) {
-                    return CBoolean.TRUE;
-                }
-            } catch (Exception e) {
-            }
-            return CBoolean.FALSE;
-        }
-    }
+			try {
+				if (!region.getIntersectingRegions(checkRegions).isEmpty()) {
+					return CBoolean.TRUE;
+				}
+			} catch (Exception e) {
+			}
+			return CBoolean.FALSE;
+		}
+	}
 
-    @api
-    public static class sk_region_intersect extends SKFunction {
-
-		@Override
-        public String getName() {
-            return "sk_region_intersect";
-        }
+	@api
+	public static class sk_region_intersect extends SKFunction {
 
 		@Override
-        public Version since() {
-            return CHVersion.V3_2_0;
-        }
+		public String getName() {
+			return "sk_region_intersect";
+		}
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{2, 3};
-        }
+		public Version since() {
+			return CHVersion.V3_2_0;
+		}
 
 		@Override
-        public String docs() {
-            return "array {world, region1, [array(region2, [regionN...])]} Returns an array of regions names which intersect with defined region."
+		public Integer[] numArgs() {
+			return new Integer[]{2, 3};
+		}
+
+		@Override
+		public String docs() {
+			return "array {world, region1, [array(region2, [regionN...])]} Returns an array of regions names which intersect with defined region."
 					+ " You can pass an array of regions to verify or omit this parameter and all regions in selected world will be checked.";
-        }
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.PluginInternalException};
-        }
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.PluginInternalException};
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            String region1 = args[1].val();
-            List<ProtectedRegion> checkRegions = new ArrayList<>();
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			String region1 = args[1].val();
+			List<ProtectedRegion> checkRegions = new ArrayList<>();
 			List<ProtectedRegion> getRegions;
 			CArray listRegions = new CArray(t);
 
-            Static.checkPlugin("WorldGuard", t);
-            World world = Bukkit.getServer().getWorld(args[0].val());
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
-            }
+			Static.checkPlugin("WorldGuard", t);
+			World world = Bukkit.getServer().getWorld(args[0].val());
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.PluginInternalException, t);
+			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
 			if (args.length == 2) {
-				 checkRegions.addAll(mgr.getRegions().values());
+				checkRegions.addAll(mgr.getRegions().values());
 			} else {
 				if (args[2] instanceof CArray) {
 					CArray arg = (CArray) args[2];
@@ -395,15 +400,15 @@ public class SKWorldGuard {
 				}
 			}
 
-            ProtectedRegion region = mgr.getRegion(region1);
-            if (region == null) {
-                throw new ConfigRuntimeException(String.format("Region %s could not be found!", region1), ExceptionType.PluginInternalException, t);
-            }
+			ProtectedRegion region = mgr.getRegion(region1);
+			if (region == null) {
+				throw new ConfigRuntimeException(String.format("Region %s could not be found!", region1), ExceptionType.PluginInternalException, t);
+			}
 
-            try {
+			try {
 				getRegions = region.getIntersectingRegions(checkRegions);
 
-                if (!getRegions.isEmpty()) {
+				if (!getRegions.isEmpty()) {
 					for (ProtectedRegion r : getRegions) {
 						if (args.length != 2 || !r.getId().equals(region.getId())) {
 							listRegions.push(new CString(r.getId(), t));
@@ -415,275 +420,278 @@ public class SKWorldGuard {
 					}
 
 					return listRegions;
-                }
-            } catch (Exception e) {
-            }
-            return new CArray(t);
-        }
-    }
+				}
+			} catch (Exception e) {
+			}
+			return new CArray(t);
+		}
+	}
 
-    @api
-    public static class sk_all_regions extends SKFunction {
-
-		@Override
-        public String getName() {
-            return "sk_all_regions";
-        }
+	@api
+	public static class sk_all_regions extends SKFunction {
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{0, 1};
-        }
+		public String getName() {
+			return "sk_all_regions";
+		}
 
 		@Override
-        public String docs() {
-            return "array {[world]} Returns all the regions in all worlds, or just the one world, if specified.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{0, 1};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{};
-        }
+		public String docs() {
+			return "array {[world]} Returns all the regions in all worlds, or just the one world, if specified.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
-            List<World> checkWorlds = null;
-            CArray arr = new CArray(t);
-            if (args.length == 1) {
-                World world = Bukkit.getServer().getWorld(args[0].val());
-                if (world != null) {
-                    checkWorlds = Arrays.asList(world);
-                }
-            }
-            if (checkWorlds == null) {
-                checkWorlds = Bukkit.getServer().getWorlds();
-            }
-            for (World world : checkWorlds) {
-                for (String region : WorldGuardPlugin.inst().getRegionManager(world).getRegions().keySet()) {
-                    arr.push(new CString(region, t));
-                }
-            }
-            return arr;
-
-        }
-    }
-
-    @api(environments=CommandHelperEnvironment.class)
-    public static class sk_current_regions extends SKFunction {
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{};
+		}
 
 		@Override
-        public String getName() {
-            return "sk_current_regions";
-        }
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
+			List<World> checkWorlds = null;
+			CArray arr = new CArray(t);
+			if (args.length == 1) {
+				World world = Bukkit.getServer().getWorld(args[0].val());
+				if (world != null) {
+					checkWorlds = Arrays.asList(world);
+				}
+			}
+			if (checkWorlds == null) {
+				checkWorlds = Bukkit.getServer().getWorlds();
+			}
+			for (World world : checkWorlds) {
+				for (String region : WorldGuardPlugin.inst().getRegionManager(world).getRegions().keySet()) {
+					arr.push(new CString(region, t));
+				}
+			}
+			return arr;
+
+		}
+	}
+
+	@api(environments = CommandHelperEnvironment.class)
+	public static class sk_current_regions extends SKFunction {
 
 		@Override
-        public Version since() {
-            return CHVersion.V3_2_0;
-        }
+		public String getName() {
+			return "sk_current_regions";
+		}
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{0, 1};
-        }
+		public Version since() {
+			return CHVersion.V3_2_0;
+		}
 
 		@Override
-        public String docs() {
-            return "mixed {[player]} Returns the list regions that player is in. If no player specified, then the current player is used."
-                    + " If region is found, an array of region names are returned, else an empty array is returned";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{0, 1};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.PluginInternalException};
-        }
+		public String docs() {
+			return "mixed {[player]} Returns the list regions that player is in. If no player specified, then the current player is used."
+					+ " If region is found, an array of region names are returned, else an empty array is returned";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
-            World world;
-
-            MCPlayer m = null;
-
-            if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-            }
-            if (args.length == 1) {
-                m = Static.GetPlayer(args[0].val(), t);
-            }
-
-            if (m == null) {
-                throw new ConfigRuntimeException(this.getName() + " needs a player", ExceptionType.PlayerOfflineException, t);
-            }
-
-            world = Bukkit.getServer().getWorld(m.getWorld().getName());
-
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
-            Vector pt = new Vector(m.getLocation().getBlockX(), m.getLocation().getBlockY(), m.getLocation().getBlockZ());
-            ApplicableRegionSet set = mgr.getApplicableRegions(pt);
-
-            CArray regions = new CArray(t);
-
-            List<ProtectedRegion> sortedRegions = new ArrayList<>();
-
-            for (ProtectedRegion r : set) {
-                boolean placed = false;
-                for (int i = 0; i < sortedRegions.size(); i++) {
-                    if (sortedRegions.get(i).volume() < r.volume()) {
-                        sortedRegions.add(i, r);
-                        placed = true;
-                        break;
-                    }
-                }
-                if (!placed) {
-                    sortedRegions.add(r);
-                }
-            }
-
-            for (ProtectedRegion region : sortedRegions) {
-                regions.push(new CString(region.getId(), t));
-            }
-
-            if (regions.size() > 0) {
-                return regions;
-            }
-
-            return new CArray(t);
-        }
-    }
-
-    @api(environments=CommandHelperEnvironment.class)
-    public static class sk_regions_at extends SKFunction {
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.PluginInternalException};
+		}
 
 		@Override
-        public String getName() {
-            return "sk_regions_at";
-        }
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
+			World world;
+
+			MCPlayer m = null;
+
+			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+			}
+			if (args.length == 1) {
+				m = Static.GetPlayer(args[0].val(), t);
+			}
+
+			if (m == null) {
+				throw new ConfigRuntimeException(
+						this.getName() + " needs a player", ExceptionType.PlayerOfflineException, t);
+			}
+
+			world = Bukkit.getServer().getWorld(m.getWorld().getName());
+
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			Vector pt = new Vector(m.getLocation().getBlockX(), m.getLocation().getBlockY(), m.getLocation().getBlockZ());
+			ApplicableRegionSet set = mgr.getApplicableRegions(pt);
+
+			CArray regions = new CArray(t);
+
+			List<ProtectedRegion> sortedRegions = new ArrayList<>();
+
+			for (ProtectedRegion r : set) {
+				boolean placed = false;
+				for (int i = 0; i < sortedRegions.size(); i++) {
+					if (sortedRegions.get(i).volume() < r.volume()) {
+						sortedRegions.add(i, r);
+						placed = true;
+						break;
+					}
+				}
+				if (!placed) {
+					sortedRegions.add(r);
+				}
+			}
+
+			for (ProtectedRegion region : sortedRegions) {
+				regions.push(new CString(region.getId(), t));
+			}
+
+			if (regions.size() > 0) {
+				return regions;
+			}
+
+			return new CArray(t);
+		}
+	}
+
+	@api(environments = CommandHelperEnvironment.class)
+	public static class sk_regions_at extends SKFunction {
 
 		@Override
-        public Version since() {
-            return CHVersion.V3_2_0;
-        }
+		public String getName() {
+			return "sk_regions_at";
+		}
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{1};
-        }
+		public Version since() {
+			return CHVersion.V3_2_0;
+		}
 
 		@Override
-        public String docs() {
-            return "mixed {Locationarray} Returns a list of regions at the specified location. "
-                    + "If regions are found, an array of region names are returned, otherwise, an empty array is returned.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{1};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.CastException, ExceptionType.PluginInternalException, ExceptionType.InsufficientArgumentsException};
-        }
+		public String docs() {
+			return "mixed {Locationarray} Returns a list of regions at the specified location. "
+					+ "If regions are found, an array of region names are returned, otherwise, an empty array is returned.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
-            World world;
-
-            if (!( args[0] instanceof CArray )) {
-                throw new ConfigRuntimeException(this.getName() + " needs a locationarray", ExceptionType.CastException, t);
-            }
-
-            MCWorld w = null;
-            MCCommandSender c = env.getEnv(CommandHelperEnvironment.class).GetCommandSender();
-            if (c instanceof MCPlayer) {
-                w = ((MCPlayer)c).getWorld();
-            }
-
-            MCLocation loc = ObjectGenerator.GetGenerator().location(args[0], w, t);
-
-            if (loc.getWorld() == null) {
-                throw new ConfigRuntimeException(this.getName() + " needs a world", ExceptionType.InsufficientArgumentsException, t);
-            }
-
-            world = Bukkit.getServer().getWorld(loc.getWorld().getName());
-
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
-            Vector pt = new Vector(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
-            ApplicableRegionSet set = mgr.getApplicableRegions(pt);
-
-            CArray regions = new CArray(t);
-
-            List<ProtectedRegion> sortedRegions = new ArrayList<>();
-
-            for (ProtectedRegion r : set) {
-                boolean placed = false;
-                for (int i = 0; i < sortedRegions.size(); i++) {
-                    if (sortedRegions.get(i).volume() < r.volume()) {
-                        sortedRegions.add(i, r);
-                        placed = true;
-                        break;
-                    }
-                }
-                if (!placed) {
-                    sortedRegions.add(r);
-                }
-            }
-
-            for (ProtectedRegion region : sortedRegions) {
-                regions.push(new CString(region.getId(), t));
-            }
-
-            if (regions.size() > 0) {
-                return regions;
-            }
-
-            return new CArray(t);
-        }
-    }
-
-    @api
-    public static class sk_region_volume extends SKFunction {
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.CastException, ExceptionType.PluginInternalException, ExceptionType.InsufficientArgumentsException};
+		}
 
 		@Override
-        public String getName() {
-            return "sk_region_volume";
-        }
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
+			World world;
+
+			if (!(args[0] instanceof CArray)) {
+				throw new ConfigRuntimeException(
+						this.getName() + " needs a locationarray", ExceptionType.CastException, t);
+			}
+
+			MCWorld w = null;
+			MCCommandSender c = env.getEnv(CommandHelperEnvironment.class).GetCommandSender();
+			if (c instanceof MCPlayer) {
+				w = ((MCPlayer) c).getWorld();
+			}
+
+			MCLocation loc = ObjectGenerator.GetGenerator().location(args[0], w, t);
+
+			if (loc.getWorld() == null) {
+				throw new ConfigRuntimeException(
+						this.getName() + " needs a world", ExceptionType.InsufficientArgumentsException, t);
+			}
+
+			world = Bukkit.getServer().getWorld(loc.getWorld().getName());
+
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			Vector pt = new Vector(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+			ApplicableRegionSet set = mgr.getApplicableRegions(pt);
+
+			CArray regions = new CArray(t);
+
+			List<ProtectedRegion> sortedRegions = new ArrayList<>();
+
+			for (ProtectedRegion r : set) {
+				boolean placed = false;
+				for (int i = 0; i < sortedRegions.size(); i++) {
+					if (sortedRegions.get(i).volume() < r.volume()) {
+						sortedRegions.add(i, r);
+						placed = true;
+						break;
+					}
+				}
+				if (!placed) {
+					sortedRegions.add(r);
+				}
+			}
+
+			for (ProtectedRegion region : sortedRegions) {
+				regions.push(new CString(region.getId(), t));
+			}
+
+			if (regions.size() > 0) {
+				return regions;
+			}
+
+			return new CArray(t);
+		}
+	}
+
+	@api
+	public static class sk_region_volume extends SKFunction {
 
 		@Override
-        public Version since() {
-            return CHVersion.V3_2_0;
-        }
+		public String getName() {
+			return "sk_region_volume";
+		}
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{2};
-        }
+		public Version since() {
+			return CHVersion.V3_2_0;
+		}
 
 		@Override
-        public String docs() {
-            return "int {region, world} Returns the volume of the given region in the given world.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{2};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.PluginInternalException};
-        }
+		public String docs() {
+			return "int {region, world} Returns the volume of the given region in the given world.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
-            World world;
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.PluginInternalException};
+		}
 
-            world = Bukkit.getServer().getWorld(args[1].val());
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
+			World world;
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			world = Bukkit.getServer().getWorld(args[1].val());
 
-            ProtectedRegion region = mgr.getRegion(args[0].val());
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            if (region == null) {
-                throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", args[0].val(), args[1].val()), ExceptionType.PluginInternalException, t);
-            }
+			ProtectedRegion region = mgr.getRegion(args[0].val());
 
-            return new CInt(region.volume(), t);
-        }
-    }
+			if (region == null) {
+				throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", args[0].val(), args[1].val()), ExceptionType.PluginInternalException, t);
+			}
+
+			return new CInt(region.volume(), t);
+		}
+	}
 
 	@api
 	public static class sk_region_create extends SKFunction {
@@ -724,7 +732,8 @@ public class SKWorldGuard {
 				region = args[1].val();
 
 				if (w == null) {
-					throw new ConfigRuntimeException("The specified world \"" + args[0].val() + "\" is not a valid world.", ExceptionType.InvalidWorldException, t);
+					throw new ConfigRuntimeException("The specified world \"" + args[0].val()
+							+ "\" is not a valid world.", ExceptionType.InvalidWorldException, t);
 				}
 			} else {
 				region = args[0].val();
@@ -779,7 +788,7 @@ public class SKWorldGuard {
 				if (verticies.isEmpty()) {
 					throw new ConfigRuntimeException("Expecting an array of LocationArrays but found no valid Location arrays.", ExceptionType.PluginInternalException, t);
 				}
-				
+
 				if (w == null) {
 					for (int i = 0; i < points.size(); i++) {
 
@@ -796,14 +805,15 @@ public class SKWorldGuard {
 							if (point.containsKey("world")) {
 								world = Static.getServer().getWorld(point.get("world", t).val());
 							}
-							
+
 							if (world != null) {
 								if (w == null) {
 									w = world;
 								} else {
 									if (!w.equals(world)) {
-										throw new ConfigRuntimeException(String.format("Conflicting worlds in LocationArrays."
-												+ " (%s) & (%s)",w.getName(),world.getName()), ExceptionType.InvalidWorldException, t);
+										throw new ConfigRuntimeException(String.format(
+												"Conflicting worlds in LocationArrays."
+														+ " (%s) & (%s)", w.getName(), world.getName()), ExceptionType.InvalidWorldException, t);
 									}
 								}
 							}
@@ -812,7 +822,7 @@ public class SKWorldGuard {
 				}
 			}
 
-			if (w == null){
+			if (w == null) {
 				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
 					w = env.getEnv(CommandHelperEnvironment.class).GetPlayer().getWorld();
 				}
@@ -884,113 +894,113 @@ public class SKWorldGuard {
 		}
 	}
 
-    @api
-    public static class sk_region_update extends SKFunction {
+	@api
+	public static class sk_region_update extends SKFunction {
 
 		@Override
-        public String getName() {
-            return "sk_region_update";
-        }
+		public String getName() {
+			return "sk_region_update";
+		}
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{2, 3};
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{2, 3};
+		}
 
 		@Override
-        public String docs() {
-            return "void {[world], name, array(vectorArrayPos1, vectorArrayPos2, [[vectorArrayPosN]...])} Updates the location of a given region to the new location. Other properties of the region, like owners, members, priority, etc are unaffected.";
-        }
+		public String docs() {
+			return "void {[world], name, array(vectorArrayPos1, vectorArrayPos2, [[vectorArrayPosN]...])} Updates the location of a given region to the new location. Other properties of the region, like owners, members, priority, etc are unaffected.";
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
 
-            World world = null;
-            String region;
+			World world = null;
+			String region;
 
-            if (args.length == 2) {
+			if (args.length == 2) {
 
-                region = args[0].val();
+				region = args[0].val();
 
-                MCPlayer m = null;
+				MCPlayer m = null;
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
-                    world = Bukkit.getServer().getWorld(m.getWorld().getName());
-                }
-            } else {
-                region = args[1].val();
-                world = Bukkit.getServer().getWorld(args[0].val());
-            }
+				if (m != null) {
+					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+				}
+			} else {
+				region = args[1].val();
+				world = Bukkit.getServer().getWorld(args[0].val());
+			}
 
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
 
 			if ("__global__".equalsIgnoreCase(region)) {
 				throw new ConfigRuntimeException("You cannot change position of __global__ region.", ExceptionType.PluginInternalException, t);
 			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            ProtectedRegion oldRegion = mgr.getRegion(region);
+			ProtectedRegion oldRegion = mgr.getRegion(region);
 
-            if (oldRegion == null) {
-                throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), ExceptionType.PluginInternalException, t);
-            }
+			if (oldRegion == null) {
+				throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), ExceptionType.PluginInternalException, t);
+			}
 
-            if (!(args[args.length - 1] instanceof CArray)) {
-                throw new ConfigRuntimeException("Pass an array of points to define a new region", ExceptionType.PluginInternalException, t);
-            }
+			if (!(args[args.length - 1] instanceof CArray)) {
+				throw new ConfigRuntimeException("Pass an array of points to define a new region", ExceptionType.PluginInternalException, t);
+			}
 
-            List<BlockVector> points = new ArrayList<>();
-            List<BlockVector2D> points2D = new ArrayList<>();
+			List<BlockVector> points = new ArrayList<>();
+			List<BlockVector2D> points2D = new ArrayList<>();
 
-            int minY = 0;
-            int maxY = 0;
+			int minY = 0;
+			int maxY = 0;
 
-            ProtectedRegion newRegion;
+			ProtectedRegion newRegion;
 
-            CArray arg = (CArray) args[args.length - 1];
+			CArray arg = (CArray) args[args.length - 1];
 
-            for (int i = 0; i < arg.size(); i++) {
-                MVector3D vec = ObjectGenerator.GetGenerator().vector(arg.get(i, t), t);
+			for (int i = 0; i < arg.size(); i++) {
+				MVector3D vec = ObjectGenerator.GetGenerator().vector(arg.get(i, t), t);
 
-               if (arg.size() == 2) {
-                    points.add(new BlockVector(vec.x, vec.y, vec.z));
-                } else {
-                    points2D.add(new BlockVector2D(vec.x, vec.z));
+				if (arg.size() == 2) {
+					points.add(new BlockVector(vec.x, vec.y, vec.z));
+				} else {
+					points2D.add(new BlockVector2D(vec.x, vec.z));
 
-                    if (i == 0) {
-                        minY = maxY = (int) vec.y;
-                    } else {
-                        if (vec.y < minY) {
-                            minY = (int) vec.y;
-                        } else if (vec.y > maxY) {
-                            maxY = (int) vec.y;
-                        }
-                    }
-                }
-            }
+					if (i == 0) {
+						minY = maxY = (int) vec.y;
+					} else {
+						if (vec.y < minY) {
+							minY = (int) vec.y;
+						} else if (vec.y > maxY) {
+							maxY = (int) vec.y;
+						}
+					}
+				}
+			}
 
-            if (arg.size() == 2) {
-                newRegion = new ProtectedCuboidRegion(region, points.get(0), points.get(1));
-            } else {
-                newRegion = new ProtectedPolygonalRegion(region, points2D, minY, maxY);
-            }
+			if (arg.size() == 2) {
+				newRegion = new ProtectedCuboidRegion(region, points.get(0), points.get(1));
+			} else {
+				newRegion = new ProtectedPolygonalRegion(region, points2D, minY, maxY);
+			}
 
-            if (newRegion == null) {
-                throw new ConfigRuntimeException("Error while redefining protected region", ExceptionType.PluginInternalException, t);
-            }
+			if (newRegion == null) {
+				throw new ConfigRuntimeException("Error while redefining protected region", ExceptionType.PluginInternalException, t);
+			}
 
 			mgr.addRegion(newRegion);
 
@@ -1010,64 +1020,64 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while redefining protected region", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
-    }
+			return CVoid.VOID;
+		}
+	}
 
-    @api
-    public static class sk_region_rename extends SKFunction {
-
-		@Override
-        public String getName() {
-            return "sk_region_rename";
-        }
+	@api
+	public static class sk_region_rename extends SKFunction {
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{2, 3};
-        }
+		public String getName() {
+			return "sk_region_rename";
+		}
 
 		@Override
-        public String docs() {
-            return "void {[world], oldName, newName} Rename the existing region. Other properties of the region, like owners, members, priority, etc are unaffected.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{2, 3};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public String docs() {
+			return "void {[world], oldName, newName} Rename the existing region. Other properties of the region, like owners, members, priority, etc are unaffected.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
 
-            World world = null;
-            String oldRegionName;
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
+
+			World world = null;
+			String oldRegionName;
 			String newRegionName;
 
-            if (args.length == 2) {
+			if (args.length == 2) {
 
-                oldRegionName = args[0].val();
+				oldRegionName = args[0].val();
 				newRegionName = args[1].val();
 
-                MCPlayer m = null;
+				MCPlayer m = null;
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
-                    world = Bukkit.getServer().getWorld(m.getWorld().getName());
-                }
-            } else {
-                oldRegionName = args[1].val();
+				if (m != null) {
+					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+				}
+			} else {
+				oldRegionName = args[1].val();
 				newRegionName = args[2].val();
-                world = Bukkit.getServer().getWorld(args[0].val());
-            }
+				world = Bukkit.getServer().getWorld(args[0].val());
+			}
 
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
 
 			if ("__global__".equalsIgnoreCase(oldRegionName)) {
 				throw new ConfigRuntimeException("You cannot change name of __global__ region.", ExceptionType.PluginInternalException, t);
@@ -1077,25 +1087,25 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("You cannot change name of any region to __global__.", ExceptionType.PluginInternalException, t);
 			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            ProtectedRegion oldRegion = mgr.getRegion(oldRegionName);
+			ProtectedRegion oldRegion = mgr.getRegion(oldRegionName);
 
-            if (oldRegion == null) {
-                throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", oldRegionName, world.getName()), ExceptionType.PluginInternalException, t);
-            }
+			if (oldRegion == null) {
+				throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", oldRegionName, world.getName()), ExceptionType.PluginInternalException, t);
+			}
 
 			ProtectedRegion newRegion;
 
 			if (oldRegion instanceof ProtectedCuboidRegion) {
 				newRegion = new ProtectedCuboidRegion(newRegionName, oldRegion.getMinimumPoint(), oldRegion.getMaximumPoint());
-            } else {
-                newRegion = new ProtectedPolygonalRegion(newRegionName, oldRegion.getPoints(), oldRegion.getMinimumPoint().getBlockY(), oldRegion.getMaximumPoint().getBlockY());
-            }
+			} else {
+				newRegion = new ProtectedPolygonalRegion(newRegionName, oldRegion.getPoints(), oldRegion.getMinimumPoint().getBlockY(), oldRegion.getMaximumPoint().getBlockY());
+			}
 
-            if (newRegion == null) {
-                throw new ConfigRuntimeException("Error while redefining protected region", ExceptionType.PluginInternalException, t);
-            }
+			if (newRegion == null) {
+				throw new ConfigRuntimeException("Error while redefining protected region", ExceptionType.PluginInternalException, t);
+			}
 
 			mgr.addRegion(newRegion);
 
@@ -1116,71 +1126,71 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while renaming protected region", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
-    }
+			return CVoid.VOID;
+		}
+	}
 
-    @api
-    public static class sk_region_remove extends SKFunction {
-
-		@Override
-        public String getName() {
-            return "sk_region_remove";
-        }
+	@api
+	public static class sk_region_remove extends SKFunction {
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{1, 2};
-        }
+		public String getName() {
+			return "sk_region_remove";
+		}
 
 		@Override
-        public String docs() {
-            return "void {[world], name} Remove existed region.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{1, 2};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public String docs() {
+			return "void {[world], name} Remove existed region.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
 
-            World world = null;
-            String region;
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
 
-            if (args.length == 1) {
+			World world = null;
+			String region;
 
-                region = args[0].val();
+			if (args.length == 1) {
 
-                MCPlayer m = null;
+				region = args[0].val();
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				MCPlayer m = null;
 
-                if (m != null) {
-                    world = Bukkit.getServer().getWorld(m.getWorld().getName());
-                }
-            } else {
-                region = args[1].val();
-                world = Bukkit.getServer().getWorld(args[0].val());
-            }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+				if (m != null) {
+					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+				}
+			} else {
+				region = args[1].val();
+				world = Bukkit.getServer().getWorld(args[0].val());
+			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
 
-            ProtectedRegion regionExists = mgr.getRegion(region);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            if (regionExists == null) {
-                throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), ExceptionType.PluginInternalException, t);
-            }
+			ProtectedRegion regionExists = mgr.getRegion(region);
 
-            mgr.removeRegion(region);
+			if (regionExists == null) {
+				throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), ExceptionType.PluginInternalException, t);
+			}
+
+			mgr.removeRegion(region);
 
 			try {
 				mgr.save();
@@ -1188,157 +1198,157 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while removing protected region", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
-    }
+			return CVoid.VOID;
+		}
+	}
 
-    @api
-    public static class sk_region_exists extends SKFunction {
-
-		@Override
-        public String getName() {
-            return "sk_region_exists";
-        }
+	@api
+	public static class sk_region_exists extends SKFunction {
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{1, 2};
-        }
+		public String getName() {
+			return "sk_region_exists";
+		}
 
 		@Override
-        public String docs() {
-            return "void {[world], name} Check if a given region exists.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{1, 2};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException};
-        }
+		public String docs() {
+			return "void {[world], name} Check if a given region exists.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
-
-            World world = null;
-            String region;
-
-            if (args.length == 1) {
-
-                region = args[0].val();
-
-                MCPlayer m = null;
-
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
-
-                if (m != null) {
-                    world = Bukkit.getServer().getWorld(m.getWorld().getName());
-                }
-            } else {
-                region = args[1].val();
-                world = Bukkit.getServer().getWorld(args[0].val());
-            }
-
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
-
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
-
-            ProtectedRegion regionExists = mgr.getRegion(region);
-
-            if (regionExists != null) {
-                return CBoolean.TRUE;
-            }
-
-            return CBoolean.FALSE;
-        }
-    }
-
-    @api
-    public static class sk_region_addowner extends SKFunction {
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException};
+		}
 
 		@Override
-        public String getName() {
-            return "sk_region_addowner";
-        }
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
+
+			World world = null;
+			String region;
+
+			if (args.length == 1) {
+
+				region = args[0].val();
+
+				MCPlayer m = null;
+
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
+
+				if (m != null) {
+					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+				}
+			} else {
+				region = args[1].val();
+				world = Bukkit.getServer().getWorld(args[0].val());
+			}
+
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
+
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+
+			ProtectedRegion regionExists = mgr.getRegion(region);
+
+			if (regionExists != null) {
+				return CBoolean.TRUE;
+			}
+
+			return CBoolean.FALSE;
+		}
+	}
+
+	@api
+	public static class sk_region_addowner extends SKFunction {
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{1, 2, 3};
-        }
+		public String getName() {
+			return "sk_region_addowner";
+		}
 
 		@Override
-        public String docs() {
-            return "void {region, [world], [owner1] | region, [world], [array(owner1, ownerN, ...)]} Add owner(s) to given region.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{1, 2, 3};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public String docs() {
+			return "void {region, [world], [owner1] | region, [world], [array(owner1, ownerN, ...)]} Add owner(s) to given region.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
 
-            World world = null;
-            MCPlayer m = null;
-            String[] owners = null;
-            String region = args[0].val();
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
 
-            if (args.length == 1) {
+			World world = null;
+			MCPlayer m = null;
+			String[] owners = null;
+			String region = args[0].val();
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+			if (args.length == 1) {
 
-                if (m != null) {
-                    world = Bukkit.getServer().getWorld(m.getWorld().getName());
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
+
+				if (m != null) {
+					world = Bukkit.getServer().getWorld(m.getWorld().getName());
 					owners = new String[1];
 					owners[0] = m.getName();
-                }
+				}
 
-            } else if (args.length == 2) {
+			} else if (args.length == 2) {
 
-                world = Bukkit.getServer().getWorld(args[0].val());
+				world = Bukkit.getServer().getWorld(args[0].val());
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
+				if (m != null) {
 					owners = new String[1];
 					owners[0] = m.getName();
-                }
+				}
 
-            } else {
+			} else {
 
-                world = Bukkit.getServer().getWorld(args[1].val());
+				world = Bukkit.getServer().getWorld(args[1].val());
 
-                if (args[2] instanceof CArray) {
+				if (args[2] instanceof CArray) {
 
-                    CArray arg = (CArray) args[2];
-					owners = new String[(int)arg.size()];
+					CArray arg = (CArray) args[2];
+					owners = new String[(int) arg.size()];
 
-                    for (int i = 0; i < arg.size(); i++) {
+					for (int i = 0; i < arg.size(); i++) {
 						owners[i] = arg.get(i, t).val();
-                    }
-                } else {
+					}
+				} else {
 					owners = new String[1];
 					owners[0] = args[2].val();
-                }
+				}
 
-            }
+			}
 
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            ProtectedRegion regionExists = mgr.getRegion(region);
+			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
 				if ("__global__".equalsIgnoreCase(region)) {
@@ -1350,7 +1360,7 @@ public class SKWorldGuard {
 			}
 
 			for (String owner : owners) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op");
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(owner, t), "op");
 				regionExists.getOwners().addPlayer(o.getUniqueId());
 			}
 
@@ -1360,100 +1370,100 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while adding owner(s) to protected region", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
-    }
+			return CVoid.VOID;
+		}
+	}
 
-    @api
-    public static class sk_region_remowner extends SKFunction {
-
-		@Override
-        public String getName() {
-            return "sk_region_remowner";
-        }
+	@api
+	public static class sk_region_remowner extends SKFunction {
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{1, 2, 3};
-        }
+		public String getName() {
+			return "sk_region_remowner";
+		}
 
 		@Override
-        public String docs() {
-            return "void {region, [world], [owner1] | region, [world], [array(owner1, ownerN, ...)]} Remove owner(s) from given region.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{1, 2, 3};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public String docs() {
+			return "void {region, [world], [owner1] | region, [world], [array(owner1, ownerN, ...)]} Remove owner(s) from given region.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
 
-            World world = null;
-            MCPlayer m = null;
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
+
+			World world = null;
+			MCPlayer m = null;
 			String[] owners = null;
-            String region = args[0].val();
+			String region = args[0].val();
 
-            if (args.length == 1) {
+			if (args.length == 1) {
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
-                    world = Bukkit.getServer().getWorld(m.getWorld().getName());
+				if (m != null) {
+					world = Bukkit.getServer().getWorld(m.getWorld().getName());
 					owners = new String[1];
 					owners[0] = m.getName();
-                }
+				}
 
-            } else if (args.length == 2) {
+			} else if (args.length == 2) {
 
-                world = Bukkit.getServer().getWorld(args[0].val());
+				world = Bukkit.getServer().getWorld(args[0].val());
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
+				if (m != null) {
 					owners = new String[1];
 					owners[0] = m.getName();
-                }
+				}
 
-            } else {
+			} else {
 
-                world = Bukkit.getServer().getWorld(args[1].val());
+				world = Bukkit.getServer().getWorld(args[1].val());
 
-                if (args[2] instanceof CArray) {
+				if (args[2] instanceof CArray) {
 
-                    CArray arg = (CArray) args[2];
-					owners = new String[(int)arg.size()];
+					CArray arg = (CArray) args[2];
+					owners = new String[(int) arg.size()];
 
-                    for (int i = 0; i < arg.size(); i++) {
+					for (int i = 0; i < arg.size(); i++) {
 						owners[i] = arg.get(i, t).val();
-                    }
-                } else {
+					}
+				} else {
 					owners = new String[1];
 					owners[0] = args[2].val();
-                }
+				}
 
-            }
+			}
 
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            ProtectedRegion regionExists = mgr.getRegion(region);
+			ProtectedRegion regionExists = mgr.getRegion(region);
 
-            if (regionExists == null) {
-                throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), ExceptionType.PluginInternalException, t);
-            }
+			if (regionExists == null) {
+				throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), ExceptionType.PluginInternalException, t);
+			}
 
 			for (String owner : owners) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(owner, t), "op");
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(owner, t), "op");
 				regionExists.getOwners().removePlayer(o.getUniqueId());
 			}
 
@@ -1463,9 +1473,9 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while deleting owner(s) from protected region", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
-    }
+			return CVoid.VOID;
+		}
+	}
 
 	@api
 	public static class sk_region_owners extends SKFunction {
@@ -1476,9 +1486,9 @@ public class SKWorldGuard {
 		}
 
 		@Override
-        public Version since() {
-            return CHVersion.V3_2_0;
-        }
+		public Version since() {
+			return CHVersion.V3_2_0;
+		}
 
 		@Override
 		public Integer[] numArgs() {
@@ -1531,89 +1541,89 @@ public class SKWorldGuard {
 		}
 	}
 
-    @api
-    public static class sk_region_addmember extends SKFunction {
+	@api
+	public static class sk_region_addmember extends SKFunction {
 
 		@Override
-        public String getName() {
-            return "sk_region_addmember";
-        }
+		public String getName() {
+			return "sk_region_addmember";
+		}
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{1, 2, 3};
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{1, 2, 3};
+		}
 
 		@Override
-        public String docs() {
-            return "void {region, [world], [member1] | region, [world], [array(member1, memberN, ...)]} Add member(s) to given region.";
-        }
+		public String docs() {
+			return "void {region, [world], [member1] | region, [world], [array(member1, memberN, ...)]} Add member(s) to given region.";
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
 
-            World world = null;
-            MCPlayer m = null;
+			World world = null;
+			MCPlayer m = null;
 			String[] members = null;
-            String region = args[0].val();
+			String region = args[0].val();
 
-            if (args.length == 1) {
+			if (args.length == 1) {
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
-                    world = Bukkit.getServer().getWorld(m.getWorld().getName());
+				if (m != null) {
+					world = Bukkit.getServer().getWorld(m.getWorld().getName());
 					members = new String[1];
 					members[0] = m.getName();
-                }
+				}
 
-            } else if (args.length == 2) {
+			} else if (args.length == 2) {
 
-                world = Bukkit.getServer().getWorld(args[0].val());
+				world = Bukkit.getServer().getWorld(args[0].val());
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
+				if (m != null) {
 					members = new String[1];
 					members[0] = m.getName();
-                }
+				}
 
-            } else {
+			} else {
 
-                world = Bukkit.getServer().getWorld(args[1].val());
+				world = Bukkit.getServer().getWorld(args[1].val());
 
-                if (args[2] instanceof CArray) {
+				if (args[2] instanceof CArray) {
 
-                    CArray arg = (CArray) args[2];
-					members = new String[(int)arg.size()];
+					CArray arg = (CArray) args[2];
+					members = new String[(int) arg.size()];
 
-                    for (int i = 0; i < arg.size(); i++) {
+					for (int i = 0; i < arg.size(); i++) {
 						members[i] = arg.get(i, t).val();
-                    }
-                } else {
+					}
+				} else {
 					members = new String[1];
 					members[0] = args[2].val();
-                }
+				}
 
-            }
+			}
 
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            ProtectedRegion regionExists = mgr.getRegion(region);
+			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
 				if ("__global__".equalsIgnoreCase(region)) {
@@ -1625,7 +1635,7 @@ public class SKWorldGuard {
 			}
 
 			for (String member : members) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op");
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(member, t), "op");
 				regionExists.getMembers().addPlayer(o.getUniqueId());
 			}
 
@@ -1635,100 +1645,100 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while adding member(s) to protected region", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
-    }
+			return CVoid.VOID;
+		}
+	}
 
-    @api
-    public static class sk_region_remmember extends SKFunction {
-
-		@Override
-        public String getName() {
-            return "sk_region_remmember";
-        }
+	@api
+	public static class sk_region_remmember extends SKFunction {
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{1, 2, 3};
-        }
+		public String getName() {
+			return "sk_region_remmember";
+		}
 
 		@Override
-        public String docs() {
-            return "void {region, [world], [member1] | region, [world], [array(member1, memberN, ...)]} Remove member(s) from given region.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{1, 2, 3};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public String docs() {
+			return "void {region, [world], [member1] | region, [world], [array(member1, memberN, ...)]} Remove member(s) from given region.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
 
-            World world = null;
-            MCPlayer m = null;
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
+
+			World world = null;
+			MCPlayer m = null;
 			String[] members = null;
-            String region = args[0].val();
+			String region = args[0].val();
 
-            if (args.length == 1) {
+			if (args.length == 1) {
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
-                    world = Bukkit.getServer().getWorld(m.getWorld().getName());
+				if (m != null) {
+					world = Bukkit.getServer().getWorld(m.getWorld().getName());
 					members = new String[1];
 					members[0] = m.getName();
-                }
+				}
 
-            } else if (args.length == 2) {
+			} else if (args.length == 2) {
 
-                world = Bukkit.getServer().getWorld(args[0].val());
+				world = Bukkit.getServer().getWorld(args[0].val());
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
+				if (m != null) {
 					members = new String[1];
 					members[0] = m.getName();
-                }
+				}
 
-            } else {
+			} else {
 
-                world = Bukkit.getServer().getWorld(args[1].val());
+				world = Bukkit.getServer().getWorld(args[1].val());
 
-                if (args[2] instanceof CArray) {
+				if (args[2] instanceof CArray) {
 
-                    CArray arg = (CArray) args[2];
-					members = new String[(int)arg.size()];
+					CArray arg = (CArray) args[2];
+					members = new String[(int) arg.size()];
 
-                    for (int i = 0; i < arg.size(); i++) {
+					for (int i = 0; i < arg.size(); i++) {
 						members[i] = arg.get(i, t).val();
-                    }
-                } else {
+					}
+				} else {
 					members = new String[1];
 					members[0] = args[2].val();
-                }
+				}
 
-            }
+			}
 
-            if (world == null) {
+			if (world == null) {
 				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            ProtectedRegion regionExists = mgr.getRegion(region);
+			ProtectedRegion regionExists = mgr.getRegion(region);
 
-            if (regionExists == null) {
-                throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), ExceptionType.PluginInternalException, t);
-            }
+			if (regionExists == null) {
+				throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), ExceptionType.PluginInternalException, t);
+			}
 
 			for (String member : members) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Temp.GetUser(member, t), "op");
+				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(member, t), "op");
 				regionExists.getMembers().removePlayer(o.getUniqueId());
 			}
 
@@ -1738,9 +1748,9 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while deleting members(s) from protected region", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
-    }
+			return CVoid.VOID;
+		}
+	}
 
 	@api
 	public static class sk_region_members extends SKFunction {
@@ -1751,9 +1761,9 @@ public class SKWorldGuard {
 		}
 
 		@Override
-        public Version since() {
-            return CHVersion.V3_2_0;
-        }
+		public Version since() {
+			return CHVersion.V3_2_0;
+		}
 
 		@Override
 		public Integer[] numArgs() {
@@ -1806,45 +1816,45 @@ public class SKWorldGuard {
 		}
 	}
 
-    @api
-    public static class sk_region_flag extends SKFunction {
+	@api
+	public static class sk_region_flag extends SKFunction {
 
 		@Override
-        public String getName() {
-            return "sk_region_flag";
-        }
+		public String getName() {
+			return "sk_region_flag";
+		}
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{4, 5};
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{4, 5};
+		}
 
 		@Override
-        public String docs() {
-            return "void {world, region, flagName, flagValue, [group]} Add/change/remove flag for selected region. FlagName should be any"
+		public String docs() {
+			return "void {world, region, flagName, flagValue, [group]} Add/change/remove flag for selected region. FlagName should be any"
 					+ " supported flag from [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags this list]. For the flagValue, use types which"
 					+ " are supported by WorldGuard. Add group argument if you want to add WorldGuard group flag (read more about group"
 					+ " flag types [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags#Group here]). Set flagValue as null (and don't set"
 					+ " group) to delete the flag from the region.";
-        }
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
 
-            World world = Bukkit.getServer().getWorld(args[0].val());
+			World world = Bukkit.getServer().getWorld(args[0].val());
 
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
 
 			String regionName = args[1].val();
-            String flagName = args[2].val();
+			String flagName = args[2].val();
 			String flagValue = null;
 			RegionGroup groupValue = null;
 
@@ -1852,9 +1862,9 @@ public class SKWorldGuard {
 				flagValue = args[3].val();
 			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            ProtectedRegion region = mgr.getRegion(regionName);
+			ProtectedRegion region = mgr.getRegion(regionName);
 
 			if (region == null) {
 				if ("__global__".equalsIgnoreCase(regionName)) {
@@ -1927,17 +1937,17 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while defining flags", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
+			return CVoid.VOID;
+		}
 
 		private <V> void setFlag(Target t, ProtectedRegion region,
-				Flag<V> flag, CommandSender sender, String value)
-						throws InvalidFlagFormat {
+								 Flag<V> flag, CommandSender sender, String value)
+				throws InvalidFlagFormat {
 			region.setFlag(flag, flag.parseInput(WorldGuardPlugin.inst(), sender, value));
 		}
-    }
+	}
 
-    @api
+	@api
 	public static class sk_region_check_flag extends SKFunction {
 
 		@Override
@@ -1960,7 +1970,7 @@ public class SKWorldGuard {
 		@Override
 		public ExceptionType[] thrown() {
 			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.FormatException,
-				ExceptionType.PluginInternalException, ExceptionType.NotFoundException};
+					ExceptionType.PluginInternalException, ExceptionType.NotFoundException};
 		}
 
 		@Override
@@ -2103,75 +2113,75 @@ public class SKWorldGuard {
 		}
 	}
 
-    @api
-    public static class sk_region_setpriority extends SKFunction {
+	@api
+	public static class sk_region_setpriority extends SKFunction {
 
 		@Override
-        public String getName() {
-            return "sk_region_setpriority";
-        }
+		public String getName() {
+			return "sk_region_setpriority";
+		}
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{2, 3};
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{2, 3};
+		}
 
 		@Override
-        public String docs() {
-            return "void {[world], region, priority} Sets priority for a given region.";
-        }
+		public String docs() {
+			return "void {[world], region, priority} Sets priority for a given region.";
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
 
-            World world = null;
+			World world = null;
 			String region;
 			int priority;
 
-            if (args.length == 2) {
+			if (args.length == 2) {
 
-                region = args[0].val();
+				region = args[0].val();
 
-                MCPlayer m = null;
+				MCPlayer m = null;
 
-                if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-                    m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-                }
+				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
+					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				}
 
-                if (m != null) {
-                    world = Bukkit.getServer().getWorld(m.getWorld().getName());
-                }
+				if (m != null) {
+					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+				}
 
 				priority = Static.getInt32(args[1], t);
 
-            } else {
-                region = args[1].val();
-                world = Bukkit.getServer().getWorld(args[0].val());
+			} else {
+				region = args[1].val();
+				world = Bukkit.getServer().getWorld(args[0].val());
 
 				priority = Static.getInt32(args[2], t);
-            }
+			}
 
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
 
 			if ("__global__".equalsIgnoreCase(region)) {
 				throw new ConfigRuntimeException("The region cannot be named __global__.", ExceptionType.PluginInternalException, t);
 			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            ProtectedRegion regionExists = mgr.getRegion(region);
+			ProtectedRegion regionExists = mgr.getRegion(region);
 
-            if (regionExists == null) {
+			if (regionExists == null) {
 				throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), ExceptionType.PluginInternalException, t);
-            }
+			}
 
 			regionExists.setPriority(priority);
 
@@ -2181,46 +2191,46 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while setting priority for protected region", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
-    }
+			return CVoid.VOID;
+		}
+	}
 
-    @api
-    public static class sk_region_setparent extends SKFunction {
-
-		@Override
-        public String getName() {
-            return "sk_region_setparent";
-        }
+	@api
+	public static class sk_region_setparent extends SKFunction {
 
 		@Override
-        public Integer[] numArgs() {
-            return new Integer[]{2, 3};
-        }
+		public String getName() {
+			return "sk_region_setparent";
+		}
 
 		@Override
-        public String docs() {
-            return "void {world, region, [parentRegion]} Sets parent region for a given region.";
-        }
+		public Integer[] numArgs() {
+			return new Integer[]{2, 3};
+		}
 
 		@Override
-        public ExceptionType[] thrown() {
-            return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
-        }
+		public String docs() {
+			return "void {world, region, [parentRegion]} Sets parent region for a given region.";
+		}
 
 		@Override
-        public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-            Static.checkPlugin("WorldGuard", t);
+		public ExceptionType[] thrown() {
+			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.PluginInternalException};
+		}
+
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
 
 			String regionName;
 			String parentName;
 
 
-            World world = Bukkit.getServer().getWorld(args[0].val());
+			World world = Bukkit.getServer().getWorld(args[0].val());
 
-            if (world == null) {
-                throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
-            }
+			if (world == null) {
+				throw new ConfigRuntimeException("Unknown world specified", ExceptionType.InvalidWorldException, t);
+			}
 
 			regionName = args[1].val();
 
@@ -2228,13 +2238,13 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("You cannot set parents for a __global__ cuboid.", ExceptionType.PluginInternalException, t);
 			}
 
-            RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
+			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
 
-            ProtectedRegion child = mgr.getRegion(regionName);
+			ProtectedRegion child = mgr.getRegion(regionName);
 
-            if (child == null) {
+			if (child == null) {
 				throw new ConfigRuntimeException(String.format("The region (%s) does not exist in world (%s).", regionName, world.getName()), ExceptionType.PluginInternalException, t);
-            }
+			}
 
 			if (args.length == 2) {
 				try {
@@ -2262,11 +2272,11 @@ public class SKWorldGuard {
 				throw new ConfigRuntimeException("Error while setting parent for protected region", ExceptionType.PluginInternalException, t, e);
 			}
 
-            return CVoid.VOID;
-        }
-    }
+			return CVoid.VOID;
+		}
+	}
 
-	@api(environments=CommandHelperEnvironment.class)
+	@api(environments = CommandHelperEnvironment.class)
 	public static class sk_can_build extends SKFunction {
 
 		@Override
@@ -2277,7 +2287,7 @@ public class SKWorldGuard {
 
 		@Override
 		public Construct exec(Target t, Environment environment,
-				Construct... args) throws ConfigRuntimeException {
+							  Construct... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 			MCPlayer p;
 			MCLocation loc;

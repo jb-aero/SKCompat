@@ -19,12 +19,11 @@ import com.sk89q.worldedit.extent.inventory.BlockBagException;
 import com.sk89q.worldedit.session.SessionKey;
 
 /**
- *
  * @author jb_aero
  */
 public abstract class SKCommandSender extends AbstractPlayerActor implements SessionKey {
 	private Target t;
-	
+
 	public void setTarget(Target target) {
 		t = target;
 	}
@@ -56,7 +55,8 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 	}
 
 	@Override
-	public void giveItem(int i, int i1) {}
+	public void giveItem(int i, int i1) {
+	}
 
 	@Override
 	public WorldVector getPosition() {
@@ -99,24 +99,29 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 	public BlockBag getInventoryBlockBag() {
 		return new ConsoleBlockBag();
 	}
-	
+
 	private static class ConsoleBlockBag extends BlockBag {
 
 		@Override
-		public void flushChanges() {}
+		public void flushChanges() {
+		}
 
 		@Override
-		public void addSourcePosition(WorldVector wv) {}
+		public void addSourcePosition(WorldVector wv) {
+		}
 
 		@Override
-		public void addSingleSourcePosition(WorldVector wv) {}
+		public void addSingleSourcePosition(WorldVector wv) {
+		}
 
 		@Override
-		public void storeItem(BaseItem item) throws BlockBagException {}
+		public void storeItem(BaseItem item) throws BlockBagException {
+		}
 
 		@Override
-		public void fetchItem(BaseItem item) throws BlockBagException {}
-		
+		public void fetchItem(BaseItem item) throws BlockBagException {
+		}
+
 	}
 
 }
