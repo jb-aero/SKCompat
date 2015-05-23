@@ -29,7 +29,7 @@ public class SKCompat extends AbstractExtension {
 
 	@Override
 	public Version getVersion() {
-		return new SimpleVersion(1, 1, 7);
+		return new SimpleVersion(1, 1, 8);
 	}
 
 	public static MCCommandSender myGetPlayer(Construct arg, Target t) {
