@@ -1,9 +1,10 @@
 package com.zeoldcraft.skcompat;
 
+import com.laytonsmith.PureUtilities.Point3D;
+import com.laytonsmith.PureUtilities.Vector3D;
 import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCConsoleCommandSender;
 import com.laytonsmith.abstraction.MCPlayer;
-import com.laytonsmith.abstraction.MVector3D;
 import com.laytonsmith.annotations.api;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
@@ -83,12 +84,12 @@ public class SKWorldEdit {
 		return ret;
 	}
 
-	public static Vector vtov(MVector3D vec) {
-		return new Vector(vec.x, vec.y, vec.z);
+	public static Vector vtov(Vector3D vec) {
+		return new Vector(vec.X(), vec.Y(), vec.Z());
 	}
 
-	public static MVector3D vtov(Vector vec) {
-		return new MVector3D(vec.getX(), vec.getY(), vec.getZ());
+	public static Vector3D vtov(Vector vec) {
+		return new Vector3D(vec.getX(), vec.getY(), vec.getZ());
 	}
 
 	public static WeightedBlockPattern generateBlockPattern(Construct source, Target t) {
@@ -165,7 +166,7 @@ public class SKWorldEdit {
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
 			MCCommandSender m = null;
-			MVector3D v = null;
+			Point3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
 			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
@@ -192,7 +193,7 @@ public class SKWorldEdit {
 			if (v != null) {
 				
 				// Set the new point.
-				Vector vInt = new Vector((int) v.x, (int) v.y, (int) v.z); // Floor to int (CUI would accept doubles and select half blocks).
+				Vector vInt = new Vector((int) v.X(), (int) v.Y(), (int) v.Z()); // Floor to int (CUI would accept doubles and select half blocks).
 				sel.selectPrimary(vInt, null);
 				
 				// Update WorldEdit CUI.
@@ -258,7 +259,7 @@ public class SKWorldEdit {
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
 			MCCommandSender m = null;
-			MVector3D v = null;
+			Point3D v = null;
 			Static.checkPlugin("WorldEdit", t);
 
 			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
@@ -286,7 +287,7 @@ public class SKWorldEdit {
 			if (v != null) {
 				
 				// Set the new point.
-				Vector vInt = new Vector((int) v.x, (int) v.y, (int) v.z); // Floor to int (CUI would accept doubles and select half blocks).
+				Vector vInt = new Vector((int) v.X(), (int) v.Y(), (int) v.Z()); // Floor to int (CUI would accept doubles and select half blocks).
 				sel.selectSecondary(vInt, null);
 				
 				// Update WorldEdit CUI.
