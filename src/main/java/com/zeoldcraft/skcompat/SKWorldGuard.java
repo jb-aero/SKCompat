@@ -1,12 +1,12 @@
 package com.zeoldcraft.skcompat;
 
 import com.laytonsmith.PureUtilities.Common.ReflectionUtils;
+import com.laytonsmith.PureUtilities.Point3D;
 import com.laytonsmith.PureUtilities.Version;
 import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
-import com.laytonsmith.abstraction.MVector3D;
 import com.laytonsmith.abstraction.bukkit.BukkitMCCommandSender;
 import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
@@ -973,20 +973,20 @@ public class SKWorldGuard {
 			CArray arg = (CArray) args[args.length - 1];
 
 			for (int i = 0; i < arg.size(); i++) {
-				MVector3D vec = ObjectGenerator.GetGenerator().vector(arg.get(i, t), t);
+				Point3D vec = ObjectGenerator.GetGenerator().vector(arg.get(i, t), t);
 
 				if (arg.size() == 2) {
-					points.add(new BlockVector(vec.x, vec.y, vec.z));
+					points.add(new BlockVector(vec.X(), vec.Y(), vec.Z()));
 				} else {
-					points2D.add(new BlockVector2D(vec.x, vec.z));
+					points2D.add(new BlockVector2D(vec.X(), vec.Z()));
 
 					if (i == 0) {
-						minY = maxY = (int) vec.y;
+						minY = maxY = (int) vec.Y();
 					} else {
-						if (vec.y < minY) {
-							minY = (int) vec.y;
-						} else if (vec.y > maxY) {
-							maxY = (int) vec.y;
+						if (vec.Y() < minY) {
+							minY = (int) vec.Y();
+						} else if (vec.Y() > maxY) {
+							maxY = (int) vec.Y();
 						}
 					}
 				}

@@ -4,7 +4,7 @@
 
 	<groupId>com.zeoldcraft</groupId>
 	<artifactId>SKCompat</artifactId>
-	<version>1.1.7</version>
+	<version>1.1.8</version>
 	<packaging>jar</packaging>
 
 	<name>SKCompat</name>
