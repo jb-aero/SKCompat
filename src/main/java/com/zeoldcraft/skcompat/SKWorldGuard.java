@@ -170,14 +170,14 @@ public class SKWorldGuard {
 					CArray pointSet = new CArray(t);
 					for (Location l : points) {
 						CArray point = new CArray(t);
-						point.push(new CInt(l.getBlockX(), t));
-						point.push(new CInt(l.getBlockY(), t));
-						point.push(new CInt(l.getBlockZ(), t));
-						point.push(new CString(l.getWorld().getName(), t));
-						pointSet.push(point);
+						point.push(new CInt(l.getBlockX(), t), t);
+						point.push(new CInt(l.getBlockY(), t), t);
+						point.push(new CInt(l.getBlockZ(), t), t);
+						point.push(new CString(l.getWorld().getName(), t), t);
+						pointSet.push(point, t);
 					}
 
-					ret.push(pointSet);
+					ret.push(pointSet, t);
 				}
 
 				if (index == 1 || index == -1) {
@@ -190,15 +190,15 @@ public class SKWorldGuard {
 					CArray players = new CArray(t);
 					CArray groups = new CArray(t);
 					for (UUID member : ownersPlayers) {
-						players.push(new CString(member.toString(), t));
+						players.push(new CString(member.toString(), t), t);
 					}
 					for (String member : ownersGroups) {
-						groups.push(new CString(member, t));
+						groups.push(new CString(member, t), t);
 					}
 					ownerSet.set("players", players, t);
 					ownerSet.set("groups", groups, t);
 
-					ret.push(ownerSet);
+					ret.push(ownerSet, t);
 				}
 
 				if (index == 2 || index == -1) {
@@ -211,14 +211,14 @@ public class SKWorldGuard {
 					CArray players = new CArray(t);
 					CArray groups = new CArray(t);
 					for (UUID member : membersPlayers) {
-						players.push(new CString(member.toString(), t));
+						players.push(new CString(member.toString(), t), t);
 					}
 					for (String member : membersGroups) {
-						groups.push(new CString(member, t));
+						groups.push(new CString(member, t), t);
 					}
 					memberSet.set("players", players, t);
 					memberSet.set("groups", groups, t);
-					ret.push(memberSet);
+					ret.push(memberSet, t);
 				}
 
 				if (index == 3 || index == -1) {
@@ -232,22 +232,22 @@ public class SKWorldGuard {
 						CArray fl = new CArray(t,
 								new CString(flag.getKey(), t),
 								new CString(flag.getValue(), t));
-						flagSet.push(fl);
+						flagSet.push(fl, t);
 					}
 
-					ret.push(flagSet);
+					ret.push(flagSet, t);
 				}
 
 				if (index == 4 || index == -1) {
 					int priority;
 					priority = region.getPriority();
-					ret.push(new CInt(priority, t));
+					ret.push(new CInt(priority, t), t);
 				}
 
 				if (index == 5 || index == -1) {
 					float volume;
 					volume = region.volume();
-					ret.push(new CDouble(volume, t));
+					ret.push(new CDouble(volume, t), t);
 				}
 
 				if (ret.size() == 1) {
@@ -411,7 +411,7 @@ public class SKWorldGuard {
 				if (!getRegions.isEmpty()) {
 					for (ProtectedRegion r : getRegions) {
 						if (args.length != 2 || !r.getId().equals(region.getId())) {
-							listRegions.push(new CString(r.getId(), t));
+							listRegions.push(new CString(r.getId(), t), t);
 						}
 					}
 
@@ -466,7 +466,7 @@ public class SKWorldGuard {
 			}
 			for (World world : checkWorlds) {
 				for (String region : WorldGuardPlugin.inst().getRegionManager(world).getRegions().keySet()) {
-					arr.push(new CString(region, t));
+					arr.push(new CString(region, t), t);
 				}
 			}
 			return arr;
@@ -547,7 +547,7 @@ public class SKWorldGuard {
 			}
 
 			for (ProtectedRegion region : sortedRegions) {
-				regions.push(new CString(region.getId(), t));
+				regions.push(new CString(region.getId(), t), t);
 			}
 
 			if (regions.size() > 0) {
@@ -635,7 +635,7 @@ public class SKWorldGuard {
 			}
 
 			for (ProtectedRegion region : sortedRegions) {
-				regions.push(new CString(region.getId(), t));
+				regions.push(new CString(region.getId(), t), t);
 			}
 
 			if (regions.size() > 0) {
@@ -1530,10 +1530,10 @@ public class SKWorldGuard {
 			CArray players = new CArray(t);
 			CArray groups = new CArray(t);
 			for (UUID owner : ownersPlayers) {
-				players.push(new CString(owner.toString(), t));
+				players.push(new CString(owner.toString(), t), t);
 			}
 			for (String owner : ownersGroups) {
-				groups.push(new CString(owner, t));
+				groups.push(new CString(owner, t), t);
 			}
 			owners.set("players", players, t);
 			owners.set("groups", groups, t);
@@ -1805,10 +1805,10 @@ public class SKWorldGuard {
 			CArray players = new CArray(t);
 			CArray groups = new CArray(t);
 			for (UUID member : membersPlayers) {
-				players.push(new CString(member.toString(), t));
+				players.push(new CString(member.toString(), t), t);
 			}
 			for (String member : membersGroups) {
-				groups.push(new CString(member, t));
+				groups.push(new CString(member, t), t);
 			}
 			members.set("players", players, t);
 			members.set("groups", groups, t);
@@ -2086,10 +2086,10 @@ public class SKWorldGuard {
 						for (Object setFlag : setValue) {
 							if (setFlag instanceof String) {
 								String value = (String) setFlag;
-								values.push(new CString(value, t));
+								values.push(new CString(value, t), t);
 							} else if (setFlag instanceof EntityType) {
 								String value = ((EntityType) setFlag).getName();
-								values.push(new CString(value, t));
+								values.push(new CString(value, t), t);
 							} else {
 								ConfigRuntimeException.DoWarning("One of the element of flag has unknown type. This is a developer mistake, please file a ticket.");
 							}
