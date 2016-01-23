@@ -1217,7 +1217,7 @@ public class SKWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {[world], name} Check if a given region exists.";
+			return "boolean {[world], name} Check if a given region exists.";
 		}
 
 		@Override
