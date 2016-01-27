@@ -1,4 +1,4 @@
-package com.zeoldcraft.skcompat;
+package io.github.jbaero.skcompat;
 
 import com.laytonsmith.abstraction.events.MCPlayerCommandEvent;
 import com.laytonsmith.annotations.event;

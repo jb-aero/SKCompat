@@ -1,4 +1,4 @@
-package com.zeoldcraft.skcompat;
+package io.github.jbaero.skcompat;
 
 import com.laytonsmith.PureUtilities.SimpleVersion;
 import com.laytonsmith.PureUtilities.Version;
@@ -29,7 +29,7 @@ public class SKCompat extends AbstractExtension {
 
 	@Override
 	public Version getVersion() {
-		return new SimpleVersion(1, 1, 8);
+		return new SimpleVersion(2, 0, 0);
 	}
 
 	public static MCCommandSender myGetPlayer(Construct arg, Target t) {

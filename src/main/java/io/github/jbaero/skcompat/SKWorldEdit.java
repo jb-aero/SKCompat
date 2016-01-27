@@ -1,4 +1,4 @@
-package com.zeoldcraft.skcompat;
+package io.github.jbaero.skcompat;
 
 import com.laytonsmith.PureUtilities.Point3D;
 import com.laytonsmith.PureUtilities.Vector3D;
@@ -15,10 +15,18 @@ import com.laytonsmith.core.constructs.Construct;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
+import com.laytonsmith.core.exceptions.CRE.CRECastException;
+import com.laytonsmith.core.exceptions.CRE.CREFormatException;
+import com.laytonsmith.core.exceptions.CRE.CREIOException;
+import com.laytonsmith.core.exceptions.CRE.CREInvalidPluginException;
+import com.laytonsmith.core.exceptions.CRE.CREInvalidWorldException;
+import com.laytonsmith.core.exceptions.CRE.CRENotFoundException;
+import com.laytonsmith.core.exceptions.CRE.CREPlayerOfflineException;
+import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
+import com.laytonsmith.core.exceptions.CRE.CRERangeException;
+import com.laytonsmith.core.exceptions.CRE.CREThrowable;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
-import com.laytonsmith.core.functions.Exceptions;
-import com.laytonsmith.core.functions.Exceptions.ExceptionType;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.EmptyClipboardException;
 import com.sk89q.worldedit.LocalSession;
@@ -45,7 +53,6 @@ import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.util.io.Closer;
 import com.sk89q.worldedit.util.io.file.FilenameException;
 import com.sk89q.worldedit.world.registry.WorldData;
-import com.zeoldcraft.skcompat.SKCompat.SKFunction;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -77,8 +84,7 @@ public class SKWorldEdit {
 		} else if (sender instanceof MCPlayer) {
 			ret = new SKPlayer((MCPlayer) sender);
 		} else {
-			throw new ConfigRuntimeException("Sender type not yet supported: " + sender.getClass().getName(),
-					ExceptionType.CastException, t);
+			throw new CRECastException("Sender type not yet supported: " + sender.getClass().getName(), t);
 		}
 		ret.setTarget(t);
 		return ret;
@@ -106,13 +112,12 @@ public class SKWorldEdit {
 			}
 			BlockType type = BlockType.lookup(src.get("name", t).val());
 			if (type == null) {
-				throw new ConfigRuntimeException("Could not determine blocktype from " + src.get("name", t).val(),
-						ExceptionType.NotFoundException, t);
+				throw new CRENotFoundException("Could not determine blocktype from " + src.get("name", t).val(), t);
 			} else {
 				return new WeightedBlockPattern(new BaseBlock(type.getID(), data), weight);
 			}
 		} else {
-			throw new ConfigRuntimeException("Block name required", ExceptionType.FormatException, t);
+			throw new CREFormatException("Block name required", t);
 		}
 	}
 
@@ -134,12 +139,12 @@ public class SKWorldEdit {
 			}
 			return new WeightedBlockPattern(new BaseBlock(type.getID(), data), weight);
 		} catch (NumberFormatException e) {
-			throw new ConfigRuntimeException(e.getMessage(), ExceptionType.CastException, t);
+			throw new CRECastException(e.getMessage(), t);
 		}
 	}
 
 	@api(environments = CommandHelperEnvironment.class)
-	public static class sk_pos1 extends SKFunction {
+	public static class sk_pos1 extends SKCompat.SKFunction {
 
 		@Override
 		public String getName() {
@@ -152,8 +157,8 @@ public class SKWorldEdit {
 		}
 
 		@Override
-		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREPlayerOfflineException.class, CRECastException.class};
 		}
 
 		@Override
@@ -187,8 +192,7 @@ public class SKWorldEdit {
 
 			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
 			if (!(sel instanceof CuboidRegionSelector)) {
-				throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
-						ExceptionType.PluginInternalException, t);
+				throw new CREPluginInternalException("Only cuboid regions are supported with " + this.getName(), t);
 			}
 			if (v != null) {
 				
@@ -208,8 +212,7 @@ public class SKWorldEdit {
 			} else {
 				Vector pt = ((CuboidRegion) sel.getIncompleteRegion()).getPos1();
 				if (pt == null) {
-					throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
-							ExceptionType.PluginInternalException, t);
+					throw new CREPluginInternalException("Point in " + this.getName() + "undefined", t);
 				}
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
 				
@@ -232,7 +235,7 @@ public class SKWorldEdit {
 	}
 
 	@api(environments = CommandHelperEnvironment.class)
-	public static class sk_pos2 extends SKFunction {
+	public static class sk_pos2 extends SKCompat.SKFunction {
 
 		@Override
 		public String getName() {
@@ -252,8 +255,8 @@ public class SKWorldEdit {
 		}
 
 		@Override
-		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREPlayerOfflineException.class, CRECastException.class};
 		}
 
 		@Override
@@ -280,8 +283,7 @@ public class SKWorldEdit {
 
 			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
 			if (!(sel instanceof CuboidRegionSelector)) {
-				throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
-						ExceptionType.PluginInternalException, t);
+				throw new CREPluginInternalException("Only cuboid regions are supported with " + this.getName(), t);
 			}
 
 			if (v != null) {
@@ -302,8 +304,7 @@ public class SKWorldEdit {
 			} else {
 				Vector pt = ((CuboidRegion) sel.getIncompleteRegion()).getPos2();
 				if (pt == null) {
-					throw new ConfigRuntimeException("Point in " + this.getName() + "undefined",
-							ExceptionType.PluginInternalException, t);
+					throw new CREPluginInternalException("Point in " + this.getName() + "undefined", t);
 				}
 				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
 				
@@ -339,8 +340,8 @@ public class SKWorldEdit {
 //					+ " The array should be an array of arrays, and the arrays should be array(x, y, z)";
 //		}
 //
-//		public ExceptionType[] thrown() {
-//			return new ExceptionType[]{ExceptionType.PlayerOfflineException, ExceptionType.CastException};
+//		public Class<? extends CREThrowable>[] thrown() {
+//			return new Class[]{CREPlayerOfflineException.class, CRECastException.class};
 //		}
 //
 //		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
@@ -350,12 +351,12 @@ public class SKWorldEdit {
 //	}
 
 	@api(environments = CommandHelperEnvironment.class)
-	public static class sk_setblock extends SKFunction {
+	public static class sk_setblock extends SKCompat.SKFunction {
 
 		@Override
-		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ ExceptionType.InvalidPluginException, ExceptionType.PluginInternalException,
-					ExceptionType.PlayerOfflineException, ExceptionType.FormatException, ExceptionType.CastException};
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREInvalidPluginException.class, CREPluginInternalException.class,
+					CREPlayerOfflineException.class, CREFormatException.class, CRECastException.class};
 		}
 
 		@Override
@@ -409,7 +410,7 @@ public class SKWorldEdit {
 			try {
 				new RegionCommands(worldEdit).set(user, user.getLocalSession(), user.getEditSession(false), pattern);
 			} catch (WorldEditException wee) {
-				throw new ConfigRuntimeException(wee.getMessage(), ExceptionType.PluginInternalException, t);
+				throw new CREPluginInternalException(wee.getMessage(), t);
 			}
 
 			return CVoid.VOID;
@@ -438,12 +439,12 @@ public class SKWorldEdit {
 
 	//https://github.com/sk89q/WorldEdit/blob/7192780251dc71f5c70f2460d74eaee6a992333f/worldedit-core/src/main/java/com/sk89q/worldedit/command/SchematicCommands.java#L79-L131
 	@api
-	public static class skcb_load extends SKFunction {
+	public static class skcb_load extends SKCompat.SKFunction {
 
 		@Override
-		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ExceptionType.PluginInternalException, ExceptionType.PlayerOfflineException,
-					ExceptionType.IOException, ExceptionType.InvalidPluginException
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREPluginInternalException.class, CREPlayerOfflineException.class,
+					CREIOException.class, CREInvalidPluginException.class
 			};
 		}
 
@@ -465,12 +466,11 @@ public class SKWorldEdit {
 			try {
 				f = worldEdit.getSafeOpenFile(user, dir, filename, "schematic", "schematic");
 			} catch (FilenameException fne) {
-				throw new ConfigRuntimeException(fne.getMessage(), ExceptionType.IOException, t);
+				throw new CREIOException(fne.getMessage(), t);
 			}
 
 			if (!f.exists()) {
-				throw new ConfigRuntimeException("Schematic " + filename + " does not exist!",
-						ExceptionType.IOException, t);
+				throw new CREIOException("Schematic " + filename + " does not exist!", t);
 			}
 
 			Closer closer = Closer.create();
@@ -479,8 +479,7 @@ public class SKWorldEdit {
 				String dirPath = dir.getCanonicalPath();
 
 				if (!filePath.substring(0, dirPath.length()).equals(dirPath)) {
-					throw new ConfigRuntimeException("Clipboard file could not read or it does not exist.",
-							ExceptionType.IOException, t);
+					throw new CREIOException("Clipboard file could not read or it does not exist.", t);
 				} else {
 					FileInputStream fis = closer.register(new FileInputStream(f));
 					BufferedInputStream bis = closer.register(new BufferedInputStream(fis));
@@ -491,8 +490,7 @@ public class SKWorldEdit {
 					user.getLocalSession().setClipboard(new ClipboardHolder(clipboard, worldData));
 				}
 			} catch (IOException e) {
-				throw new ConfigRuntimeException("Schematic could not read or it does not exist: " + e.getMessage(),
-						ExceptionType.IOException, t);
+				throw new CREIOException("Schematic could not read or it does not exist: " + e.getMessage(), t);
 			} finally {
 				try {
 					closer.close();
@@ -521,13 +519,12 @@ public class SKWorldEdit {
 	}
 
 	@api
-	public static class skcb_rotate extends SKFunction {
+	public static class skcb_rotate extends SKCompat.SKFunction {
 
 		@Override
-		public Exceptions.ExceptionType[] thrown() {
-			return new Exceptions.ExceptionType[]{ExceptionType.InvalidPluginException,
-					Exceptions.ExceptionType.NotFoundException, ExceptionType.PlayerOfflineException,
-					ExceptionType.RangeException, Exceptions.ExceptionType.CastException};
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREInvalidPluginException.class, CRENotFoundException.class,
+					CREPlayerOfflineException.class, CRERangeException.class, CRECastException.class};
 		}
 
 		@Override
@@ -557,11 +554,9 @@ public class SKWorldEdit {
 				SKCommandSender user = getSKPlayer(plyr, t);
 				command.rotate(user, user.getLocalSession(), (double) yaxis, (double) xaxis, (double) zaxis);
 			} catch (EmptyClipboardException e) {
-				throw new ConfigRuntimeException("The clipboard is empty, copy something to it first!",
-						Exceptions.ExceptionType.NotFoundException, t);
+				throw new CRENotFoundException("The clipboard is empty, copy something to it first!", t);
 			} catch (WorldEditException ex) {
-				throw new ConfigRuntimeException(ex.getMessage(),
-						Exceptions.ExceptionType.PluginInternalException, t);
+				throw new CREPluginInternalException(ex.getMessage(), t);
 			}
 			return CVoid.VOID;
 		}
@@ -586,14 +581,12 @@ public class SKWorldEdit {
 	}
 
 	@api
-	public static class skcb_paste extends SKFunction {
+	public static class skcb_paste extends SKCompat.SKFunction {
 
 		@Override
-		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ExceptionType.InvalidWorldException, ExceptionType.FormatException,
-					ExceptionType.NotFoundException, ExceptionType.RangeException,
-					ExceptionType.CastException, ExceptionType.InvalidPluginException
-			};
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREInvalidWorldException.class, CREFormatException.class, CRERangeException.class,
+					CRENotFoundException.class, CRECastException.class, CREInvalidPluginException.class};
 		}
 
 		@Override
@@ -631,11 +624,9 @@ public class SKWorldEdit {
 				ClipboardCommands command = new ClipboardCommands(WorldEdit.getInstance());
 				command.paste(user, user.getLocalSession(), editor, airless, origin, select);
 			} catch (MaxChangedBlocksException e) {
-				throw new ConfigRuntimeException("Attempted to change more blocks than allowed.",
-						Exceptions.ExceptionType.RangeException, t);
+				throw new CRERangeException("Attempted to change more blocks than allowed.", t);
 			} catch (EmptyClipboardException e) {
-				throw new ConfigRuntimeException("The clipboard is empty, copy something to it first!",
-						Exceptions.ExceptionType.NotFoundException, t);
+				throw new CRENotFoundException("The clipboard is empty, copy something to it first!", t);
 			} catch (WorldEditException ex) {
 				Logger.getLogger(SKWorldEdit.class.getName()).log(Level.SEVERE, null, ex);
 			}
@@ -668,7 +659,7 @@ public class SKWorldEdit {
 	}
 	
 	@api
-	public static class sk_clipboard_info extends SKFunction {
+	public static class sk_clipboard_info extends SKCompat.SKFunction {
 		
 		@Override
 		public String getName() {
@@ -688,8 +679,8 @@ public class SKWorldEdit {
 		}
 		
 		@Override
-		public ExceptionType[] thrown() {
-			return new ExceptionType[]{ ExceptionType.PlayerOfflineException };
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREPlayerOfflineException.class};
 		}
 		
 		@Override
@@ -707,8 +698,7 @@ public class SKWorldEdit {
 			
 			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
 			if (!( sel instanceof CuboidRegionSelector )) {
-				throw new ConfigRuntimeException("Only cuboid regions are supported with " + this.getName(),
-						ExceptionType.PluginInternalException, t);
+				throw new CREPluginInternalException("Only cuboid regions are supported with " + this.getName(), t);
 			}
 			
 			LocalSession localSession = user.getLocalSession();

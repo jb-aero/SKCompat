@@ -1,4 +1,4 @@
-package com.zeoldcraft.skcompat;
+package io.github.jbaero.skcompat;
 
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.function.pattern.BlockPattern;

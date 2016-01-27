@@ -1,12 +1,11 @@
-package com.zeoldcraft.skcompat;
+package io.github.jbaero.skcompat;
 
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.core.CHLog;
 import com.laytonsmith.core.LogLevel;
 import com.laytonsmith.core.constructs.Target;
-import com.laytonsmith.core.exceptions.ConfigRuntimeException;
-import com.laytonsmith.core.functions.Exceptions;
+import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -40,7 +39,7 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 
 	@Override
 	public void printError(String string) {
-		throw new ConfigRuntimeException(string, Exceptions.ExceptionType.PluginInternalException, t);
+		throw new CREPluginInternalException(string, t);
 	}
 
 	@Override

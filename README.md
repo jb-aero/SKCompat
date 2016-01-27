@@ -3,7 +3,10 @@ SKCompat
 
 An extension to [CommandHelper](https://github.com/sk89q/CommandHelper) providing access to features of other plugins in the sk89q family. Currently supports WorldEdit and WorldGuard.
 
-Downloads can be found in [the Releases tab](https://github.com/jb-aero/SKCompat/releases).
+Download the correct version for your version of CommandHelper:
+[CH 3.3.1-Snapshot](https://letsbuild.net/jenkins/job/SKCompat/23/) (Old version)
+[CH 3.3.1 (Release)](https://letsbuild.net/jenkins/job/SKCompat/24/) (You probably want this one)
+[CH 3.3.2-Snapshot](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/) (Dev builds)
 
 ## Documentation
 **CommandHelper's documentation generator does not work, and people keep asking why I removed functions just because they were not listed here. I did not remove any functions. So now you have to check yourself.**
