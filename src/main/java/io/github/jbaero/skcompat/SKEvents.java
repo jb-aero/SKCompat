@@ -8,7 +8,7 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
 public class SKEvents {
 
-	@event
+	// @event
 	public void onCommand(MCPlayerCommandEvent event) {
 		WorldGuardPlayerListener wgpl = new WorldGuardPlayerListener(WorldGuardPlugin.inst());
 		wgpl.onPlayerCommandPreprocess((PlayerCommandPreprocessEvent) event._GetObject());

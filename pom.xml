@@ -4,7 +4,7 @@
 
 	<groupId>com.zeoldcraft</groupId>
 	<artifactId>SKCompat</artifactId>
-	<version>2.0.0</version>
+	<version>2.0.1</version>
 	<packaging>jar</packaging>
 
 	<name>SKCompat</name>
@@ -62,6 +62,19 @@
 						<argument>${basedir}/target/classes</argument>
 					</arguments>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>templating-maven-plugin</artifactId>
+				<version>1.0-alpha-3</version>
+				<executions>
+					<execution>
+						<id>filter-src</id>
+						<goals>
+							<goal>filter-sources</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
