@@ -5,7 +5,7 @@ An extension to [CommandHelper](https://github.com/sk89q/CommandHelper) providin
 
 Download the correct version for your version of CommandHelper:
 [CH 3.3.1-Snapshot](https://letsbuild.net/jenkins/job/SKCompat/23/) (Old version)
-[CH 3.3.1 (Release)](https://letsbuild.net/jenkins/job/SKCompat/24/) (You probably want this one)
+[CH 3.3.1 (Release)](https://letsbuild.net/jenkins/job/SKCompat/26/) (You probably want this one)
 [CH 3.3.2-Snapshot](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/) (Dev builds)
 
 ## Documentation

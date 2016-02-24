@@ -66,15 +66,12 @@ import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import io.github.jbaero.skcompat.SKCompat.SKFunction;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -87,6 +84,17 @@ public class SKWorldGuard {
 
 	public static String docs() {
 		return "Provides various methods for hooking into WorldGuard";
+	}
+
+	private static LazyAbstraction abstraction = null;
+	static LazyAbstraction getAbstraction() {
+		return abstraction;
+	}
+
+	static {
+		if (abstraction == null && Static.getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+			abstraction = new LazyAbstraction();
+		}
 	}
 
 	@api
@@ -131,141 +139,98 @@ public class SKWorldGuard {
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
-			try {
-				String regionName = args[0].val();
-				String worldName = args[1].val();
-				int index = -1;
+			String regionName = args[0].val();
+			String worldName = args[1].val();
+			int index = -1;
 
-				if (args.length == 3) {
-					index = Static.getInt32(args[2], t);
-				}
-
-				int maxIndex = 5;
-				if (index < -1 || index > maxIndex) {
-					throw new CRERangeException(
-							this.getName() + " expects the index to be between -1 and " + maxIndex, t);
-				}
-
-				org.bukkit.World world = Bukkit.getServer().getWorld(worldName);
-				if (world == null) {
-					throw new CREPluginInternalException("Unknown world specified", t);
-				}
-				RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
-				ProtectedRegion region = mgr.getRegion(regionName);
-				if (region == null) {
-					throw new CREPluginInternalException("Region could not be found!", t);
-				}
-
-				CArray ret = new CArray(t);
-
-				//Fill these data structures in with the information we need
-				if (index == 0 || index == -1) {
-					List<Location> points = new ArrayList<>();
-
-					boolean first = true;
-					if (region instanceof ProtectedPolygonalRegion) {
-						for (BlockVector2D pt : ((ProtectedPolygonalRegion) region).getPoints()) {
-							points.add(new Location(world, pt.getX(), first ? region.getMaximumPoint().getY()
-									: region.getMinimumPoint().getY(), pt.getZ()));
-							first = false;
-						}
-					} else {
-						points.add(com.sk89q.worldguard.bukkit.BukkitUtil.toLocation(world, region.getMaximumPoint()));
-						points.add(com.sk89q.worldguard.bukkit.BukkitUtil.toLocation(world, region.getMinimumPoint()));
-					}
-
-					CArray pointSet = new CArray(t);
-					for (Location l : points) {
-						CArray point = new CArray(t);
-						point.push(new CInt(l.getBlockX(), t), t);
-						point.push(new CInt(l.getBlockY(), t), t);
-						point.push(new CInt(l.getBlockZ(), t), t);
-						point.push(new CString(l.getWorld().getName(), t), t);
-						pointSet.push(point, t);
-					}
-
-					ret.push(pointSet, t);
-				}
-
-				if (index == 1 || index == -1) {
-					List<UUID> ownersPlayers = new ArrayList<>();
-					List<String> ownersGroups = new ArrayList<>();
-					ownersPlayers.addAll(region.getOwners().getUniqueIds());
-					ownersGroups.addAll(region.getOwners().getGroups());
-
-					CArray ownerSet = CArray.GetAssociativeArray(t);
-					CArray players = new CArray(t);
-					CArray groups = new CArray(t);
-					for (UUID member : ownersPlayers) {
-						players.push(new CString(member.toString(), t), t);
-					}
-					for (String member : ownersGroups) {
-						groups.push(new CString(member, t), t);
-					}
-					ownerSet.set("players", players, t);
-					ownerSet.set("groups", groups, t);
-
-					ret.push(ownerSet, t);
-				}
-
-				if (index == 2 || index == -1) {
-					List<UUID> membersPlayers = new ArrayList<>();
-					List<String> membersGroups = new ArrayList<>();
-					membersPlayers.addAll(region.getMembers().getUniqueIds());
-					membersGroups.addAll(region.getMembers().getGroups());
-
-					CArray memberSet = CArray.GetAssociativeArray(t);
-					CArray players = new CArray(t);
-					CArray groups = new CArray(t);
-					for (UUID member : membersPlayers) {
-						players.push(new CString(member.toString(), t), t);
-					}
-					for (String member : membersGroups) {
-						groups.push(new CString(member, t), t);
-					}
-					memberSet.set("players", players, t);
-					memberSet.set("groups", groups, t);
-					ret.push(memberSet, t);
-				}
-
-				if (index == 3 || index == -1) {
-					Map<String, String> flags = new HashMap<>();
-					for (Map.Entry<Flag<?>, Object> ent : region.getFlags().entrySet()) {
-						flags.put(ent.getKey().getName(), String.valueOf(ent.getValue()));
-					}
-
-					CArray flagSet = new CArray(t);
-					for (Map.Entry<String, String> flag : flags.entrySet()) {
-						CArray fl = new CArray(t,
-								new CString(flag.getKey(), t),
-								new CString(flag.getValue(), t));
-						flagSet.push(fl, t);
-					}
-
-					ret.push(flagSet, t);
-				}
-
-				if (index == 4 || index == -1) {
-					int priority;
-					priority = region.getPriority();
-					ret.push(new CInt(priority, t), t);
-				}
-
-				if (index == 5 || index == -1) {
-					float volume;
-					volume = region.volume();
-					ret.push(new CDouble(volume, t), t);
-				}
-
-				if (ret.size() == 1) {
-					return ret.get(0, t);
-				}
-				return ret;
-
-			} catch (NoClassDefFoundError e) {
-				throw new CREInvalidPluginException("It does not appear as though the WorldEdit or WorldGuard plugin"
-						+ " is loaded properly. Execution of " + this.getName() + " cannot continue.", t, e);
+			if (args.length == 3) {
+				index = Static.getInt32(args[2], t);
 			}
+
+			int maxIndex = 5;
+			if (index < -1 || index > maxIndex) {
+				throw new CRERangeException(
+						this.getName() + " expects the index to be between -1 and " + maxIndex, t);
+			}
+
+			getAbstraction().lookupRegion(regionName, worldName, t);
+
+			CArray ret = new CArray(t);
+
+			//Fill these data structures in with the information we need
+			if (index == 0 || index == -1) {
+
+				CArray pointSet = new CArray(t);
+				for (MCLocation l : getAbstraction().getBounds()) {
+					CArray point = new CArray(t);
+					point.push(new CInt(l.getBlockX(), t), t);
+					point.push(new CInt(l.getBlockY(), t), t);
+					point.push(new CInt(l.getBlockZ(), t), t);
+					point.push(new CString(l.getWorld().getName(), t), t);
+					pointSet.push(point, t);
+				}
+
+				ret.push(pointSet, t);
+			}
+
+			if (index == 1 || index == -1) {
+
+				CArray ownerSet = CArray.GetAssociativeArray(t);
+				CArray players = new CArray(t);
+				CArray groups = new CArray(t);
+				for (UUID member : getAbstraction().getOwnerPlayers()) {
+					players.push(new CString(member.toString(), t), t);
+				}
+				for (String member : getAbstraction().getOwnerGroups()) {
+					groups.push(new CString(member, t), t);
+				}
+				ownerSet.set("players", players, t);
+				ownerSet.set("groups", groups, t);
+
+				ret.push(ownerSet, t);
+			}
+
+			if (index == 2 || index == -1) {
+
+				CArray memberSet = CArray.GetAssociativeArray(t);
+				CArray players = new CArray(t);
+				CArray groups = new CArray(t);
+				for (UUID member : getAbstraction().getMemberPlayers()) {
+					players.push(new CString(member.toString(), t), t);
+				}
+				for (String member : getAbstraction().getMemberGroups()) {
+					groups.push(new CString(member, t), t);
+				}
+				memberSet.set("players", players, t);
+				memberSet.set("groups", groups, t);
+				ret.push(memberSet, t);
+			}
+
+			if (index == 3 || index == -1) {
+
+				CArray flagSet = new CArray(t);
+				for (Map.Entry<String, String> flag : getAbstraction().getFlags().entrySet()) {
+					CArray fl = new CArray(t,
+							new CString(flag.getKey(), t),
+							new CString(flag.getValue(), t));
+					flagSet.push(fl, t);
+				}
+
+				ret.push(flagSet, t);
+			}
+
+			if (index == 4 || index == -1) {
+				ret.push(new CInt(getAbstraction().getPriority(), t), t);
+			}
+
+			if (index == 5 || index == -1) {
+				ret.push(new CDouble(getAbstraction().getVolume(), t), t);
+			}
+
+			if (ret.size() == 1) {
+				return ret.get(0, t);
+			}
+			return ret;
 		}
 	}
 
@@ -452,7 +417,7 @@ public class SKWorldGuard {
 
 		@Override
 		public Class<? extends CREThrowable>[] thrown() {
-			return new Class[]{};
+			return new Class[]{CREInvalidWorldException.class};
 		}
 
 		@Override
@@ -462,20 +427,17 @@ public class SKWorldGuard {
 			CArray arr = new CArray(t);
 			if (args.length == 1) {
 				World world = Bukkit.getServer().getWorld(args[0].val());
-				if (world != null) {
-					checkWorlds = Arrays.asList(world);
-				}
-			}
-			if (checkWorlds == null) {
-				checkWorlds = Bukkit.getServer().getWorlds();
-			}
-			for (World world : checkWorlds) {
-				for (String region : WorldGuardPlugin.inst().getRegionManager(world).getRegions().keySet()) {
+				for (String region : getAbstraction().allRegions(args[0].val(), t)) {
 					arr.push(new CString(region, t), t);
+				}
+			} else {
+				for (MCWorld world : Static.getServer().getWorlds()) {
+					for (String region : getAbstraction().allRegions(world.getName(), t)) {
+						arr.push(new CString(region, t), t);
+					}
 				}
 			}
 			return arr;
-
 		}
 	}
 
@@ -526,39 +488,13 @@ public class SKWorldGuard {
 				throw new CREPlayerOfflineException(this.getName() + " needs a player", t);
 			}
 
-			world = Bukkit.getServer().getWorld(m.getWorld().getName());
-
-			RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(world);
-			Vector pt = new Vector(m.getLocation().getBlockX(), m.getLocation().getBlockY(), m.getLocation().getBlockZ());
-			ApplicableRegionSet set = mgr.getApplicableRegions(pt);
-
 			CArray regions = new CArray(t);
 
-			List<ProtectedRegion> sortedRegions = new ArrayList<>();
-
-			for (ProtectedRegion r : set) {
-				boolean placed = false;
-				for (int i = 0; i < sortedRegions.size(); i++) {
-					if (sortedRegions.get(i).volume() < r.volume()) {
-						sortedRegions.add(i, r);
-						placed = true;
-						break;
-					}
-				}
-				if (!placed) {
-					sortedRegions.add(r);
-				}
+			for (String region : getAbstraction().regionsAt(m.getLocation())) {
+				regions.push(new CString(region, t), t);
 			}
 
-			for (ProtectedRegion region : sortedRegions) {
-				regions.push(new CString(region.getId(), t), t);
-			}
-
-			if (regions.size() > 0) {
-				return regions;
-			}
-
-			return new CArray(t);
+			return regions;
 		}
 	}
 
