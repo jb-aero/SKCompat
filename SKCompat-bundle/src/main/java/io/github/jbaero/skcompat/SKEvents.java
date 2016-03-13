@@ -1,7 +1,6 @@
 package io.github.jbaero.skcompat;
 
 import com.laytonsmith.abstraction.events.MCPlayerCommandEvent;
-import com.laytonsmith.annotations.event;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.bukkit.listener.WorldGuardPlayerListener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;

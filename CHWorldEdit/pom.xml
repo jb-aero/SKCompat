@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<artifactId>SKCompat-parent</artifactId>
+		<groupId>io.github.jbaero</groupId>
+		<version>3</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>CHWorldEdit</artifactId>
+	<version>2.1.0</version>
+
+	<dependencies>
+		<dependency>
+			<groupId>io.github.jbaero</groupId>
+			<artifactId>SKCompat</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>templating-maven-plugin</artifactId>
+				<version>1.0-alpha-3</version>
+				<executions>
+					<execution>
+						<id>filter-src</id>
+						<goals>
+							<goal>filter-sources</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.4.3</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<minimizeJar>false</minimizeJar>
+							<artifactSet>
+								<includes>
+									<include>io.github.jbaero:SKCompat</include>
+								</includes>
+							</artifactSet>
+							<filters>
+								<filter>
+									<artifact>io.github.jbaero:SKCompat</artifact>
+									<includes>
+										<include>io/github/jbaero/skcompat/**</include>
+									</includes>
+									<excludes>
+										<exclude>io/github/jbaero/skcompat/LazyAbstraction*</exclude>
+										<exclude>io/github/jbaero/skcompat/CHWorldGuard*</exclude>
+									</excludes>
+								</filter>
+							</filters>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

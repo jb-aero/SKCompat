@@ -1,3 +1,20 @@
+/*
+ * CHWorldEdit, MethodScript functions for interacting with WorldEdit
+ * Copyright (C) Various contributors over the years.
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 package io.github.jbaero.skcompat;
 
 import com.laytonsmith.PureUtilities.Point3D;
@@ -62,10 +79,7 @@ import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * @author jb_aero
- */
-public class SKWorldEdit {
+public class CHWorldEdit {
 
 	public static String docs() {
 		return "Provides various methods for hooking into WorldEdit.";
@@ -628,7 +642,7 @@ public class SKWorldEdit {
 			} catch (EmptyClipboardException e) {
 				throw new CRENotFoundException("The clipboard is empty, copy something to it first!", t);
 			} catch (WorldEditException ex) {
-				Logger.getLogger(SKWorldEdit.class.getName()).log(Level.SEVERE, null, ex);
+				Logger.getLogger(CHWorldEdit.class.getName()).log(Level.SEVERE, null, ex);
 			}
 
 			return CVoid.VOID;

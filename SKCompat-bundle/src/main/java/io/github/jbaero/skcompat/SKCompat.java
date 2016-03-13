@@ -14,22 +14,22 @@ import com.laytonsmith.core.functions.AbstractFunction;
 /**
  * @author jb_aero
  */
-@MSExtension("${project.name}")
+@MSExtension(PomData.NAME)
 public class SKCompat extends AbstractExtension {
 
 	@Override
 	public void onStartup() {
-		System.out.println("${project.name} ${project.version} loaded.");
+		System.out.println(PomData.NAME + " " + PomData.VERSION + " loaded.");
 	}
 
 	@Override
 	public void onShutdown() {
-		System.out.println("${project.name} ${project.version} unloaded.");
+		System.out.println(PomData.NAME + " " + PomData.VERSION + " unloaded.");
 	}
 
 	@Override
 	public Version getVersion() {
-		return new SimpleVersion("");
+		return new SimpleVersion(PomData.VERSION);
 	}
 
 	public static MCCommandSender myGetPlayer(Construct arg, Target t) {
