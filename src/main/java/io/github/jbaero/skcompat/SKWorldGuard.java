@@ -1,6 +1,5 @@
 package io.github.jbaero.skcompat;
 
-import com.laytonsmith.PureUtilities.Common.ReflectionUtils;
 import com.laytonsmith.PureUtilities.Point3D;
 import com.laytonsmith.PureUtilities.Version;
 import com.laytonsmith.abstraction.MCCommandSender;
@@ -9,7 +8,6 @@ import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.bukkit.BukkitMCCommandSender;
 import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
-import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCWorld;
 import com.laytonsmith.abstraction.bukkit.entities.BukkitMCPlayer;
 import com.laytonsmith.annotations.api;
@@ -67,7 +65,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import io.github.jbaero.skcompat.SKCompat.SKFunction;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
@@ -78,7 +75,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  *
@@ -188,16 +184,16 @@ public class SKWorldGuard {
 				}
 
 				if (index == 1 || index == -1) {
-					List<UUID> ownersPlayers = new ArrayList<>();
+					List<String> ownersPlayers = new ArrayList<>();
 					List<String> ownersGroups = new ArrayList<>();
-					ownersPlayers.addAll(region.getOwners().getUniqueIds());
+					ownersPlayers.addAll(region.getOwners().getPlayers());
 					ownersGroups.addAll(region.getOwners().getGroups());
 
 					CArray ownerSet = CArray.GetAssociativeArray(t);
 					CArray players = new CArray(t);
 					CArray groups = new CArray(t);
-					for (UUID member : ownersPlayers) {
-						players.push(new CString(member.toString(), t), t);
+					for (String member : ownersPlayers) {
+						players.push(new CString(member, t), t);
 					}
 					for (String member : ownersGroups) {
 						groups.push(new CString(member, t), t);
@@ -209,16 +205,16 @@ public class SKWorldGuard {
 				}
 
 				if (index == 2 || index == -1) {
-					List<UUID> membersPlayers = new ArrayList<>();
+					List<String> membersPlayers = new ArrayList<>();
 					List<String> membersGroups = new ArrayList<>();
-					membersPlayers.addAll(region.getMembers().getUniqueIds());
+					membersPlayers.addAll(region.getMembers().getPlayers());
 					membersGroups.addAll(region.getMembers().getGroups());
 
 					CArray memberSet = CArray.GetAssociativeArray(t);
 					CArray players = new CArray(t);
 					CArray groups = new CArray(t);
-					for (UUID member : membersPlayers) {
-						players.push(new CString(member.toString(), t), t);
+					for (String member : membersPlayers) {
+						players.push(new CString(member, t), t);
 					}
 					for (String member : membersGroups) {
 						groups.push(new CString(member, t), t);
@@ -1363,8 +1359,7 @@ public class SKWorldGuard {
 			}
 
 			for (String owner : owners) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(owner, t), "op");
-				regionExists.getOwners().addPlayer(o.getUniqueId());
+				regionExists.getOwners().addPlayer(owner);
 			}
 
 			try {
@@ -1466,8 +1461,7 @@ public class SKWorldGuard {
 			}
 
 			for (String owner : owners) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(owner, t), "op");
-				regionExists.getOwners().removePlayer(o.getUniqueId());
+				regionExists.getOwners().removePlayer(owner);
 			}
 
 			try {
@@ -1514,7 +1508,7 @@ public class SKWorldGuard {
 			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
 			String worldName = args[1].val();
-			List<UUID> ownersPlayers = new ArrayList<>();
+			List<String> ownersPlayers = new ArrayList<>();
 			List<String> ownersGroups = new ArrayList<>();
 			World world = Bukkit.getServer().getWorld(worldName);
 			if (world == null) {
@@ -1526,14 +1520,14 @@ public class SKWorldGuard {
 				throw new CREPluginInternalException("Region could not be found!", t);
 			}
 
-			ownersPlayers.addAll(region.getOwners().getUniqueIds());
+			ownersPlayers.addAll(region.getOwners().getPlayers());
 			ownersGroups.addAll(region.getOwners().getGroups());
 
 			CArray owners = CArray.GetAssociativeArray(t);
 			CArray players = new CArray(t);
 			CArray groups = new CArray(t);
-			for (UUID owner : ownersPlayers) {
-				players.push(new CString(owner.toString(), t), t);
+			for (String owner : ownersPlayers) {
+				players.push(new CString(owner, t), t);
 			}
 			for (String owner : ownersGroups) {
 				groups.push(new CString(owner, t), t);
@@ -1638,8 +1632,7 @@ public class SKWorldGuard {
 			}
 
 			for (String member : members) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(member, t), "op");
-				regionExists.getMembers().addPlayer(o.getUniqueId());
+				regionExists.getMembers().addPlayer(member);
 			}
 
 			try {
@@ -1741,8 +1734,7 @@ public class SKWorldGuard {
 			}
 
 			for (String member : members) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(member, t), "op");
-				regionExists.getMembers().removePlayer(o.getUniqueId());
+				regionExists.getMembers().removePlayer(member);
 			}
 
 			try {
@@ -1789,7 +1781,7 @@ public class SKWorldGuard {
 			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
 			String worldName = args[1].val();
-			List<UUID> membersPlayers = new ArrayList<>();
+			List<String> membersPlayers = new ArrayList<>();
 			List<String> membersGroups = new ArrayList<>();
 			World world = Bukkit.getServer().getWorld(worldName);
 			if (world == null) {
@@ -1801,14 +1793,14 @@ public class SKWorldGuard {
 				throw new CREPluginInternalException("Region could not be found!", t);
 			}
 
-			membersPlayers.addAll(region.getMembers().getUniqueIds());
+			membersPlayers.addAll(region.getMembers().getPlayers());
 			membersGroups.addAll(region.getMembers().getGroups());
 
 			CArray members = CArray.GetAssociativeArray(t);
 			CArray players = new CArray(t);
 			CArray groups = new CArray(t);
-			for (UUID member : membersPlayers) {
-				players.push(new CString(member.toString(), t), t);
+			for (String member : membersPlayers) {
+				players.push(new CString(member, t), t);
 			}
 			for (String member : membersGroups) {
 				groups.push(new CString(member, t), t);
