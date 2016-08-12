@@ -24,7 +24,6 @@ import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
-import com.laytonsmith.abstraction.bukkit.BukkitMCCommandSender;
 import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCWorld;
@@ -67,6 +66,7 @@ import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.flags.DoubleFlag;
 import com.sk89q.worldguard.protection.flags.EnumFlag;
 import com.sk89q.worldguard.protection.flags.Flag;
+import com.sk89q.worldguard.protection.flags.FlagContext;
 import com.sk89q.worldguard.protection.flags.IntegerFlag;
 import com.sk89q.worldguard.protection.flags.InvalidFlagFormat;
 import com.sk89q.worldguard.protection.flags.LocationFlag;
@@ -1809,6 +1809,7 @@ public class CHWorldGuard {
 				throw new CREInvalidWorldException("Unknown world specified", t);
 			}
 
+			CommandSender sender = (CommandSender) env.getEnv(CommandHelperEnvironment.class).GetCommandSender().getHandle();
 			String regionName = args[1].val();
 			String flagName = args[2].val();
 			String flagValue = null;
@@ -1852,7 +1853,10 @@ public class CHWorldGuard {
 				}
 
 				try {
-					groupValue = groupFlag.parseInput(WorldGuardPlugin.inst(), new BukkitMCCommandSender(env.getEnv(CommandHelperEnvironment.class).GetCommandSender())._CommandSender(), group);
+					groupValue = groupFlag.parseInput(FlagContext.create().setSender(sender).setInput(group).build());
+				} catch (NoClassDefFoundError e) {
+					// probably WorldGuard 3.1.2 or earlier
+					groupValue = groupFlag.unmarshal(ReflectionUtils.invokeMethod(groupFlag, "parseInput", WorldGuardPlugin.inst(), sender, group));
 				} catch (InvalidFlagFormat e) {
 					throw new CREPluginInternalException(String.format("Unknown group (%s).", group), t);
 				}
@@ -1861,7 +1865,7 @@ public class CHWorldGuard {
 
 			if (flagValue != null) {
 				try {
-					setFlag(t, region, foundFlag, new BukkitMCCommandSender(env.getEnv(CommandHelperEnvironment.class).GetCommandSender())._CommandSender(), flagValue);
+					setFlag(t, region, foundFlag, sender, flagValue);
 
 				} catch (InvalidEnvironmentException e) {
 					throw new CREPluginInternalException(e.getMessage(), t);
@@ -1899,7 +1903,12 @@ public class CHWorldGuard {
 		private <V> void setFlag(Target t, ProtectedRegion region,
 								 Flag<V> flag, CommandSender sender, String value)
 				throws InvalidFlagFormat {
-			region.setFlag(flag, flag.parseInput(WorldGuardPlugin.inst(), sender, value));
+			try {
+				region.setFlag(flag, flag.parseInput(FlagContext.create().setSender(sender).setInput(value).build()));
+			} catch (NoClassDefFoundError ex) {
+				// probably WorldGuard 3.1.2 or earlier
+				region.setFlag(flag, flag.unmarshal(ReflectionUtils.invokeMethod(flag, "parseInput", WorldGuardPlugin.inst(), sender, value)));
+			}
 		}
 	}
 
