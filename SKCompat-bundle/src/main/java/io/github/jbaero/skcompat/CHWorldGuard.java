@@ -194,14 +194,19 @@ public class CHWorldGuard {
 
 				CArray ownerSet = CArray.GetAssociativeArray(t);
 				CArray players = new CArray(t);
+				CArray names = new CArray(t);
 				CArray groups = new CArray(t);
 				for (UUID member : getAbstraction().getOwnerPlayers()) {
 					players.push(new CString(member.toString(), t), t);
+				}
+				for (String name : getAbstraction().getOwnerNames()) {
+					names.push(new CString(name, t), t);
 				}
 				for (String member : getAbstraction().getOwnerGroups()) {
 					groups.push(new CString(member, t), t);
 				}
 				ownerSet.set("players", players, t);
+				ownerSet.set("names", names, t);
 				ownerSet.set("groups", groups, t);
 
 				ret.push(ownerSet, t);
@@ -211,14 +216,19 @@ public class CHWorldGuard {
 
 				CArray memberSet = CArray.GetAssociativeArray(t);
 				CArray players = new CArray(t);
+				CArray names = new CArray(t);
 				CArray groups = new CArray(t);
 				for (UUID member : getAbstraction().getMemberPlayers()) {
 					players.push(new CString(member.toString(), t), t);
+				}
+				for (String name : getAbstraction().getMemberNames()) {
+					names.push(new CString(name, t), t);
 				}
 				for (String member : getAbstraction().getMemberGroups()) {
 					groups.push(new CString(member, t), t);
 				}
 				memberSet.set("players", players, t);
+				memberSet.set("names", names, t);
 				memberSet.set("groups", groups, t);
 				ret.push(memberSet, t);
 			}
@@ -1468,6 +1478,7 @@ public class CHWorldGuard {
 			String regionName = args[0].val();
 			String worldName = args[1].val();
 			List<UUID> ownersPlayers = new ArrayList<>();
+			List<String> ownersNames = new ArrayList<>();
 			List<String> ownersGroups = new ArrayList<>();
 			World world = Bukkit.getServer().getWorld(worldName);
 			if (world == null) {
@@ -1480,18 +1491,24 @@ public class CHWorldGuard {
 			}
 
 			ownersPlayers.addAll(region.getOwners().getUniqueIds());
+			ownersNames.addAll(region.getOwners().getPlayers());
 			ownersGroups.addAll(region.getOwners().getGroups());
 
 			CArray owners = CArray.GetAssociativeArray(t);
 			CArray players = new CArray(t);
+			CArray names = new CArray(t);
 			CArray groups = new CArray(t);
 			for (UUID owner : ownersPlayers) {
 				players.push(new CString(owner.toString(), t), t);
+			}
+			for (String owner : ownersNames) {
+				names.push(new CString(owner, t), t);
 			}
 			for (String owner : ownersGroups) {
 				groups.push(new CString(owner, t), t);
 			}
 			owners.set("players", players, t);
+			owners.set("names", names, t);
 			owners.set("groups", groups, t);
 			return owners;
 		}
@@ -1743,6 +1760,7 @@ public class CHWorldGuard {
 			String regionName = args[0].val();
 			String worldName = args[1].val();
 			List<UUID> membersPlayers = new ArrayList<>();
+			List<String> membersNames = new ArrayList<>();
 			List<String> membersGroups = new ArrayList<>();
 			World world = Bukkit.getServer().getWorld(worldName);
 			if (world == null) {
@@ -1755,18 +1773,24 @@ public class CHWorldGuard {
 			}
 
 			membersPlayers.addAll(region.getMembers().getUniqueIds());
+			membersNames.addAll(region.getMembers().getPlayers());
 			membersGroups.addAll(region.getMembers().getGroups());
 
 			CArray members = CArray.GetAssociativeArray(t);
 			CArray players = new CArray(t);
+			CArray names = new CArray(t);
 			CArray groups = new CArray(t);
 			for (UUID member : membersPlayers) {
 				players.push(new CString(member.toString(), t), t);
+			}
+			for (String member : membersNames) {
+				names.push(new CString(member, t), t);
 			}
 			for (String member : membersGroups) {
 				groups.push(new CString(member, t), t);
 			}
 			members.set("players", players, t);
+			members.set("names", names, t);
 			members.set("groups", groups, t);
 			return members;
 		}

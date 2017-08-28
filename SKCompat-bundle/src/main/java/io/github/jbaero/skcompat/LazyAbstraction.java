@@ -113,12 +113,20 @@ public class LazyAbstraction {
 		return lastRegion.getOwners().getUniqueIds();
 	}
 
+	public Collection<String> getOwnerNames() {
+		return lastRegion.getOwners().getPlayers();
+	}
+
 	public Collection<String> getOwnerGroups() {
 		return lastRegion.getOwners().getGroups();
 	}
 
 	public Collection<UUID> getMemberPlayers() {
 		return lastRegion.getMembers().getUniqueIds();
+	}
+
+	public Collection<String> getMemberNames() {
+		return lastRegion.getMembers().getPlayers();
 	}
 
 	public Collection<String> getMemberGroups() {
