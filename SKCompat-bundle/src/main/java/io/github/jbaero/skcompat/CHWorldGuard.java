@@ -2117,7 +2117,8 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "array {region, world} Returns an associative array with the flags of this region. If the world"
+			return "array {region, world} Returns an associative array with the flags of the region "
+					+ "in format: array(flag-name: flag-value, ...). If the world"
 					+ " or region cannot be found, a PluginInternalException is thrown.";
 		}
 
