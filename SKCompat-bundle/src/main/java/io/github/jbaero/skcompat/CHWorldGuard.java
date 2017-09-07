@@ -2101,6 +2101,48 @@ public class CHWorldGuard {
 
 		}
 	}
+	
+	@api
+	public static class sk_region_flags extends SKFunction {
+
+		@Override
+		public String getName() {
+			return "sk_region_flags";
+		}
+
+		@Override
+		public Integer[] numArgs() {
+			return new Integer[]{2};
+		}
+
+		@Override
+		public String docs() {
+			return "array {region, world} Returns an associative array with the flags of the region "
+					+ "in format: array(flag-name: flag-value, ...). If the world"
+					+ " or region cannot be found, a PluginInternalException is thrown.";
+		}
+
+		@Override
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREPluginInternalException.class};
+		}
+
+		@Override
+		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+			Static.checkPlugin("WorldGuard", t);
+			String regionName = args[0].val();
+			String worldName = args[1].val();
+			
+			getAbstraction().lookupRegion(regionName, worldName, t);
+			
+			CArray flagSet = new CArray(t);
+			for (Map.Entry<String, String> flag : getAbstraction().getFlags().entrySet()) {
+				flagSet.set(flag.getKey(), flag.getValue(), t);
+			}
+			
+			return flagSet;
+		}
+	}
 
 	@api
 	public static class sk_region_setpriority extends SKFunction {
