@@ -4,12 +4,15 @@ import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.StaticLayer;
+import com.sk89q.util.StringUtil;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.internal.cui.CUIEvent;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.world.World;
 
+import java.nio.charset.Charset;
 import java.util.UUID;
 
 /**
@@ -25,8 +28,9 @@ public class SKPlayer extends SKCommandSender {
 
 	@Override
 	public World getWorld() {
+		String worldName = player.getWorld().getName();
 		for (World w : WorldEdit.getInstance().getServer().getWorlds()) {
-			if (w.getName().equals(player.getWorld().getName())) {
+			if (w.getName().equals(worldName)) {
 				return w;
 			}
 		}
@@ -94,5 +98,15 @@ public class SKPlayer extends SKCommandSender {
 	@Override
 	public void setLocation(MCLocation loc) {
 		player.teleport(loc);
+	}
+
+	@Override
+	public void dispatchCUIEvent(CUIEvent event) {
+		String[] params = event.getParameters();
+		String send = event.getTypeId();
+		if (params.length > 0) {
+			send = send + "|" + StringUtil.joinString(params, "|");
+		}
+		player.sendPluginMessage("WECUI", send.getBytes(Charset.forName("UTF-8")));
 	}
 }
