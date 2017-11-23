@@ -58,12 +58,16 @@ import com.sk89q.worldedit.command.RegionCommands;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
+import com.sk89q.worldedit.function.operation.Operation;
+import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.function.pattern.BlockPattern;
 import com.sk89q.worldedit.function.pattern.Pattern;
+import com.sk89q.worldedit.function.pattern.Patterns;
 import com.sk89q.worldedit.function.pattern.RandomPattern;
 import com.sk89q.worldedit.math.transform.AffineTransform;
 import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.session.ClipboardHolder;
@@ -375,22 +379,19 @@ public class CHWorldEdit {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws ConfigRuntimeException {
-
 			Static.checkPlugin("WorldEdit", t);
-			WorldEdit worldEdit = WorldEdit.getInstance();
-
 			MCPlayer player = null;
-			Construct pat = null;
+			Construct pat;
 			if (args.length == 2) {
 				if (!(args[0] instanceof CNull)) {
 					player = Static.GetPlayer(args[0], t);
 				}
-				pat = Static.getArray(args[1], t);
+				pat = args[1];
 			} else {
 				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
 					player = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
 				}
-				pat = Static.getArray(args[0], t);
+				pat = args[0];
 			}
 			SKCommandSender user = getSKPlayer(player, t);
 
@@ -420,11 +421,13 @@ public class CHWorldEdit {
 					pattern = generateBlockPattern(multi[0], t);
 				}
 			}
-
+			EditSession editSession = user.getEditSession(false);
 			try {
-				new RegionCommands(worldEdit).set(user, user.getLocalSession(), user.getEditSession(false), pattern);
+				editSession.setBlocks(user.getLocalSession().getSelection(user.getWorld()), Patterns.wrap(pattern));
 			} catch (WorldEditException wee) {
 				throw new CREPluginInternalException(wee.getMessage(), t);
+			} finally {
+				editSession.flushQueue();
 			}
 
 			return CVoid.VOID;
@@ -610,7 +613,7 @@ public class CHWorldEdit {
 					fastMode = false,
 					origin = false,
 					select = false;
-			SKCommandSender user = null;
+			SKCommandSender user;
 			if (args[0] instanceof CArray) {
 				user = getSKPlayer(null, t);
 				user.setLocation(ObjectGenerator.GetGenerator().location(args[0], null, t));
@@ -632,17 +635,38 @@ public class CHWorldEdit {
 					select = Static.getBoolean(options.get("select", t));
 				}
 			}
-			EditSession editor = user.getEditSession(fastMode);
-
+			EditSession editSession = user.getEditSession(fastMode);
+			LocalSession session = user.getLocalSession();
 			try {
-				ClipboardCommands command = new ClipboardCommands(WorldEdit.getInstance());
-				command.paste(user, user.getLocalSession(), editor, airless, origin, select);
+				// from com.sk89q.worldedit.command.ClipboardCommands.paste()
+				ClipboardHolder holder = session.getClipboard();
+				Clipboard clipboard = holder.getClipboard();
+				Region region = clipboard.getRegion();
+
+				Vector to = origin ? clipboard.getOrigin() : session.getPlacementPosition(user);
+				Operation operation = holder
+						.createPaste(editSession, editSession.getWorld().getWorldData())
+						.to(to)
+						.ignoreAirBlocks(airless)
+						.build();
+				Operations.completeLegacy(operation);
+				if (select) {
+					Vector clipboardOffset = clipboard.getRegion().getMinimumPoint().subtract(clipboard.getOrigin());
+					Vector realTo = to.add(holder.getTransform().apply(clipboardOffset));
+					Vector max = realTo.add(holder.getTransform().apply(region.getMaximumPoint().subtract(region.getMinimumPoint())));
+					RegionSelector selector = new CuboidRegionSelector(user.getWorld(), realTo, max);
+					session.setRegionSelector(user.getWorld(), selector);
+					selector.learnChanges();
+					selector.explainRegionAdjust(user, session);
+				}
 			} catch (MaxChangedBlocksException e) {
 				throw new CRERangeException("Attempted to change more blocks than allowed.", t);
 			} catch (EmptyClipboardException e) {
 				throw new CRENotFoundException("The clipboard is empty, copy something to it first!", t);
 			} catch (WorldEditException ex) {
 				Logger.getLogger(CHWorldEdit.class.getName()).log(Level.SEVERE, null, ex);
+			} finally {
+				editSession.flushQueue();
 			}
 
 			return CVoid.VOID;
