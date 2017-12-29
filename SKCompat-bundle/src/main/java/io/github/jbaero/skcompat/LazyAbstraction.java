@@ -32,8 +32,8 @@ import java.util.UUID;
  */
 public class LazyAbstraction {
 
-	ProtectedRegion lastRegion;
-	World lastWorld;
+	private ProtectedRegion lastRegion;
+	private World lastWorld;
 
 	public Collection<String> allRegions(String worldName, Target t) {
 		World world = Bukkit.getServer().getWorld(worldName);
@@ -96,7 +96,7 @@ public class LazyAbstraction {
 
 		boolean first = true;
 		if (lastRegion instanceof ProtectedPolygonalRegion) {
-			for (BlockVector2D pt : ((ProtectedPolygonalRegion) lastRegion).getPoints()) {
+			for (BlockVector2D pt : lastRegion.getPoints()) {
 				points.add(new BukkitMCLocation(new Location(lastWorld, pt.getX(),
 						first ? lastRegion.getMaximumPoint().getY() : lastRegion.getMinimumPoint().getY(), pt.getZ())));
 				first = false;
