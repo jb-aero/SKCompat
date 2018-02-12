@@ -74,7 +74,7 @@ public class SKPlayer extends SKCommandSender {
 
 	@Override
 	public boolean isActive() {
-		return false;
+		return player.isOnline();
 	}
 
 	@Override
