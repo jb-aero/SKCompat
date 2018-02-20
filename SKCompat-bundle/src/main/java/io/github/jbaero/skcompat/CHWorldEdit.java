@@ -17,7 +17,6 @@
  */
 package io.github.jbaero.skcompat;
 
-import com.laytonsmith.PureUtilities.Point3D;
 import com.laytonsmith.PureUtilities.Vector3D;
 import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCConsoleCommandSender;
@@ -42,10 +41,13 @@ import com.laytonsmith.core.exceptions.CRE.CREPlayerOfflineException;
 import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
 import com.laytonsmith.core.exceptions.CRE.CRERangeException;
 import com.laytonsmith.core.exceptions.CRE.CREThrowable;
+import com.laytonsmith.core.functions.AbstractFunction;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
+import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.EmptyClipboardException;
+import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.Vector;
@@ -78,6 +80,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -180,77 +183,19 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[player], array | [player]} Sets the player's point 1, or returns it if the array to set"
-					+ " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
-					+ " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+			return "mixed {[player], array | [player] | array} Sets the player's point 2 to the given location array."
+					+ " If the array is null, the point will be cleared."
+					+ " If no array is given, current point 2 of the player will be returned as an array in format"
+					+ " array(0:xVal, 1:yVal, 2:zVal, x:xVal, y:yVal, z:zVal) or null when the point has not been set."
+					+ " In case " + this.getName() + "(null) is called, the argument will be treated as player.";
 		}
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCCommandSender m = null;
-			Point3D v = null;
-			Static.checkPlugin("WorldEdit", t);
-
-			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
-				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
-			}
-			if (args.length == 2) { // If sk_posX(player, locationArray).
-				m = SKCompat.myGetPlayer(args[0], t);
-				v = ObjectGenerator.GetGenerator().vector(args[1], t);
-			} else if (args.length == 1) {
-				if (args[0] instanceof CArray) {
-					v = ObjectGenerator.GetGenerator().vector(args[0], t);
-				} else {
-					m = Static.GetPlayer(args[0].val(), t);
-				}
-			}
-
-			SKCommandSender user = getSKPlayer(m, t);
-
-			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
-			if (!(sel instanceof CuboidRegionSelector)) {
-				throw new CREPluginInternalException("Only cuboid regions are supported with " + this.getName(), t);
-			}
-			if (v != null) {
-				
-				// Set the new point.
-				Vector vInt = new Vector((int) v.X(), (int) v.Y(), (int) v.Z()); // Floor to int (CUI would accept doubles and select half blocks).
-				sel.selectPrimary(vInt, null);
-				
-				// Update WorldEdit CUI.
-				if(m instanceof MCPlayer) {
-					String CUImessage = "p|0|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
-					((MCPlayer) m).sendPluginMessage("WECUI", CUImessage.getBytes(Charset.forName("UTF-8")));
-				}
-				
-				// Return void as a new point has been selected.
-				return CVoid.VOID;
-				
-			} else {
-				Vector pt = ((CuboidRegion) sel.getIncompleteRegion()).getPos1();
-				if (pt == null) {
-					throw new CREPluginInternalException("Point in " + this.getName() + "undefined", t);
-				}
-				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
-				
-				// Return null when the position is not set (Coordinates 0,0,0).
-				if (Float.parseFloat(ret.get("x", t).getValue()) == 0f
-						&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
-						&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
-					return CNull.NULL;
-				}
-				
-				// Set the x,y,z values to indices 0,1,2 (for backwards compatibility).
-				ret.set("0", ret.get("x", t), t);
-				ret.set("1", ret.get("y", t), t);
-				ret.set("2", ret.get("z", t), t);
-				
-				// Return the point coordinates.
-				return ret;
-			}
+			return sk_posX_exec(t, env, true, this, args);
 		}
 	}
-
+	
 	@api(environments = CommandHelperEnvironment.class)
 	public static class sk_pos2 extends SKCompat.SKFunction {
 
@@ -266,9 +211,11 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[player], array | [player]} Sets the player's point 2, or returns it if the array to set"
-					+ " isn't specified. Returns an array in format array(0:xValue, 1:yValue, 2:zValue, x:xValue,"
-					+ " y:yValue, z:zValue) or null when the position has not been selected (coordinates 0,0,0).";
+			return "mixed {[player], array | [player] | array} Sets the player's point 2 to the given location array."
+					+ " If the array is null, the point will be cleared."
+					+ " If no array is given, current point 2 of the player will be returned as an array in format"
+					+ " array(0:xVal, 1:yVal, 2:zVal, x:xVal, y:yVal, z:zVal) or null when the point has not been set."
+					+ " In case " + this.getName() + "(null) is called, the argument will be treated as player.";
 		}
 
 		@Override
@@ -278,70 +225,178 @@ public class CHWorldEdit {
 
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCCommandSender m = null;
-			Point3D v = null;
-			Static.checkPlugin("WorldEdit", t);
-
-			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
-				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
-			}
-			if (args.length == 2) { // If sk_posX(player, locationArray).
-				m = SKCompat.myGetPlayer(args[0], t);
-				v = ObjectGenerator.GetGenerator().vector(args[1], t);
-			} else if (args.length == 1) {
-				if (args[0] instanceof CArray) {
-					v = ObjectGenerator.GetGenerator().vector(args[0], t);
-				} else {
-					m = Static.GetPlayer(args[0].val(), t);
-				}
-			}
-
-			SKCommandSender user = getSKPlayer(m, t);
-
-			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
-			if (!(sel instanceof CuboidRegionSelector)) {
-				throw new CREPluginInternalException("Only cuboid regions are supported with " + this.getName(), t);
-			}
-
-			if (v != null) {
-				
-				// Set the new point.
-				Vector vInt = new Vector((int) v.X(), (int) v.Y(), (int) v.Z()); // Floor to int (CUI would accept doubles and select half blocks).
-				sel.selectSecondary(vInt, null);
-				
-				// Update WorldEdit CUI.
-				if(m instanceof MCPlayer) {
-					String CUImessage = "p|1|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0";
-					((MCPlayer) m).sendPluginMessage("WECUI", CUImessage.getBytes(Charset.forName("UTF-8")));
-				}
-				
-				// Return void as a new point has been selected.
-				return CVoid.VOID;
-				
-			} else {
-				Vector pt = ((CuboidRegion) sel.getIncompleteRegion()).getPos2();
-				if (pt == null) {
-					throw new CREPluginInternalException("Point in " + this.getName() + "undefined", t);
-				}
-				CArray ret = ObjectGenerator.GetGenerator().vector(vtov(pt), t);
-				
-				// Return null when the position is not set (Coordinates 0,0,0).
-				if (Float.parseFloat(ret.get("x", t).getValue()) == 0f
-						&& Float.parseFloat(ret.get("y", t).getValue()) == 0f
-						&& Float.parseFloat(ret.get("z", t).getValue()) == 0f) {
-					return CNull.NULL;
-				}
-				
-				// Set the x,y,z values to indices 0,1,2 (for backwards compatibility).
-				ret.set("0", ret.get("x", t), t);
-				ret.set("1", ret.get("y", t), t);
-				ret.set("2", ret.get("z", t), t);
-				
-				return ret;
-			}
+			return sk_posX_exec(t, env, false, this, args);
 		}
 	}
-
+	
+	private static Construct sk_posX_exec(Target t, Environment env, boolean primary,
+			AbstractFunction caller, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		Static.checkPlugin("WorldEdit", t);
+		MCCommandSender m;
+		Construct rawPos;
+		if (args.length == 2) { // If sk_posX(player, locationArray).
+			m = SKCompat.myGetPlayer(args[0], t);
+			rawPos = args[1];
+		} else if (args.length == 1) {
+			if (args[0] instanceof CArray) { // If sk_posX(locationArray).
+				m = null;
+				rawPos = args[0];
+			} else { // If sk_posX(player). sk_posX(null) ends up here too, this is desired since player "null" exists.
+				m = Static.GetPlayer(args[0].val(), t);
+				rawPos = null;
+			}
+		} else { // If sk_posX().
+			m = null;
+			rawPos = null;
+		}
+		if (m == null && env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) { // If the command sender is a player.
+			m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
+		}
+		
+		SKCommandSender user = getSKPlayer(m, t);
+		
+		if (rawPos != null) {
+			
+			// Get the region selector.
+			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
+			if (!(sel instanceof CuboidRegionSelector)) {
+				// If this happens and the selection of the user was not in the same world as the user, his/her
+				// selection will be erased by the "getRegionSelector(user.getWorld())" call.
+				throw new CREPluginInternalException("Only cuboid regions are supported with " + caller.getName(), t);
+			}
+			
+			// Set the new point.
+			if(rawPos instanceof CNull) { // Delete a position.
+				
+				// Get the primary and secondary positions and return if this call doesn't change the selection.
+				Vector pos1 = getPos1((CuboidRegionSelector) sel, t);
+				if(primary && pos1 == null) {
+					return CVoid.VOID; // Selection did not change.
+				}
+				Vector pos2 = getPos2((CuboidRegionSelector) sel, t);
+				if(!primary && pos2 == null) {
+					return CVoid.VOID; // Selection did not change.
+				}
+				
+				// Clear the selection.
+				sel.clear();
+				if(primary) {
+					pos1 = null;
+				} else {
+					pos2 = null;
+				}
+				
+				// Re-set the other position if it was set before.
+				if(pos1 != null) {
+					sel.selectPrimary(pos1, null);
+				}
+				if(pos2 != null) {
+					sel.selectSecondary(pos2, null);
+				}
+				
+				// Update WorldEdit CUI.
+				if (m instanceof MCPlayer) {
+					
+					// Clear the users current selection.
+					((MCPlayer) m).sendPluginMessage("WECUI", "s|cuboid".getBytes(Charset.forName("UTF-8")));
+					
+					// Select any remaining position (can be none or one).
+					if(pos1 != null) {
+						((MCPlayer) m).sendPluginMessage("WECUI",
+								("p|0|" + (int) pos1.getX() + "|" + (int) pos1.getY() + "|" + (int) pos1.getZ() + "|0")
+								.getBytes(Charset.forName("UTF-8")));
+					} else if(pos2 != null) {
+						((MCPlayer) m).sendPluginMessage("WECUI",
+								("p|1|" + (int) pos2.getX() + "|" + (int) pos2.getY() + "|" + (int) pos2.getZ() + "|0")
+								.getBytes(Charset.forName("UTF-8")));
+					}
+				}
+				
+			} else { // Set a position.
+				
+				// Construct and set the position.
+				Vector3D v = ObjectGenerator.GetGenerator().vector(rawPos, t);
+				Vector vInt = new Vector((int) v.X(), (int) v.Y(), (int) v.Z()); // Floor to int (CUI would accept doubles and select half blocks).
+				if (primary) {
+					sel.selectPrimary(vInt, null);
+				} else {
+					sel.selectSecondary(vInt, null);
+				}
+				
+				// Update WorldEdit CUI.
+				if (m instanceof MCPlayer) {
+						((MCPlayer) m).sendPluginMessage("WECUI",
+								("p|" + (primary ? "0" : "1") + "|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0")
+								.getBytes(Charset.forName("UTF-8")));
+				}
+			}
+			
+			// Return void as a new point has been selected.
+			return CVoid.VOID;
+			
+		} else {
+			
+			// When getting the region selector. Don't call "getRegionSelector(user.getWorld())" before checking the
+			// world since it will change the world and clear the users selection if the user is in another world.
+			
+			// Return null if the user does not have a selection in this world.
+			if (!user.getWorld().equals(user.getLocalSession().getSelectionWorld())) {
+				return CNull.NULL;
+			}
+			
+			// Get the region selector.
+			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
+			
+			// Check if the selector region type is supported.
+			if (!(sel instanceof CuboidRegionSelector)) {
+				throw new CREPluginInternalException("Only cuboid regions are supported with " + caller.getName(), t);
+			}
+			
+			// Get the position.
+			Vector pos = (primary ? getPos1((CuboidRegionSelector) sel, t) : getPos2((CuboidRegionSelector) sel, t));
+			
+			// Return the position converted to a CArray or CNull if no position is set.
+			return (pos == null ? CNull.NULL : ObjectGenerator.GetGenerator().vector(vtov(pos)));
+			
+		}
+	}
+	
+	private static Vector getPos1(CuboidRegionSelector selector, Target t) {
+		try {
+			return selector.getPrimaryPosition();
+		} catch (IncompleteRegionException e) {
+			return null; // The primary position is null.
+		}
+	}
+	
+	private static Vector getPos2(CuboidRegionSelector selector, Target t) {
+		
+		// Return the secondary position from a complete selection if it is available.
+		try {
+			return ((CuboidRegion) selector.getRegion()).getPos2();
+		} catch (IncompleteRegionException e) {
+			// Region is incomplete. There is no way to know if position 2 is set without using reflection.
+		}
+		
+		// Get the secondary position using reflection. This is necessary because there is no way to
+		// obtain the secondary position from CuboidRegionSelector. Getting it from the incomplete selection
+		// might return an outdated value which is not properly cleared by CuboidRegionSelector.clear().
+		BlockVector position2;
+		try {
+			Field position2Field = CuboidRegionSelector.class.getDeclaredField("position2");
+			position2Field.setAccessible(true);
+			position2 = (BlockVector) position2Field.get(selector);
+		} catch (NoSuchFieldException | SecurityException
+				| IllegalArgumentException | IllegalAccessException e) {
+			throw new CREPluginInternalException("Getter for secondary position in CommandHelper extension "
+					+ PomData.NAME + " version " + PomData.VERSION + " is not compatible with WorldEdit version "
+					+ WorldEdit.getVersion(), t);
+		}
+		
+		// Return the secondary position (null if the position is not set).
+		return position2;
+	}
+	
 //	public static class sk_points extends SKFunction {
 //
 //		public String getName() {
@@ -750,12 +805,12 @@ public class CHWorldEdit {
 			
 			// Create return array.
 			CArray ret = new CArray(t);
-			CArray origin            = ObjectGenerator.GetGenerator().vector(vtov(clip.getOrigin())      , t);
-			CArray dimensions        = ObjectGenerator.GetGenerator().vector(vtov(clip.getDimensions())  , t);
-			CArray minPointOriginal  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMinimumPoint()), t);
-			CArray maxPointOriginal  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMaximumPoint()), t);
-			CArray minPointRelative  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMinimumPoint().subtract(clip.getOrigin())), t);
-			CArray maxPointRelative  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMaximumPoint().subtract(clip.getOrigin())), t);
+			CArray origin            = ObjectGenerator.GetGenerator().vector(vtov(clip.getOrigin())      );
+			CArray dimensions        = ObjectGenerator.GetGenerator().vector(vtov(clip.getDimensions())  );
+			CArray minPointOriginal  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMinimumPoint()));
+			CArray maxPointOriginal  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMaximumPoint()));
+			CArray minPointRelative  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMinimumPoint().subtract(clip.getOrigin())));
+			CArray maxPointRelative  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMaximumPoint().subtract(clip.getOrigin())));
 			CArray minPoint = new CArray(t);
 			CArray maxPoint = new CArray(t);
 			minPoint.set("original", minPointOriginal, t); // Original copy region world coords (//paste -o).
@@ -778,10 +833,10 @@ public class CHWorldEdit {
 			Vector minPointRelativeVec = affineTransform.apply(clip.getMinimumPoint().subtract(clip.getOrigin()));
 			Vector maxPointRelativeVec = affineTransform.apply(clip.getMaximumPoint().subtract(clip.getOrigin()));
 			
-			CArray minPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointOriginalVec), t);
-			CArray maxPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointOriginalVec), t);
-			CArray minPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointRelativeVec), t);
-			CArray maxPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointRelativeVec), t);
+			CArray minPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointOriginalVec));
+			CArray maxPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointOriginalVec));
+			CArray minPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointRelativeVec));
+			CArray maxPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointRelativeVec));
 			
 			minPoint.set("original", minPointOriginalCVec, t); // 'Original' copy region world coords (//paste -o) inc rotation & flip.
 			maxPoint.set("original", maxPointOriginalCVec, t); // 'Original' copy region world coords (//paste -o) inc rotation & flip.
