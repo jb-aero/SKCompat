@@ -316,18 +316,21 @@ public class CHWorldEdit {
 				
 				// Construct and set the position.
 				Vector3D v = ObjectGenerator.GetGenerator().vector(rawPos, t);
-				Vector vInt = new Vector((int) v.X(), (int) v.Y(), (int) v.Z()); // Floor to int (CUI would accept doubles and select half blocks).
+				// Floor to int (CUI would accept doubles and select half blocks).
+				Vector blockPos = new Vector(Math.floor(v.X()), Math.floor(v.Y()), Math.floor(v.Z()));
 				if (primary) {
-					sel.selectPrimary(vInt, null);
+					sel.selectPrimary(blockPos, null);
 				} else {
-					sel.selectSecondary(vInt, null);
+					sel.selectSecondary(blockPos, null);
 				}
 				
 				// Update WorldEdit CUI.
 				if (m instanceof MCPlayer) {
 						((MCPlayer) m).sendPluginMessage("WECUI",
-								("p|" + (primary ? "0" : "1") + "|" + vInt.getX() + "|" + vInt.getY() + "|" + vInt.getZ() + "|0")
-								.getBytes(Charset.forName("UTF-8")));
+								("p|" + (primary ? "0" : "1")
+								+ "|" + blockPos.getX() + "|" + blockPos.getY() + "|" + blockPos.getZ() + "|0")
+								.getBytes(Charset.forName("UTF-8"))
+						);
 				}
 			}
 			
