@@ -8,8 +8,12 @@ import com.laytonsmith.core.Static;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.blocks.BaseItemStack;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.util.HandSide;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.world.World;
+import org.bukkit.Bukkit;
 
 import java.util.UUID;
 
@@ -47,14 +51,23 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public World getWorld() {
 		if (location != null) {
-			for (World w : WorldEdit.getInstance().getServer().getWorlds()) {
+			for (org.bukkit.World w : Bukkit.getWorlds()) {
 				if (w.getName().equals(location.getWorld().getName())) {
-					return w;
+					return BukkitAdapter.adapt(w);
 				}
 			}
 		}
-		World ret = WorldEdit.getInstance().getServer().getWorlds().get(0);
-		return ret;
+		return BukkitAdapter.adapt(Bukkit.getWorlds().get(0));
+	}
+
+	@Override
+	public BaseItemStack getItemInHand(HandSide handSide) {
+		return null;
+	}
+
+	@Override
+	public void giveItem(BaseItemStack baseItemStack) {
+		// do nothing
 	}
 
 	public void setWorld(MCWorld w) {
@@ -90,21 +103,6 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public UUID getUniqueId() {
 		return uuid;
-	}
-
-	@Override
-	public int getItemInHand() {
-		return 0;
-	}
-
-	@Override
-	public double getPitch() {
-		return location.getPitch();
-	}
-
-	@Override
-	public double getYaw() {
-		return location.getY();
 	}
 
 	@Override

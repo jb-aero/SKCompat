@@ -4,15 +4,18 @@ import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.StaticLayer;
-import com.sk89q.util.StringUtil;
+import com.laytonsmith.abstraction.bukkit.BukkitMCItemStack;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.internal.cui.CUIEvent;
+import com.sk89q.worldedit.blocks.BaseItemStack;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.util.HandSide;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.world.World;
+import org.bukkit.Bukkit;
+import org.bukkit.inventory.ItemStack;
 
-import java.nio.charset.Charset;
 import java.util.UUID;
 
 /**
@@ -29,12 +32,26 @@ public class SKPlayer extends SKCommandSender {
 	@Override
 	public World getWorld() {
 		String worldName = player.getWorld().getName();
-		for (World w : WorldEdit.getInstance().getServer().getWorlds()) {
+		for (org.bukkit.World w : Bukkit.getWorlds()) {
 			if (w.getName().equals(worldName)) {
-				return w;
+				return BukkitAdapter.adapt(w);
 			}
 		}
-		return WorldEdit.getInstance().getServer().getWorlds().get(0);
+		return BukkitAdapter.adapt(Bukkit.getWorlds().get(0));
+	}
+
+	@Override
+	public BaseItemStack getItemInHand(HandSide handSide) {
+		if(handSide == HandSide.MAIN_HAND) {
+			return BukkitAdapter.adapt((ItemStack) player.getItemInHand().getHandle());
+		} else {
+			return BukkitAdapter.adapt((ItemStack) player.getInventory().getItemInOffHand().getHandle());
+		}
+	}
+
+	@Override
+	public void giveItem(BaseItemStack baseItemStack) {
+		player.getInventory().addItem(new BukkitMCItemStack(BukkitAdapter.adapt(baseItemStack)));
 	}
 
 	@Override
@@ -43,23 +60,8 @@ public class SKPlayer extends SKCommandSender {
 	}
 
 	@Override
-	public int getItemInHand() {
-		return player.getItemInHand() == null ? 0 : player.getItemInHand().getTypeId();
-	}
-
-	@Override
 	public LocalSession getLocalSession() {
 		return WorldEdit.getInstance().getSessionManager().get(this);
-	}
-
-	@Override
-	public double getPitch() {
-		return player.getLocation().getPitch();
-	}
-
-	@Override
-	public double getYaw() {
-		return player.getLocation().getYaw();
 	}
 
 	@Override
@@ -98,15 +100,5 @@ public class SKPlayer extends SKCommandSender {
 	@Override
 	public void setLocation(MCLocation loc) {
 		player.teleport(loc);
-	}
-
-	@Override
-	public void dispatchCUIEvent(CUIEvent event) {
-		String[] params = event.getParameters();
-		String send = event.getTypeId();
-		if (params.length > 0) {
-			send = send + "|" + StringUtil.joinString(params, "|");
-		}
-		player.sendPluginMessage("WECUI", send.getBytes(Charset.forName("UTF-8")));
 	}
 }

@@ -53,35 +53,33 @@ import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
-import com.sk89q.worldedit.blocks.BaseBlock;
-import com.sk89q.worldedit.blocks.BlockType;
 import com.sk89q.worldedit.command.ClipboardCommands;
+import com.sk89q.worldedit.extension.input.InputParseException;
+import com.sk89q.worldedit.extension.input.ParserContext;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
+import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.function.pattern.BlockPattern;
 import com.sk89q.worldedit.function.pattern.Pattern;
-import com.sk89q.worldedit.function.pattern.Patterns;
 import com.sk89q.worldedit.function.pattern.RandomPattern;
 import com.sk89q.worldedit.math.transform.AffineTransform;
 import com.sk89q.worldedit.math.transform.Transform;
-import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.util.io.Closer;
 import com.sk89q.worldedit.util.io.file.FilenameException;
-import com.sk89q.worldedit.world.registry.WorldData;
+import com.sk89q.worldedit.world.block.BlockStateHolder;
+import com.sk89q.worldedit.world.block.BlockTypes;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -118,48 +116,33 @@ public class CHWorldEdit {
 		return new Vector3D(vec.getX(), vec.getY(), vec.getZ());
 	}
 
-	public static WeightedBlockPattern generateBlockPattern(Construct source, Target t) {
+	public static WeightedBlockPattern generateBlockPattern(Construct source, SKCommandSender user, Target t) {
+		ParserContext context = new ParserContext();
+		context.setActor(user);
 		CArray src = Static.getArray(source, t);
-
-		if (src.containsKey("name")) {
-			int data = 0;
+		if (src.containsKey("block")) {
 			double weight = 1D;
-			if (src.containsKey("data")) {
-				data = Static.getInt32(src.get("data", t), t);
-			}
 			if (src.containsKey("weight")) {
 				weight = Static.getDouble(src.get("weight", t), t);
 			}
-			BlockType type = BlockType.lookup(src.get("name", t).val());
-			if (type == null) {
-				throw new CRENotFoundException("Could not determine blocktype from " + src.get("name", t).val(), t);
-			} else {
-				return new WeightedBlockPattern(new BaseBlock(type.getID(), data), weight);
+			try {
+				BlockStateHolder block = WorldEdit.getInstance().getBlockFactory().parseFromInput(src.get("block", t).val(), context);
+				return new WeightedBlockPattern(block, weight);
+			} catch(InputParseException ex) {
+				throw new CREFormatException(ex.getMessage(), t);
 			}
 		} else {
 			throw new CREFormatException("Block name required", t);
 		}
 	}
 
-	public static WeightedBlockPattern generateBlockPattern(String source, Target t) {
+	public static Pattern generateBlockPattern(String source, SKCommandSender user, Target t) {
+		ParserContext context = new ParserContext();
+		context.setActor(user);
 		try {
-			int data = 0;
-			double weight = 1D;
-			String[] typeInfo;
-			String[] weightedType = source.split("%");
-			if (weightedType.length == 1) {
-				typeInfo = weightedType[0].split(":");
-			} else {
-				weight = Double.valueOf(weightedType[0]);
-				typeInfo = weightedType[1].split(":");
-			}
-			BlockType type = BlockType.lookup(typeInfo[0]);
-			if (typeInfo.length > 1) {
-				data = Integer.valueOf(typeInfo[1]);
-			}
-			return new WeightedBlockPattern(new BaseBlock(type.getID(), data), weight);
-		} catch (NumberFormatException e) {
-			throw new CRECastException(e.getMessage(), t);
+			return WorldEdit.getInstance().getPatternFactory().parseFromInput(source, context);
+		} catch(InputParseException ex) {
+			throw new CREFormatException(ex.getMessage(), t);
 		}
 	}
 
@@ -296,20 +279,7 @@ public class CHWorldEdit {
 				
 				// Update WorldEdit CUI.
 				if (m instanceof MCPlayer) {
-					
-					// Clear the users current selection.
-					((MCPlayer) m).sendPluginMessage("WECUI", "s|cuboid".getBytes(Charset.forName("UTF-8")));
-					
-					// Select any remaining position (can be none or one).
-					if(pos1 != null) {
-						((MCPlayer) m).sendPluginMessage("WECUI",
-								("p|0|" + (int) pos1.getX() + "|" + (int) pos1.getY() + "|" + (int) pos1.getZ() + "|0")
-								.getBytes(Charset.forName("UTF-8")));
-					} else if(pos2 != null) {
-						((MCPlayer) m).sendPluginMessage("WECUI",
-								("p|1|" + (int) pos2.getX() + "|" + (int) pos2.getY() + "|" + (int) pos2.getZ() + "|0")
-								.getBytes(Charset.forName("UTF-8")));
-					}
+					user.getLocalSession().dispatchCUISelection(user);
 				}
 				
 			} else { // Set a position.
@@ -326,11 +296,7 @@ public class CHWorldEdit {
 				
 				// Update WorldEdit CUI.
 				if (m instanceof MCPlayer) {
-						((MCPlayer) m).sendPluginMessage("WECUI",
-								("p|" + (primary ? "0" : "1")
-								+ "|" + blockPos.getX() + "|" + blockPos.getY() + "|" + blockPos.getZ() + "|0")
-								.getBytes(Charset.forName("UTF-8"))
-						);
+					sel.explainRegionAdjust(user, user.getLocalSession());
 				}
 			}
 			
@@ -376,7 +342,7 @@ public class CHWorldEdit {
 		
 		// Return the secondary position from a complete selection if it is available.
 		try {
-			return ((CuboidRegion) selector.getRegion()).getPos2();
+			return selector.getRegion().getPos2();
 		} catch (IncompleteRegionException e) {
 			// Region is incomplete. There is no way to know if position 2 is set without using reflection.
 		}
@@ -456,31 +422,22 @@ public class CHWorldEdit {
 			if (pat instanceof CArray) {
 				CArray pata = (CArray) pat;
 				if (pata.size() == 0) {
-					pattern = new BlockPattern(new BaseBlock(0));
+					pattern = new BlockPattern(BlockTypes.AIR.getDefaultState());
 				} else if (pata.size() == 1) {
-					pattern = generateBlockPattern(pata.get(0, t), t);
+					pattern = generateBlockPattern(pata.get(0, t), user, t);
 				} else {
 					pattern = new RandomPattern();
 					for (Construct entry : pata.asList()) {
-						WeightedBlockPattern temp = generateBlockPattern(entry, t);
+						WeightedBlockPattern temp = generateBlockPattern(entry, user, t);
 						((RandomPattern) pattern).add(temp, temp.getWeight());
 					}
 				}
 			} else {
-				String[] multi = pat.val().split(",");
-				if (multi.length > 1) {
-					pattern = new RandomPattern();
-					for (String type : multi) {
-						WeightedBlockPattern temp = generateBlockPattern(type, t);
-						((RandomPattern) pattern).add(temp, temp.getWeight());
-					}
-				} else {
-					pattern = generateBlockPattern(multi[0], t);
-				}
+				pattern = generateBlockPattern(pat.val(), user, t);
 			}
 			EditSession editSession = user.getEditSession(false);
 			try {
-				editSession.setBlocks(user.getLocalSession().getSelection(user.getWorld()), Patterns.wrap(pattern));
+				editSession.setBlocks(user.getLocalSession().getSelection(user.getWorld()), pattern);
 			} catch (WorldEditException wee) {
 				throw new CREPluginInternalException(wee.getMessage(), t);
 			} finally {
@@ -502,11 +459,12 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {[player], pattern} Sets a selection of blocks according to the provided pattern,"
+			return "void {[player], pattern} Sets the user's selection to blocks defined by the provided pattern."
+					+ " The pattern can be a string in the format given to worldedit commands, or it can be"
 					+ " a normal array of associative arrays. If the array is empty, the entire selection will be"
-					+ " set to air. The inner arrays consist of a required 'name' field, an optional 'data' field,"
-					+ " and an optional decimal 'weight' field. If data is not given it defaults to 0,"
-					+ " and if weight is not given it defaults to 1. The weight represents that blocktype's chance"
+					+ " set to air. The inner arrays consist of a required 'block' field describing the block's"
+					+ " material and properties, and an optional decimal 'weight' field."
+					+ " If weight is not given it defaults to 1. The weight represents that block's chance"
 					+ " of being selected for the next random block setting.";
 		}
 	}
@@ -557,11 +515,16 @@ public class CHWorldEdit {
 				} else {
 					FileInputStream fis = closer.register(new FileInputStream(f));
 					BufferedInputStream bis = closer.register(new BufferedInputStream(fis));
-					ClipboardReader reader = ClipboardFormat.SCHEMATIC.getReader(bis);
+					ClipboardReader reader;
+					if(BuiltInClipboardFormat.SPONGE_SCHEMATIC.isFormat(f)) {
+						reader = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getReader(bis);
+					} else {
+						// legacy schematic format
+						reader = BuiltInClipboardFormat.MCEDIT_SCHEMATIC.getReader(bis);
+					}
 
-					WorldData worldData = user.getWorld().getWorldData();
-					Clipboard clipboard = reader.read(worldData);
-					user.getLocalSession().setClipboard(new ClipboardHolder(clipboard, worldData));
+					Clipboard clipboard = reader.read();
+					user.getLocalSession().setClipboard(new ClipboardHolder(clipboard));
 				}
 			} catch (IOException e) {
 				throw new CREIOException("Schematic could not read or it does not exist: " + e.getMessage(), t);
@@ -680,16 +643,16 @@ public class CHWorldEdit {
 			if (args.length >= 2) {
 				CArray options = Static.getArray(args[1], t);
 				if (options.containsKey("airless")) {
-					airless = Static.getBoolean(options.get("airless", t));
+					airless = Static.getBoolean(options.get("airless", t), t);
 				}
 				if (options.containsKey("fastmode")) {
-					fastMode = Static.getBoolean(options.get("fastmode", t));
+					fastMode = Static.getBoolean(options.get("fastmode", t), t);
 				}
 				if (options.containsKey("origin")) {
-					origin = Static.getBoolean(options.get("origin", t));
+					origin = Static.getBoolean(options.get("origin", t), t);
 				}
 				if (options.containsKey("select")) {
-					select = Static.getBoolean(options.get("select", t));
+					select = Static.getBoolean(options.get("select", t), t);
 				}
 			}
 			EditSession editSession = user.getEditSession(fastMode);
@@ -702,7 +665,7 @@ public class CHWorldEdit {
 
 				Vector to = origin ? clipboard.getOrigin() : session.getPlacementPosition(user);
 				Operation operation = holder
-						.createPaste(editSession, editSession.getWorld().getWorldData())
+						.createPaste(editSession)
 						.to(to)
 						.ignoreAirBlocks(airless)
 						.build();
@@ -780,7 +743,7 @@ public class CHWorldEdit {
 		
 		@Override
 		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
-			MCPlayer player = null;
+			MCPlayer player;
 			Static.checkPlugin("WorldEdit", t);
 			
 			if (args.length == 0) {
@@ -790,14 +753,9 @@ public class CHWorldEdit {
 			}
 			
 			SKCommandSender user = getSKPlayer(player, t);
-			
-			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
-			if (!( sel instanceof CuboidRegionSelector )) {
-				throw new CREPluginInternalException("Only cuboid regions are supported with " + this.getName(), t);
-			}
-			
+
 			LocalSession localSession = user.getLocalSession();
-			ClipboardHolder clipHolder = null;
+			ClipboardHolder clipHolder;
 			try {
 				clipHolder = localSession.getClipboard();
 			} catch (EmptyClipboardException e) {
