@@ -9,13 +9,13 @@ import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.WorldVector;
-import com.sk89q.worldedit.blocks.BaseItem;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.extension.platform.AbstractPlayerActor;
 import com.sk89q.worldedit.extent.inventory.BlockBag;
 import com.sk89q.worldedit.extent.inventory.BlockBagException;
 import com.sk89q.worldedit.session.SessionKey;
+import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldedit.world.block.BlockState;
 
 /**
  * @author jb_aero
@@ -51,15 +51,6 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 	public boolean hasPermission(String string) {
 		// TODO: console can have permissions set
 		return true;
-	}
-
-	@Override
-	public void giveItem(int i, int i1) {
-	}
-
-	@Override
-	public WorldVector getPosition() {
-		return new WorldVector(getLocation());
 	}
 
 	public abstract void setLocation(MCLocation loc);
@@ -102,23 +93,23 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 	private static class ConsoleBlockBag extends BlockBag {
 
 		@Override
+		public void fetchBlock(BlockState blockState) throws BlockBagException {
+		}
+
+		@Override
+		public void storeBlock(BlockState blockState, int i) throws BlockBagException {
+		}
+
+		@Override
 		public void flushChanges() {
 		}
 
 		@Override
-		public void addSourcePosition(WorldVector wv) {
+		public void addSourcePosition(Location location) {
 		}
 
 		@Override
-		public void addSingleSourcePosition(WorldVector wv) {
-		}
-
-		@Override
-		public void storeItem(BaseItem item) throws BlockBagException {
-		}
-
-		@Override
-		public void fetchItem(BaseItem item) throws BlockBagException {
+		public void addSingleSourcePosition(Location location) {
 		}
 
 	}

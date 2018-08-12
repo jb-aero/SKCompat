@@ -7,8 +7,8 @@ import com.laytonsmith.core.exceptions.CRE.CREInvalidWorldException;
 import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
 import com.sk89q.worldedit.BlockVector2D;
 import com.sk89q.worldedit.Vector;
-import com.sk89q.worldguard.bukkit.BukkitUtil;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -35,18 +35,26 @@ public class LazyAbstraction {
 	private ProtectedRegion lastRegion;
 	private World lastWorld;
 
+	public RegionManager getRegionManager(World world, Target t) {
+		RegionManager mgr = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
+		if(mgr == null) {
+			throw new CREPluginInternalException("Could not find region manager for world: " + world.getName(), t);
+		}
+		return mgr;
+	}
+
 	public Collection<String> allRegions(String worldName, Target t) {
 		World world = Bukkit.getServer().getWorld(worldName);
 		if (world == null) {
 			throw new CREInvalidWorldException("Unknown world specified.", t);
 		}
-		return WorldGuardPlugin.inst().getRegionManager(world).getRegions().keySet();
+		return getRegionManager(world, t).getRegions().keySet();
 	}
 
 	public Collection<String> regionsAt(String worldName, int x, int y, int z) {
 
 		lastWorld = Bukkit.getServer().getWorld(worldName);
-		RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(lastWorld);
+		RegionManager mgr = getRegionManager(lastWorld, Target.UNKNOWN);
 		Vector pt = new Vector(x, y, z);
 		ApplicableRegionSet set = mgr.getApplicableRegions(pt);
 
@@ -84,7 +92,7 @@ public class LazyAbstraction {
 		if (lastWorld == null) {
 			throw new CREPluginInternalException("Unknown world specified", t);
 		}
-		RegionManager mgr = WorldGuardPlugin.inst().getRegionManager(lastWorld);
+		RegionManager mgr = getRegionManager(lastWorld, t);
 		lastRegion = mgr.getRegion(regionName);
 		if (lastRegion == null) {
 			throw new CREPluginInternalException("Region could not be found!", t);
@@ -102,8 +110,8 @@ public class LazyAbstraction {
 				first = false;
 			}
 		} else {
-			points.add(new BukkitMCLocation(BukkitUtil.toLocation(lastWorld, lastRegion.getMaximumPoint())));
-			points.add(new BukkitMCLocation(BukkitUtil.toLocation(lastWorld, lastRegion.getMinimumPoint())));
+			points.add(new BukkitMCLocation(BukkitAdapter.adapt(lastWorld, lastRegion.getMaximumPoint())));
+			points.add(new BukkitMCLocation(BukkitAdapter.adapt(lastWorld, lastRegion.getMinimumPoint())));
 		}
 
 		return points;
