@@ -958,10 +958,6 @@ public class CHWorldGuard {
 				newRegion = new ProtectedPolygonalRegion(region, points2D, minY, maxY);
 			}
 
-			if (newRegion == null) {
-				throw new CREPluginInternalException("Error while redefining protected region", t);
-			}
-
 			mgr.addRegion(newRegion);
 
 			newRegion.setMembers(oldRegion.getMembers());
@@ -1062,10 +1058,6 @@ public class CHWorldGuard {
 				newRegion = new ProtectedCuboidRegion(newRegionName, oldRegion.getMinimumPoint(), oldRegion.getMaximumPoint());
 			} else {
 				newRegion = new ProtectedPolygonalRegion(newRegionName, oldRegion.getPoints(), oldRegion.getMinimumPoint().getBlockY(), oldRegion.getMaximumPoint().getBlockY());
-			}
-
-			if (newRegion == null) {
-				throw new CREPluginInternalException("Error while redefining protected region", t);
 			}
 
 			mgr.addRegion(newRegion);
@@ -1995,17 +1987,19 @@ public class CHWorldGuard {
 			ApplicableRegionSet set = mgr.getApplicableRegions(BukkitAdapter.asVector((Location) l.getHandle()));
 			if (foundFlag instanceof StateFlag) {
 				if (p == null) {
-					return CBoolean.get(set.allows((StateFlag) foundFlag));
+					return CBoolean.get(set.testState(null, (StateFlag) foundFlag));
 				} else {
-					return CBoolean.get(set.allows((StateFlag) foundFlag, WorldGuardPlugin.inst().wrapPlayer(((BukkitMCPlayer) p)._Player())));
+					return CBoolean.get(set.testState(
+							WorldGuardPlugin.inst().wrapPlayer(((BukkitMCPlayer) p)._Player()), (StateFlag) foundFlag));
 				}
 			} else {
 				Object getFlag;
 
 				if (p == null) {
-					getFlag = set.getFlag((Flag) foundFlag);
+					getFlag = set.queryValue(null, (Flag<?>) foundFlag);
 				} else {
-					getFlag = set.getFlag((Flag) foundFlag, WorldGuardPlugin.inst().wrapPlayer(((BukkitMCPlayer) p)._Player()));
+					getFlag = set.queryValue(
+							WorldGuardPlugin.inst().wrapPlayer(((BukkitMCPlayer) p)._Player()), (Flag<?>) foundFlag);
 				}
 
 				if (foundFlag instanceof BooleanFlag) {
@@ -2023,7 +2017,7 @@ public class CHWorldGuard {
 						return CNull.NULL;
 					}
 				} else if (foundFlag instanceof EnumFlag) {
-					String value = ((EnumFlag) foundFlag).unmarshal(getFlag).name();
+					String value = ((EnumFlag<?>) foundFlag).unmarshal(getFlag).name();
 					if (value != null) {
 						return new CString(value, t);
 					} else {
@@ -2051,7 +2045,7 @@ public class CHWorldGuard {
 
 					CArray values = new CArray(t);
 
-					Set setValue = ((SetFlag) foundFlag).unmarshal(getFlag);
+					Set<?> setValue = ((SetFlag<?>) foundFlag).unmarshal(getFlag);
 
 					if (setValue != null) {
 						for (Object setFlag : setValue) {
