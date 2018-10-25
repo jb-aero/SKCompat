@@ -441,7 +441,7 @@ public class CHWorldEdit {
 			} catch (WorldEditException wee) {
 				throw new CREPluginInternalException(wee.getMessage(), t);
 			} finally {
-				editSession.flushQueue();
+				editSession.flushSession();
 			}
 
 			return CVoid.VOID;
@@ -686,7 +686,7 @@ public class CHWorldEdit {
 			} catch (WorldEditException ex) {
 				Logger.getLogger(CHWorldEdit.class.getName()).log(Level.SEVERE, null, ex);
 			} finally {
-				editSession.flushQueue();
+				editSession.flushSession();
 			}
 
 			return CVoid.VOID;
