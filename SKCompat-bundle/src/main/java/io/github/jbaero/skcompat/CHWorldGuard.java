@@ -54,10 +54,9 @@ import com.laytonsmith.core.exceptions.CRE.CRERangeException;
 import com.laytonsmith.core.exceptions.CRE.CREThrowable;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
-import com.sk89q.worldedit.BlockVector;
-import com.sk89q.worldedit.BlockVector2D;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.math.BlockVector2;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -577,7 +576,7 @@ public class CHWorldGuard {
 
 			world = Bukkit.getServer().getWorld(loc.getWorld().getName());
 			RegionManager mgr = getAbstraction().getRegionManager(world, t);
-			Vector pt = new Vector(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+			BlockVector3 pt = BlockVector3.at(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
 			ApplicableRegionSet set = mgr.getApplicableRegions(pt);
 
 			CArray regions = new CArray(t);
@@ -688,7 +687,7 @@ public class CHWorldGuard {
 			MCWorld w = null;
 			String region;
 			CArray points;
-			List<BlockVector> verticies = new ArrayList<>();
+			List<BlockVector3> verticies = new ArrayList<>();
 
 			if ((args.length == 3) || (args.length == 2 && "__global__".equalsIgnoreCase(args[1].val()))) {
 
@@ -745,7 +744,7 @@ public class CHWorldGuard {
 							z = Static.getNumber(point.get("z", t), t);
 						}
 
-						verticies.add(new BlockVector(x, y, z));
+						verticies.add(BlockVector3.at(x, y, z));
 					}
 				}
 
@@ -814,19 +813,19 @@ public class CHWorldGuard {
 					newRegion = new ProtectedCuboidRegion(region, verticies.get(0), verticies.get(1));
 				} else {
 
-					List<BlockVector2D> pointsPoly = new ArrayList<>();
+					List<BlockVector2> pointsPoly = new ArrayList<>();
 					int minY = 0;
 					int maxY = 0;
 
 					for (int i = 0; i < verticies.size(); i++) {
 
-						BlockVector vector = verticies.get(i);
+						BlockVector3 vector = verticies.get(i);
 
 						int x = vector.getBlockX();
 						int y = vector.getBlockY();
 						int z = vector.getBlockZ();
 
-						pointsPoly.add(new BlockVector2D(x, z));
+						pointsPoly.add(BlockVector2.at(x, z));
 
 						if (i == 0) {
 							minY = maxY = y;
@@ -922,8 +921,8 @@ public class CHWorldGuard {
 				throw new CREPluginInternalException("Pass an array of points to define a new region", t);
 			}
 
-			List<BlockVector> points = new ArrayList<>();
-			List<BlockVector2D> points2D = new ArrayList<>();
+			List<BlockVector3> points = new ArrayList<>();
+			List<BlockVector2> points2D = new ArrayList<>();
 
 			int minY = 0;
 			int maxY = 0;
@@ -936,9 +935,9 @@ public class CHWorldGuard {
 				Point3D vec = ObjectGenerator.GetGenerator().vector(arg.get(i, t), t);
 
 				if (arg.size() == 2) {
-					points.add(new BlockVector(vec.X(), vec.Y(), vec.Z()));
+					points.add(BlockVector3.at(vec.X(), vec.Y(), vec.Z()));
 				} else {
-					points2D.add(new BlockVector2D(vec.X(), vec.Z()));
+					points2D.add(BlockVector2.at(vec.X(), vec.Z()));
 
 					if (i == 0) {
 						minY = maxY = (int) vec.Y();
@@ -1984,7 +1983,7 @@ public class CHWorldGuard {
 
 			RegionManager mgr = getAbstraction().getRegionManager(Bukkit.getServer().getWorld(l.getWorld().getName()), t);
 
-			ApplicableRegionSet set = mgr.getApplicableRegions(BukkitAdapter.asVector((Location) l.getHandle()));
+			ApplicableRegionSet set = mgr.getApplicableRegions(BukkitAdapter.asBlockVector((Location) l.getHandle()));
 			if (foundFlag instanceof StateFlag) {
 				if (p == null) {
 					return CBoolean.get(set.testState(null, (StateFlag) foundFlag));
