@@ -496,7 +496,7 @@ public class CHWorldEdit {
 			File f;
 
 			try {
-				f = worldEdit.getSafeOpenFile(user, dir, filename, "schematic", "schematic");
+				f = worldEdit.getSafeOpenFile(user, dir, filename, "schem", "schematic");
 			} catch (FilenameException fne) {
 				throw new CREIOException(fne.getMessage(), t);
 			}
