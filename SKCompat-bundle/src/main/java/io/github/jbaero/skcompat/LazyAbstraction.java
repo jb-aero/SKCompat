@@ -5,8 +5,8 @@ import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.exceptions.CRE.CREInvalidWorldException;
 import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
-import com.sk89q.worldedit.BlockVector2D;
-import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.math.BlockVector2;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
@@ -55,7 +55,7 @@ public class LazyAbstraction {
 
 		lastWorld = Bukkit.getServer().getWorld(worldName);
 		RegionManager mgr = getRegionManager(lastWorld, Target.UNKNOWN);
-		Vector pt = new Vector(x, y, z);
+		BlockVector3 pt = BlockVector3.at(x, y, z);
 		ApplicableRegionSet set = mgr.getApplicableRegions(pt);
 
 		List<ProtectedRegion> sortedRegions = new ArrayList<>();
@@ -104,7 +104,7 @@ public class LazyAbstraction {
 
 		boolean first = true;
 		if (lastRegion instanceof ProtectedPolygonalRegion) {
-			for (BlockVector2D pt : lastRegion.getPoints()) {
+			for (BlockVector2 pt : lastRegion.getPoints()) {
 				points.add(new BukkitMCLocation(new Location(lastWorld, pt.getX(),
 						first ? lastRegion.getMaximumPoint().getY() : lastRegion.getMinimumPoint().getY(), pt.getZ())));
 				first = false;

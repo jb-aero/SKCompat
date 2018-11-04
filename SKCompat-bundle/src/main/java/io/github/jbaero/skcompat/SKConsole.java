@@ -6,7 +6,7 @@ import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.StaticLayer;
 import com.laytonsmith.core.Static;
 import com.sk89q.worldedit.LocalSession;
-import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
@@ -106,7 +106,7 @@ public class SKConsole extends SKCommandSender {
 	}
 
 	@Override
-	public void setPosition(Vector vector, float f, float f1) {
+	public void setPosition(Vector3 vector, float f, float f1) {
 		location.setX(vector.getX());
 		location.setY(vector.getY());
 		location.setZ(vector.getZ());

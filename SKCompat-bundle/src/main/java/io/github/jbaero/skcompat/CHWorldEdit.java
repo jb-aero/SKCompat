@@ -44,13 +44,11 @@ import com.laytonsmith.core.exceptions.CRE.CREThrowable;
 import com.laytonsmith.core.functions.AbstractFunction;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
-import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.EmptyClipboardException;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.command.ClipboardCommands;
@@ -64,6 +62,8 @@ import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.function.pattern.BlockPattern;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.function.pattern.RandomPattern;
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.math.transform.AffineTransform;
 import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.regions.Region;
@@ -108,11 +108,11 @@ public class CHWorldEdit {
 		return ret;
 	}
 
-	public static Vector vtov(Vector3D vec) {
-		return new Vector(vec.X(), vec.Y(), vec.Z());
+	public static BlockVector3 vtov(Vector3D vec) {
+		return BlockVector3.at(vec.X(), vec.Y(), vec.Z());
 	}
 
-	public static Vector3D vtov(Vector vec) {
+	public static Vector3D vtov(BlockVector3 vec) {
 		return new Vector3D(vec.getX(), vec.getY(), vec.getZ());
 	}
 
@@ -252,11 +252,11 @@ public class CHWorldEdit {
 			if(rawPos instanceof CNull) { // Delete a position.
 				
 				// Get the primary and secondary positions and return if this call doesn't change the selection.
-				Vector pos1 = getPos1((CuboidRegionSelector) sel, t);
+				BlockVector3 pos1 = getPos1((CuboidRegionSelector) sel, t);
 				if(primary && pos1 == null) {
 					return CVoid.VOID; // Selection did not change.
 				}
-				Vector pos2 = getPos2((CuboidRegionSelector) sel, t);
+				BlockVector3 pos2 = getPos2((CuboidRegionSelector) sel, t);
 				if(!primary && pos2 == null) {
 					return CVoid.VOID; // Selection did not change.
 				}
@@ -287,7 +287,7 @@ public class CHWorldEdit {
 				// Construct and set the position.
 				Vector3D v = ObjectGenerator.GetGenerator().vector(rawPos, t);
 				// Floor to int (CUI would accept doubles and select half blocks).
-				Vector blockPos = new Vector(Math.floor(v.X()), Math.floor(v.Y()), Math.floor(v.Z()));
+				BlockVector3 blockPos = BlockVector3.at(Math.floor(v.X()), Math.floor(v.Y()), Math.floor(v.Z()));
 				if (primary) {
 					sel.selectPrimary(blockPos, null);
 				} else {
@@ -322,7 +322,7 @@ public class CHWorldEdit {
 			}
 			
 			// Get the position.
-			Vector pos = (primary ? getPos1((CuboidRegionSelector) sel, t) : getPos2((CuboidRegionSelector) sel, t));
+			BlockVector3 pos = (primary ? getPos1((CuboidRegionSelector) sel, t) : getPos2((CuboidRegionSelector) sel, t));
 			
 			// Return the position converted to a CArray or CNull if no position is set.
 			return (pos == null ? CNull.NULL : ObjectGenerator.GetGenerator().vector(vtov(pos)));
@@ -330,7 +330,7 @@ public class CHWorldEdit {
 		}
 	}
 	
-	private static Vector getPos1(CuboidRegionSelector selector, Target t) {
+	private static BlockVector3 getPos1(CuboidRegionSelector selector, Target t) {
 		try {
 			return selector.getPrimaryPosition();
 		} catch (IncompleteRegionException e) {
@@ -338,7 +338,7 @@ public class CHWorldEdit {
 		}
 	}
 	
-	private static Vector getPos2(CuboidRegionSelector selector, Target t) {
+	private static BlockVector3 getPos2(CuboidRegionSelector selector, Target t) {
 		
 		// Return the secondary position from a complete selection if it is available.
 		try {
@@ -350,11 +350,11 @@ public class CHWorldEdit {
 		// Get the secondary position using reflection. This is necessary because there is no way to
 		// obtain the secondary position from CuboidRegionSelector. Getting it from the incomplete selection
 		// might return an outdated value which is not properly cleared by CuboidRegionSelector.clear().
-		BlockVector position2;
+		BlockVector3 position2;
 		try {
 			Field position2Field = CuboidRegionSelector.class.getDeclaredField("position2");
 			position2Field.setAccessible(true);
-			position2 = (BlockVector) position2Field.get(selector);
+			position2 = (BlockVector3) position2Field.get(selector);
 		} catch (NoSuchFieldException | SecurityException
 				| IllegalArgumentException | IllegalAccessException e) {
 			throw new CREPluginInternalException("Getter for secondary position in CommandHelper extension "
@@ -496,7 +496,7 @@ public class CHWorldEdit {
 			File f;
 
 			try {
-				f = worldEdit.getSafeOpenFile(user, dir, filename, "schematic", "schematic");
+				f = worldEdit.getSafeOpenFile(user, dir, filename, "schem", "schematic");
 			} catch (FilenameException fne) {
 				throw new CREIOException(fne.getMessage(), t);
 			}
@@ -663,7 +663,7 @@ public class CHWorldEdit {
 				Clipboard clipboard = holder.getClipboard();
 				Region region = clipboard.getRegion();
 
-				Vector to = origin ? clipboard.getOrigin() : session.getPlacementPosition(user);
+				BlockVector3 to = origin ? clipboard.getOrigin() : session.getPlacementPosition(user);
 				Operation operation = holder
 						.createPaste(editSession)
 						.to(to)
@@ -671,10 +671,10 @@ public class CHWorldEdit {
 						.build();
 				Operations.completeLegacy(operation);
 				if (select) {
-					Vector clipboardOffset = clipboard.getRegion().getMinimumPoint().subtract(clipboard.getOrigin());
-					Vector realTo = to.add(holder.getTransform().apply(clipboardOffset));
-					Vector max = realTo.add(holder.getTransform().apply(region.getMaximumPoint().subtract(region.getMinimumPoint())));
-					RegionSelector selector = new CuboidRegionSelector(user.getWorld(), realTo, max);
+					BlockVector3 clipboardOffset = clipboard.getRegion().getMinimumPoint().subtract(clipboard.getOrigin());
+					Vector3 realTo = to.toVector3().add(holder.getTransform().apply(clipboardOffset.toVector3()));
+					Vector3 max = realTo.add(holder.getTransform().apply(region.getMaximumPoint().subtract(region.getMinimumPoint()).toVector3()));
+					RegionSelector selector = new CuboidRegionSelector(user.getWorld(), realTo.toBlockPoint(), max.toBlockPoint());
 					session.setRegionSelector(user.getWorld(), selector);
 					selector.learnChanges();
 					selector.explainRegionAdjust(user, session);
@@ -789,15 +789,15 @@ public class CHWorldEdit {
 			}
 			AffineTransform affineTransform = (AffineTransform) transform;
 			
-			Vector minPointOriginalVec = affineTransform.apply(clip.getMinimumPoint().subtract(clip.getOrigin())).add(clip.getOrigin());
-			Vector maxPointOriginalVec = affineTransform.apply(clip.getMaximumPoint().subtract(clip.getOrigin())).add(clip.getOrigin());
-			Vector minPointRelativeVec = affineTransform.apply(clip.getMinimumPoint().subtract(clip.getOrigin()));
-			Vector maxPointRelativeVec = affineTransform.apply(clip.getMaximumPoint().subtract(clip.getOrigin()));
+			Vector3 minPointOriginalVec = affineTransform.apply(clip.getMinimumPoint().subtract(clip.getOrigin()).toVector3()).add(clip.getOrigin().toVector3());
+			Vector3 maxPointOriginalVec = affineTransform.apply(clip.getMaximumPoint().subtract(clip.getOrigin()).toVector3()).add(clip.getOrigin().toVector3());
+			Vector3 minPointRelativeVec = affineTransform.apply(clip.getMinimumPoint().subtract(clip.getOrigin()).toVector3());
+			Vector3 maxPointRelativeVec = affineTransform.apply(clip.getMaximumPoint().subtract(clip.getOrigin()).toVector3());
 			
-			CArray minPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointOriginalVec));
-			CArray maxPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointOriginalVec));
-			CArray minPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointRelativeVec));
-			CArray maxPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointRelativeVec));
+			CArray minPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointOriginalVec.toBlockPoint()));
+			CArray maxPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointOriginalVec.toBlockPoint()));
+			CArray minPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointRelativeVec.toBlockPoint()));
+			CArray maxPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointRelativeVec.toBlockPoint()));
 			
 			minPoint.set("original", minPointOriginalCVec, t); // 'Original' copy region world coords (//paste -o) inc rotation & flip.
 			maxPoint.set("original", maxPointOriginalCVec, t); // 'Original' copy region world coords (//paste -o) inc rotation & flip.
