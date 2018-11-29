@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>SKCompat</artifactId>
-	<version>3.0.0</version>
+	<version>3.0.1</version>
 
 	<repositories>
 		<repository>
@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>com.sk89q</groupId>
 			<artifactId>commandhelper</artifactId>
-			<version>3.3.3-SNAPSHOT</version>
+			<version>3.3.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sk89q.worldedit</groupId>

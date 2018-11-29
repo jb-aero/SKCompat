@@ -7,7 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>CHWorldEdit</artifactId>
-  <version>3.0.0</version>
+  <version>3.0.1</version>
   <build>
     <plugins>
       <plugin>

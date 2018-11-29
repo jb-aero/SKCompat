@@ -4,9 +4,9 @@ SKCompat
 An extension to [CommandHelper](https://github.com/sk89q/CommandHelper) providing access to features of other plugins in the sk89q family. Currently supports WorldEdit and WorldGuard.
 
 Download the correct version for your version of CommandHelper:
-<br>[CH 3.3.1-Snapshot](https://letsbuild.net/jenkins/job/SKCompat/23/) (Old version, WorldGuard required)
-<br>[CH 3.3.2-Snapshot](https://letsbuild.net/jenkins/job/SKCompat/39/) (stable, for MC 1.7.10 - 1.12.2 servers)
-<br>[CH 3.3.3-Snapshot](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/) (dev builds for MC 1.13.x and WorldEdit/WorldGuard 7.0.x)
+<br>[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3) (CommandHelper 3.3.2, Minecraft 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
+<br>[SKCompat 3.0.0](https://letsbuild.net/jenkins/job/SKCompat/7/) (CommandHelper 3.3.3, Minecraft 1.13.2, WorldEdit/WorldGuard 7.0.0-SNAPSHOT)
+<br>[SKCompat 3.0.1](https://letsbuild.net/jenkins/job/SKCompat/10/) (CommandHelper 3.3.4, Minecraft 1.13.2, WorldEdit/WorldGuard 7.0.0-SNAPSHOT)
 
 ## Documentation
 **CommandHelper's documentation generator was not working, and people keep asking why I removed functions just because they were not listed here. I did not remove any functions. So now you have to check yourself.**

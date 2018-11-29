@@ -27,7 +27,7 @@ import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
 import com.laytonsmith.abstraction.bukkit.entities.BukkitMCPlayer;
 import com.laytonsmith.annotations.api;
-import com.laytonsmith.core.CHVersion;
+import com.laytonsmith.core.MSVersion;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
 import com.laytonsmith.core.constructs.CArray;
@@ -37,7 +37,6 @@ import com.laytonsmith.core.constructs.CInt;
 import com.laytonsmith.core.constructs.CNull;
 import com.laytonsmith.core.constructs.CString;
 import com.laytonsmith.core.constructs.CVoid;
-import com.laytonsmith.core.constructs.Construct;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
@@ -54,6 +53,7 @@ import com.laytonsmith.core.exceptions.CRE.CRERangeException;
 import com.laytonsmith.core.exceptions.CRE.CREThrowable;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
+import com.laytonsmith.core.natives.interfaces.Mixed;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
@@ -127,7 +127,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Version since() {
-			return CHVersion.V3_2_0;
+			return MSVersion.V3_2_0;
 		}
 
 		@Override
@@ -157,7 +157,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
 			String worldName = args[1].val();
@@ -274,7 +274,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Version since() {
-			return CHVersion.V3_2_0;
+			return MSVersion.V3_2_0;
 		}
 
 		@Override
@@ -293,7 +293,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			String region1 = args[1].val();
 			List<ProtectedRegion> checkRegions = new ArrayList<>();
 			Static.checkPlugin("WorldGuard", t);
@@ -345,7 +345,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Version since() {
-			return CHVersion.V3_2_0;
+			return MSVersion.V3_2_0;
 		}
 
 		@Override
@@ -365,7 +365,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			String region1 = args[1].val();
 			List<ProtectedRegion> checkRegions = new ArrayList<>();
 			List<ProtectedRegion> getRegions;
@@ -450,7 +450,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 			CArray arr = new CArray(t);
 			if (args.length == 1) {
@@ -478,7 +478,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Version since() {
-			return CHVersion.V3_2_0;
+			return MSVersion.V3_2_0;
 		}
 
 		@Override
@@ -498,7 +498,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			MCPlayer m = null;
@@ -534,7 +534,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Version since() {
-			return CHVersion.V3_2_0;
+			return MSVersion.V3_2_0;
 		}
 
 		@Override
@@ -554,7 +554,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 			World world;
 
@@ -619,7 +619,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Version since() {
-			return CHVersion.V3_2_0;
+			return MSVersion.V3_2_0;
 		}
 
 		@Override
@@ -638,7 +638,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 			World world = Bukkit.getServer().getWorld(args[1].val());
 			if (world == null) {
@@ -681,7 +681,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			MCWorld w = null;
@@ -877,7 +877,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = null;
@@ -1003,7 +1003,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = null;
@@ -1106,7 +1106,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = null;
@@ -1178,7 +1178,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = null;
@@ -1242,7 +1242,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = null;
@@ -1350,7 +1350,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = null;
@@ -1439,7 +1439,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Version since() {
-			return CHVersion.V3_2_0;
+			return MSVersion.V3_2_0;
 		}
 
 		@Override
@@ -1459,7 +1459,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
 			String worldName = args[1].val();
@@ -1524,7 +1524,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = null;
@@ -1632,7 +1632,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = null;
@@ -1721,7 +1721,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Version since() {
-			return CHVersion.V3_2_0;
+			return MSVersion.V3_2_0;
 		}
 
 		@Override
@@ -1741,7 +1741,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
 			String worldName = args[1].val();
@@ -1810,7 +1810,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = Bukkit.getServer().getWorld(args[0].val());
@@ -1944,7 +1944,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			if ("build".equalsIgnoreCase(args[1].val())) {
@@ -2103,7 +2103,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
 			String worldName = args[1].val();
@@ -2143,7 +2143,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			World world = null;
@@ -2225,7 +2225,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 
 			String regionName;
@@ -2292,7 +2292,7 @@ public class CHWorldGuard {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment environment, Construct... args) throws ConfigRuntimeException {
+		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldGuard", t);
 			MCPlayer p;
 			MCLocation loc;
