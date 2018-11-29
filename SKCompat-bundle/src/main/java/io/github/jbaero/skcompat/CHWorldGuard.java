@@ -2306,10 +2306,11 @@ public class CHWorldGuard {
 				p = Static.GetPlayer(args[0], t);
 				loc = ObjectGenerator.GetGenerator().location(args[1], p.getWorld(), t);
 			}
-			if(p.hasPermission("worldguard.region.bypass." + loc.getWorld().getName())) {
+			LocalPlayer player = WorldGuardPlugin.inst().wrapPlayer((Player) p.getHandle());
+			com.sk89q.worldedit.world.World world =  BukkitAdapter.adapt((World) loc.getWorld().getHandle());
+			if(WorldGuard.getInstance().getPlatform().getSessionManager().hasBypass(player, world)) {
 				return CBoolean.TRUE;
 			}
-			LocalPlayer player = WorldGuardPlugin.inst().wrapPlayer((Player) p.getHandle());
 			RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
 			return CBoolean.get(query.testState(BukkitAdapter.adapt((Location) loc.getHandle()), player, Flags.BUILD));
 		}
