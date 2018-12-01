@@ -44,6 +44,7 @@ import com.laytonsmith.core.exceptions.CRE.CREThrowable;
 import com.laytonsmith.core.functions.AbstractFunction;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
+import com.laytonsmith.core.natives.interfaces.Mixed;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.EmptyClipboardException;
 import com.sk89q.worldedit.IncompleteRegionException;
@@ -116,7 +117,7 @@ public class CHWorldEdit {
 		return new Vector3D(vec.getX(), vec.getY(), vec.getZ());
 	}
 
-	public static WeightedBlockPattern generateBlockPattern(Construct source, SKCommandSender user, Target t) {
+	public static WeightedBlockPattern generateBlockPattern(Mixed source, SKCommandSender user, Target t) {
 		ParserContext context = new ParserContext();
 		context.setActor(user);
 		CArray src = Static.getArray(source, t);
@@ -174,7 +175,7 @@ public class CHWorldEdit {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			return sk_posX_exec(t, env, true, this, args);
 		}
 	}
@@ -207,16 +208,16 @@ public class CHWorldEdit {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			return sk_posX_exec(t, env, false, this, args);
 		}
 	}
 	
-	private static Construct sk_posX_exec(Target t, Environment env, boolean primary,
-			AbstractFunction caller, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+	private static Mixed sk_posX_exec(Target t, Environment env, boolean primary, 
+				AbstractFunction caller, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 		Static.checkPlugin("WorldEdit", t);
 		MCCommandSender m;
-		Construct rawPos;
+		Mixed rawPos;
 		if (args.length == 2) { // If sk_posX(player, locationArray).
 			m = SKCompat.myGetPlayer(args[0], t);
 			rawPos = args[1];
@@ -385,7 +386,7 @@ public class CHWorldEdit {
 //			return new Class[]{CREPlayerOfflineException.class, CRECastException.class};
 //		}
 //
-//		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+//		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 //			Static.checkPlugin("WorldEdit", t);
 //			return CVoid.VOID;
 //		}
@@ -401,10 +402,10 @@ public class CHWorldEdit {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldEdit", t);
 			MCPlayer player = null;
-			Construct pat;
+			Mixed pat;
 			if (args.length == 2) {
 				if (!(args[0] instanceof CNull)) {
 					player = Static.GetPlayer(args[0], t);
@@ -427,7 +428,7 @@ public class CHWorldEdit {
 					pattern = generateBlockPattern(pata.get(0, t), user, t);
 				} else {
 					pattern = new RandomPattern();
-					for (Construct entry : pata.asList()) {
+					for (Mixed entry : pata.asList()) {
 						WeightedBlockPattern temp = generateBlockPattern(entry, user, t);
 						((RandomPattern) pattern).add(temp, temp.getWeight());
 					}
@@ -481,7 +482,7 @@ public class CHWorldEdit {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment environment, Construct... args) throws ConfigRuntimeException {
+		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
 
 			Static.checkPlugin("WorldEdit", t);
 			WorldEdit worldEdit = WorldEdit.getInstance();
@@ -565,7 +566,7 @@ public class CHWorldEdit {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment environment, Construct... args) throws ConfigRuntimeException {
+		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldEdit", t);
 			int yaxis = 0,
 					xaxis = 0,
@@ -627,7 +628,7 @@ public class CHWorldEdit {
 		}
 
 		@Override
-		public Construct exec(Target t, Environment environment, Construct... args) throws ConfigRuntimeException {
+		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
 			Static.checkPlugin("WorldEdit", t);
 			boolean airless = false,
 					fastMode = false,
@@ -742,7 +743,7 @@ public class CHWorldEdit {
 		}
 		
 		@Override
-		public Construct exec(Target t, Environment env, Construct... args) throws CancelCommandException, ConfigRuntimeException {
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			MCPlayer player;
 			Static.checkPlugin("WorldEdit", t);
 			
