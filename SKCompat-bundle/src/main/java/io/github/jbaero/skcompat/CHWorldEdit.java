@@ -17,20 +17,30 @@
  */
 package io.github.jbaero.skcompat;
 
+import com.laytonsmith.PureUtilities.SimpleVersion;
 import com.laytonsmith.PureUtilities.Vector3D;
+import com.laytonsmith.PureUtilities.Version;
 import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCConsoleCommandSender;
+import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
+import com.laytonsmith.abstraction.MCWorld;
+import com.laytonsmith.abstraction.StaticLayer;
 import com.laytonsmith.annotations.api;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
 import com.laytonsmith.core.constructs.CArray;
 import com.laytonsmith.core.constructs.CNull;
+import com.laytonsmith.core.constructs.CString;
 import com.laytonsmith.core.constructs.CVoid;
 import com.laytonsmith.core.constructs.Construct;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
+import com.laytonsmith.core.events.AbstractEvent;
+import com.laytonsmith.core.events.BindableEvent;
+import com.laytonsmith.core.events.Driver;
+import com.laytonsmith.core.events.Prefilters;
 import com.laytonsmith.core.exceptions.CRE.CRECastException;
 import com.laytonsmith.core.exceptions.CRE.CREFormatException;
 import com.laytonsmith.core.exceptions.CRE.CREIOException;
@@ -41,9 +51,11 @@ import com.laytonsmith.core.exceptions.CRE.CREPlayerOfflineException;
 import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
 import com.laytonsmith.core.exceptions.CRE.CRERangeException;
 import com.laytonsmith.core.exceptions.CRE.CREThrowable;
-import com.laytonsmith.core.functions.AbstractFunction;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
+import com.laytonsmith.core.exceptions.EventException;
+import com.laytonsmith.core.exceptions.PrefilterNonMatchException;
+import com.laytonsmith.core.functions.AbstractFunction;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.EmptyClipboardException;
@@ -56,6 +68,8 @@ import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.command.ClipboardCommands;
 import com.sk89q.worldedit.extension.input.InputParseException;
 import com.sk89q.worldedit.extension.input.ParserContext;
+import com.sk89q.worldedit.extension.platform.Capability;
+import com.sk89q.worldedit.extension.platform.Platform;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
@@ -70,8 +84,10 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.session.ClipboardHolder;
+import com.sk89q.worldedit.util.LocatedBlock;
 import com.sk89q.worldedit.util.io.Closer;
 import com.sk89q.worldedit.util.io.file.FilenameException;
+import com.sk89q.worldedit.world.World;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockTypes;
 
@@ -80,6 +96,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -91,6 +109,7 @@ public class CHWorldEdit {
 
 	// reserved LocalPlayer for the Console
 	private static SKConsole console;
+	private static Platform platform;
 
 	public static SKCommandSender getSKPlayer(MCCommandSender sender, Target t) {
 		SKCommandSender ret;
@@ -108,12 +127,44 @@ public class CHWorldEdit {
 		return ret;
 	}
 
+	public static Platform getPlatform() {
+		if (platform == null) {
+			platform = WorldEdit.getInstance().getPlatformManager().queryCapability(Capability.WORLD_EDITING);
+		}
+		return platform;
+	}
+
 	public static Vector vtov(Vector3D vec) {
 		return new Vector(vec.X(), vec.Y(), vec.Z());
 	}
 
 	public static Vector3D vtov(Vector vec) {
 		return new Vector3D(vec.getX(), vec.getY(), vec.getZ());
+	}
+
+	public static World wtow(MCWorld mcWorld, Target t) {
+		for (World world : getPlatform().getWorlds()) {
+			if (world.getName().equals(world.getName())) {
+				return world;
+			}
+		}
+		throw new CREInvalidWorldException("World not found: " + mcWorld.getName(), t);
+	}
+
+	public static MCWorld wtow(World world, Target t) {
+		return Static.getWorld(world.getName(), t);
+	}
+
+	public static MCLocation vtol(World world, Vector vector, Target t) {
+		return vtol(wtow(world, t), vector);
+	}
+
+	public static MCLocation vtol(MCWorld world, Vector vector) {
+		return StaticLayer.GetLocation(world, vector.getX(), vector.getY(), vector.getZ());
+	}
+
+	public static MCLocation vtol(MCWorld world, Vector3D vector) {
+		return StaticLayer.GetLocation(world, vector.X(), vector.Y(), vector.Z());
 	}
 
 	public static WeightedBlockPattern generateBlockPattern(Construct source, SKCommandSender user, Target t) {
@@ -166,9 +217,9 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[player], array | [player] | array} Sets the player's point 2 to the given location array."
+			return "mixed {[player], array | [player] | array} Sets the player's point 1 to the given location array."
 					+ " If the array is null, the point will be cleared."
-					+ " If no array is given, current point 2 of the player will be returned as an array in format"
+					+ " If no array is given, current point 1 of the player will be returned as an array in format"
 					+ " array(0:xVal, 1:yVal, 2:zVal, x:xVal, y:yVal, z:zVal) or null when the point has not been set."
 					+ " In case " + this.getName() + "(null) is called, the argument will be treated as player.";
 		}
@@ -325,7 +376,7 @@ public class CHWorldEdit {
 			Vector pos = (primary ? getPos1((CuboidRegionSelector) sel, t) : getPos2((CuboidRegionSelector) sel, t));
 			
 			// Return the position converted to a CArray or CNull if no position is set.
-			return (pos == null ? CNull.NULL : ObjectGenerator.GetGenerator().vector(vtov(pos)));
+			return (pos == null ? CNull.NULL : ObjectGenerator.GetGenerator().vector(vtov(pos), t));
 			
 		}
 	}
@@ -441,7 +492,7 @@ public class CHWorldEdit {
 			} catch (WorldEditException wee) {
 				throw new CREPluginInternalException(wee.getMessage(), t);
 			} finally {
-				editSession.flushQueue();
+				editSession.flushSession();
 			}
 
 			return CVoid.VOID;
@@ -686,7 +737,7 @@ public class CHWorldEdit {
 			} catch (WorldEditException ex) {
 				Logger.getLogger(CHWorldEdit.class.getName()).log(Level.SEVERE, null, ex);
 			} finally {
-				editSession.flushQueue();
+				editSession.flushSession();
 			}
 
 			return CVoid.VOID;
@@ -805,6 +856,152 @@ public class CHWorldEdit {
 			maxPoint.set("relative", maxPointRelativeCVec, t); // Relative copy selection world coords inc rotation & flip (//paste).
 			
 			return ret;
+		}
+	}
+
+	@api
+	public static class world_edit_multi extends AbstractEvent {
+
+		@Override
+		public String getName() {
+			return "world_edit_multi";
+		}
+
+		@Override
+		public String docs() {
+			return null;
+		}
+
+		@Override
+		public Version since() {
+			return new SimpleVersion(3, 1, 0);
+		}
+
+		@Override
+		public boolean matches(Map<String, Construct> prefilter, BindableEvent e) throws PrefilterNonMatchException {
+			if (e instanceof WorldEditEvents.WorldEditEventMulti) {
+				WorldEditEvents.WorldEditEventMulti event = (WorldEditEvents.WorldEditEventMulti) e;
+				Prefilters.match(prefilter, "stage", event.getStage().name(), Prefilters.PrefilterType.MACRO);
+				Prefilters.match(prefilter, "world", event.getWorld().getName(), Prefilters.PrefilterType.MACRO);
+				Prefilters.match(prefilter, "actor", event.getActor().getName(), Prefilters.PrefilterType.MACRO);
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		public BindableEvent convert(CArray manualObject, Target t) {
+			return null;
+		}
+
+		@Override
+		public Map<String, Construct> evaluate(BindableEvent e) throws EventException {
+			WorldEditEvents.WorldEditEventMulti event = (WorldEditEvents.WorldEditEventMulti) e;
+			Map<String, Construct> ret = new HashMap<>();
+			ret.put("world", new CString(event.getWorld().getName(), Target.UNKNOWN));
+			ret.put("stage", new CString(event.getStage().name(), Target.UNKNOWN));
+			ret.put("actor", new CString(event.getActor().getName(), Target.UNKNOWN));
+
+			CArray changes = new CArray(Target.UNKNOWN);
+
+			for(LocatedBlock edit : event.getEditList()){
+				CArray change = CArray.GetAssociativeArray(Target.UNKNOWN);
+				change.set("location", ObjectGenerator.GetGenerator().location(vtol(event.getWorld(),
+						edit.getLocation(), Target.UNKNOWN), false), Target.UNKNOWN);
+				change.set("to", edit.getBlock().getAsString());
+				changes.push(change, Target.UNKNOWN);
+			}
+
+			ret.put("changes", changes);
+
+			return ret;
+		}
+
+		@Override
+		public Driver driver() {
+			return Driver.EXTENSION;
+		}
+
+		@Override
+		public boolean modifyEvent(String key, Construct value, BindableEvent event) {
+			return false;
+		}
+
+		@Override
+		public boolean isCancellable(BindableEvent o) {
+			return true;
+		}
+
+		@Override
+		public boolean isCancelled(BindableEvent o) {
+			return ((WorldEditEvents.WorldEditEvent) o).cancelled;
+		}
+
+		@Override
+		public void cancel(BindableEvent o, boolean state) {
+			((WorldEditEvents.WorldEditEvent) o).cancelled = state;
+		}
+	}
+
+	@api
+	public static class world_edit_single extends AbstractEvent {
+
+		@Override
+		public String getName() {
+			return "world_edit_single";
+		}
+
+		@Override
+		public String docs() {
+			return null;
+		}
+
+		@Override
+		public Version since() {
+			return new SimpleVersion(3, 1, 0);
+		}
+
+		@Override
+		public Driver driver() {
+			return Driver.EXTENSION;
+		}
+
+		@Override
+		public boolean matches(Map<String, Construct> prefilter, BindableEvent e) throws PrefilterNonMatchException {
+			if (e instanceof WorldEditEvents.WorldEditEventSingle) {
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		public BindableEvent convert(CArray manualObject, Target t) {
+			return null;
+		}
+
+		@Override
+		public Map<String, Construct> evaluate(BindableEvent e) throws EventException {
+			return null;
+		}
+
+		@Override
+		public boolean modifyEvent(String key, Construct value, BindableEvent event) {
+			return false;
+		}
+
+		@Override
+		public void cancel(BindableEvent o, boolean state) {
+			((WorldEditEvents.WorldEditEvent) o).cancelled = state;
+		}
+
+		@Override
+		public boolean isCancellable(BindableEvent o) {
+			return true;
+		}
+
+		@Override
+		public boolean isCancelled(BindableEvent o) {
+			return ((WorldEditEvents.WorldEditEvent) o).cancelled;
 		}
 	}
 }

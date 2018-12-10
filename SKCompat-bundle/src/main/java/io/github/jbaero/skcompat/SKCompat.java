@@ -10,6 +10,7 @@ import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.extensions.AbstractExtension;
 import com.laytonsmith.core.extensions.MSExtension;
 import com.laytonsmith.core.functions.AbstractFunction;
+import com.sk89q.worldedit.WorldEdit;
 
 /**
  * @author jb_aero
@@ -17,9 +18,16 @@ import com.laytonsmith.core.functions.AbstractFunction;
 @MSExtension(PomData.NAME)
 public class SKCompat extends AbstractExtension {
 
+	boolean eventRegistered = false;
+
 	@Override
 	public void onStartup() {
 		System.out.println(PomData.NAME + " " + PomData.VERSION + " loaded.");
+		if (!eventRegistered) {
+			WorldEdit.getInstance().getEventBus().register(new WorldEditEvents());
+			eventRegistered = true;
+			System.out.println("Event registered!");
+		}
 	}
 
 	@Override
