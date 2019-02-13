@@ -4,6 +4,7 @@ import com.laytonsmith.abstraction.MCConsoleCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.StaticLayer;
+import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.laytonsmith.core.Static;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.math.Vector3;
@@ -41,6 +42,12 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public void setLocation(MCLocation loc) {
 		location = loc;
+	}
+
+	@Override
+	public boolean setLocation(Location loc) {
+		location = new BukkitMCLocation(BukkitAdapter.adapt(loc));
+		return true;
 	}
 
 	@Override

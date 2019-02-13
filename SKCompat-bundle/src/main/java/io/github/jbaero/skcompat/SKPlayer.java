@@ -5,6 +5,7 @@ import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.StaticLayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCItemStack;
+import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.WorldEdit;
@@ -100,5 +101,10 @@ public class SKPlayer extends SKCommandSender {
 	@Override
 	public void setLocation(MCLocation loc) {
 		player.teleport(loc);
+	}
+
+	@Override
+	public boolean setLocation(Location loc) {
+		return player.teleport(new BukkitMCLocation(BukkitAdapter.adapt(loc)));
 	}
 }
