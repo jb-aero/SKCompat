@@ -2,7 +2,7 @@ package io.github.jbaero.skcompat;
 
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCWorld;
-import com.laytonsmith.core.CHLog;
+import com.laytonsmith.core.MSLog;
 import com.laytonsmith.core.LogLevel;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
@@ -29,7 +29,7 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 
 	@Override
 	public void printDebug(String string) {
-		CHLog.GetLogger().Log(CHLog.Tags.RUNTIME, LogLevel.VERBOSE, string, t);
+		MSLog.GetLogger().Log(MSLog.Tags.RUNTIME, LogLevel.VERBOSE, string, t);
 	}
 
 	@Override
