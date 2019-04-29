@@ -15,6 +15,7 @@ import com.sk89q.worldedit.extent.inventory.BlockBag;
 import com.sk89q.worldedit.extent.inventory.BlockBagException;
 import com.sk89q.worldedit.session.SessionKey;
 import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.world.block.BlockState;
 
 /**
@@ -34,6 +35,11 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 
 	@Override
 	public void print(String string) {
+		// Do nothing
+	}
+	
+	@Override
+	public void print(TextComponent component) {
 		// Do nothing
 	}
 
