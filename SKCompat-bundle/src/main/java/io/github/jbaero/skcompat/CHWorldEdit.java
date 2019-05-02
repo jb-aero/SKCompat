@@ -30,16 +30,7 @@ import com.laytonsmith.core.constructs.CVoid;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
-import com.laytonsmith.core.exceptions.CRE.CRECastException;
-import com.laytonsmith.core.exceptions.CRE.CREFormatException;
-import com.laytonsmith.core.exceptions.CRE.CREIOException;
-import com.laytonsmith.core.exceptions.CRE.CREInvalidPluginException;
-import com.laytonsmith.core.exceptions.CRE.CREInvalidWorldException;
-import com.laytonsmith.core.exceptions.CRE.CRENotFoundException;
-import com.laytonsmith.core.exceptions.CRE.CREPlayerOfflineException;
-import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
-import com.laytonsmith.core.exceptions.CRE.CRERangeException;
-import com.laytonsmith.core.exceptions.CRE.CREThrowable;
+import com.laytonsmith.core.exceptions.CRE.*;
 import com.laytonsmith.core.functions.AbstractFunction;
 import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
@@ -51,7 +42,6 @@ import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
-import com.sk89q.worldedit.command.ClipboardCommands;
 import com.sk89q.worldedit.extension.input.InputParseException;
 import com.sk89q.worldedit.extension.input.ParserContext;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
@@ -561,7 +551,8 @@ public class CHWorldEdit {
 		@Override
 		public Class<? extends CREThrowable>[] thrown() {
 			return new Class[]{CREInvalidPluginException.class, CRENotFoundException.class,
-					CREPlayerOfflineException.class, CRERangeException.class, CRECastException.class};
+					CREPlayerOfflineException.class, CRERangeException.class, CRECastException.class,
+					CREIllegalArgumentException.class};
 		}
 
 		@Override
@@ -586,14 +577,23 @@ public class CHWorldEdit {
 					plyr = Static.GetPlayer(args[0], t);
 					break;
 			}
+
+			if (yaxis % 90 != 0 || xaxis % 90 != 0 || zaxis % 90 != 0) {
+				throw new CREIllegalArgumentException("Axes must be multiples of 90 degrees.", t);
+			}
+
+			SKCommandSender user = getSKPlayer(plyr, t);
+			LocalSession session = user.getLocalSession();
+			
 			try {
-				ClipboardCommands command = new ClipboardCommands(WorldEdit.getInstance());
-				SKCommandSender user = getSKPlayer(plyr, t);
-				command.rotate(user, user.getLocalSession(), (double) yaxis, (double) xaxis, (double) zaxis);
+				ClipboardHolder holder = session.getClipboard();
+				AffineTransform transform = new AffineTransform();
+				transform = transform.rotateY(-yaxis);
+				transform = transform.rotateX(-xaxis);
+				transform = transform.rotateZ(-zaxis);
+				holder.setTransform(holder.getTransform().combine(transform));
 			} catch (EmptyClipboardException e) {
 				throw new CRENotFoundException("The clipboard is empty, copy something to it first!", t);
-			} catch (WorldEditException ex) {
-				throw new CREPluginInternalException(ex.getMessage(), t);
 			}
 			return CVoid.VOID;
 		}
