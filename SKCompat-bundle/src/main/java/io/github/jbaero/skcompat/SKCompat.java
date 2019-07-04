@@ -5,6 +5,7 @@ import com.laytonsmith.PureUtilities.Version;
 import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.core.MSVersion;
 import com.laytonsmith.core.Static;
+import com.laytonsmith.core.constructs.CNull;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.extensions.AbstractExtension;
 import com.laytonsmith.core.extensions.MSExtension;
@@ -33,7 +34,7 @@ public class SKCompat extends AbstractExtension {
 	}
 
 	public static MCCommandSender myGetPlayer(Mixed arg, Target t) {
-		if (arg == null || Static.getConsoleName().equals(arg.val())) {
+		if (arg instanceof CNull || Static.getConsoleName().equals(arg.val())) {
 			return Static.getServer().getConsole();
 		} else {
 			return Static.GetPlayer(arg, t);
