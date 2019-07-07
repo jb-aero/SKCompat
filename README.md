@@ -4,85 +4,51 @@ SKCompat
 An extension to [CommandHelper](https://github.com/sk89q/CommandHelper) providing access to features of other plugins in the sk89q family. Currently supports WorldEdit and WorldGuard.
 
 Download the correct version for your version of CommandHelper:
-<br>[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3) (CommandHelper 3.3.2, Minecraft 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
-<br>[SKCompat 3.0.0](https://letsbuild.net/jenkins/job/SKCompat/7/) (CommandHelper 3.3.3, Minecraft 1.13.2, WorldEdit/WorldGuard 7.0.0-SNAPSHOT)
-<br>[SKCompat 3.0.1](https://letsbuild.net/jenkins/job/SKCompat/10/) (CommandHelper 3.3.4, Minecraft 1.13.2, WorldEdit/WorldGuard 7.0.0-SNAPSHOT)
+<br>**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3)** (CommandHelper 3.3.2, Minecraft 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
+<br>**[SKCompat 3.1.0](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.4, Minecraft 1.13.2 - 1.14.x, WorldEdit/WorldGuard 7.0.x)
 
-## Documentation
-**CommandHelper's documentation generator was not working, and people keep asking why I removed functions just because they were not listed here. I did not remove any functions. So now you have to check yourself.**
+NOTE: CHWorldEdit provides functions for WorldEdit. CHWorldGuard provides functions for WorldGuard. SKCompat combines both, which means you only need to download one file.
 
-Add the following to main.ms to give yourself a /docs command that tabcompletes with functionnames and classes. For example, "/docs SKWorldGuard" will return a list of all the WorldGuard functions, but you can see all functions containing "sk" by typing "/docs sk" and hitting tab. "/docs sk_region_addmember" will give you the documentation for the sk_region_addmember function.
+-> [How to See Documentation In-Game](DOCUMENTATION.md)
 
-The below can also be found on the [forums](http://forum.enginehub.org/threads/jb_aeros-scripts.9347/#post-19243).
-```
-# I do this as a cache because there are a lot of functions,
-# this way I only have to use get_functions() once
-@gfuncs = get_functions()
-export('gfuncs', @gfuncs)
-export('funclasses', array_keys(@gfuncs))
-@funcs = array()
-foreach(@gfuncs, @fc, @fa,
-    foreach(@fa, @f,
-        array_push(@funcs, @f)
-    )
-)
-export('funcs', @funcs)
- 
-register_command('docs', array(
-    description: 'Shows the documentation for a given CommandHelper function',
-    permission: 'commandhelper.*',
-    noPermMsg: color(c).'This is not the command you are looking for',
-    usage: colorize('&aUsage&f: /docs [FunctionType|function_name]\n&aExample&f: /docs\n&aExample&f: /docs PlayerManagement\n&aExample&f: /docs ploc'),
-    aliases: array('doc', 'func', 'funcs'),
-    executor: closure(@al, @p, @args, @cmd,
-        @gfuncs = import('gfuncs')
-        @fcs = import('funclasses')
-        @funcs = import('funcs')
-        if(array_size(@args) == 0) {
-            tmsg(@p, colorize('&aFunctionTypes&f: &e'.array_implode(@fcs, '&f, &e')))
-            return(false)
-        } else if (array_size(@args) == 1) {
-            @choice = to_lower(@args[0])
-            foreach(@fcs, @fc,
-                if (@choice == to_lower(@fc)) {
-                    tmsg(@p, colorize('&6'.@fc.'&f: &b'.array_implode(@gfuncs[@fc], '&f, &b')))
-                    return(true)
-                }
-            )
-            if (array_contains(@funcs, @choice)) {
-                tmsg(@p, colorize('&2'.@choice.'&f:'))
-                tmsg(@p, colorize('&aReturn&f: '.reflect_docs(@choice, return)))
-                tmsg(@p, colorize('&aArgs&f: '.reflect_docs(@choice, args)))
-                tmsg(@p, colorize('&aDescription&f: '.reflect_docs(@choice, description)))
-            } else {
-                tmsg(@p, 'You entered \''.@choice.'\'')
-                tmsg(@p, 'Use \'/docs\' to get a list of valid function names')
-            }
-        } else {
-            return(false)
-        }
-    ),
-    tabcompleter: closure(@al, @p, @args, @cmd,
-        @funcs = import('funcs')
-        @gfuncs = import('gfuncs')
-        @fcs = import('funclasses')
-        if(array_size(@args) == 1) {
-            @c = to_lower(@args[0])
-            @returnable = array()
-            foreach(@fcs, @fc,
-                if(string_position(to_lower(@fc), @c) != -1) {
-                    array_push(@returnable, @fc)
-                }
-            )
-            foreach(@funcs, @f,
-                if(string_position(@f, @c) != -1) {
-                    array_push(@returnable, @f)
-                }
-            )
-            return(@returnable)
-        } else {
-            return(array())
-        }
-    )
-))
-```
+## Compact Function List
+### WorldEdit
+
+**sk_pos1([player], array | [player] | array)** Sets the player's point 1 to the given location array.<br>
+**sk_pos2([player], array | [player] | array)** Sets the player's point 2 to the given location array.<br>
+**sk_set_block([player], pattern)** Sets the player's selection to blocks defined by the provided pattern.<br>
+**skcb_copy(location | player)** Copies the selected region into the clipboard.<br>
+**skcb_paste(location, [array] | player, [array])** Pastes a schematic from the player's clipboard.<br>
+**skcb_load(filename, [player])** Loads a schematic into the clipboard from file.<br>
+**skcb_save(filename, [overwrite], [player])** Saves a schematic in the clipboard to file.<br>
+**skcb_rotate([player,] y, [x, z])** Rotates the clipboard by the given degrees for each corresponding axis.<br>
+**skcb_clear([player])** Clears the clipboard for the specified player.<br>
+**sk_schematic_exists(filename)** Returns whether a schematic by that name exists.<br>
+**sk_clipboard_info([player])** Returns an array with selection info of the give player's clipboard.
+
+### WorldGuard
+
+**sk_all_regions([world])** Returns all the regions in all worlds, or just the one world.<br>
+**sk_region_info(region, world, [value])** Returns information about the a region in the given world.<br>
+**sk_region_overlaps(world, region1, array(region2, [regionN...]))** Returns whether or not the specified regions overlap.<br>
+**sk_region_intersect(world, first_region, [other_region(s)]}** Returns array of regions which intersect with first region.<br>
+**sk_current_regions([player])** Returns an array of regions a player is in.<br>
+**sk_regions_at(locationArray)** Returns a list of regions at the specified location.<br>
+**sk_region_volume(region, world)** Returns the volume of a region in the given world.<br>
+**sk_region_create([world], name, array(locationArray, [...]))** Create region of the given name in the given world.<br>
+**sk_region_update([world], region, array(locationArray, [...]))** Updates the location of a given region to the new location.<br>
+**sk_region_rename([world], oldName, newName])** Renames an existing region.<br>
+**sk_region_remove([world], region)** Removes existing region.<br>
+**sk_region_exists([world], region)** Check if a region by that name exists in a world.<br>
+**sk_region_addowner(region, [world], [owner(s)])** Add owner(s) to a region.<br>
+**sk_region_remowner(region, [world], [owner(s)])** Removes owner(s) from a region.<br>
+**sk_region_owners(region, world)** Returns an array of owners of this region.<br>
+**sk_region_addmember(region, [world], [member(s)])** Add member(s) to a region.<br>
+**sk_region_remmember(region, [world], [member(s)])** Remove member(s) from a region.<br>
+**sk_region_members(region, world)** Returns an array of members of this region.<br>
+**sk_region_flag(world, region, flagName, flagValue, [group])** Add/change/remove flag in a region.<br>
+**sk_region_check_flag(locationArray, flagName, [player])** Check state of selected flag in defined location.<br>
+**sk_region_flags(region, world)** Returns an associative array with the flags of the region.<br>
+**sk_region_setpriority([world], region, priority)** Sets priority for a region.<br>
+**sk_region_setparent(world, region, [parentRegion])** Sets parent region for a region.<br>
+**sk_can_build([player], locationArray)** Returns whether or not player can build at the location.

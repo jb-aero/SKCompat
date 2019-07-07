@@ -58,11 +58,7 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public World getWorld() {
 		if (location != null) {
-			for (org.bukkit.World w : Bukkit.getWorlds()) {
-				if (w.getName().equals(location.getWorld().getName())) {
-					return BukkitAdapter.adapt(w);
-				}
-			}
+			return BukkitAdapter.adapt((org.bukkit.World) location.getWorld().getHandle());
 		}
 		return BukkitAdapter.adapt(Bukkit.getWorlds().get(0));
 	}

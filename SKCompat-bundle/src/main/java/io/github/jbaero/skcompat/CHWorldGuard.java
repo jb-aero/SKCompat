@@ -284,7 +284,8 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "boolean {world, region1, array(region2, [regionN...])} Returns true or false whether or not the specified regions overlap.";
+			return "boolean {world, region1, array(region2, [regionN...])} Returns true or false whether or not the specified regions overlap."
+					+ " Third parameter may be a single region or an array of regions.";
 		}
 
 		@Override
@@ -355,8 +356,8 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "array {world, region1, [array(region2, [regionN...])]} Returns an array of regions names which intersect with defined region."
-					+ " You can pass an array of regions to verify or omit this parameter and all regions in selected world will be checked.";
+			return "array {world, first_region, [other_region(s)]} Returns an array of regions names which intersect with defined region."
+					+ " You can pass a single region, an array of regions to verify or omit this parameter and all regions in selected world will be checked.";
 		}
 
 		@Override
