@@ -9,16 +9,16 @@ Download the correct version for your version of CommandHelper:
 
 NOTE: CHWorldEdit provides functions for WorldEdit. CHWorldGuard provides functions for WorldGuard. SKCompat combines both, which means you only need to download one file.
 
--> [How to See Documentation In-Game](DOCUMENTATION.md)
+-> [How to See Documentation In-Game](https://github.com/jb-aero/SKCompat/blob/master/DOCUMENTATION.md)
 
 ## Compact Function List
 ### WorldEdit
 
 **sk_pos1([player], array | [player] | array)** Sets the player's point 1 to the given location array.<br>
 **sk_pos2([player], array | [player] | array)** Sets the player's point 2 to the given location array.<br>
-**sk_set_block([player], pattern)** Sets the player's selection to blocks defined by the provided pattern.<br>
-**skcb_copy(location | player)** Copies the selected region into the clipboard.<br>
-**skcb_paste(location, [array] | player, [array])** Pastes a schematic from the player's clipboard.<br>
+**sk_setblock([player], pattern)** Sets the player's selection to blocks defined by the provided pattern.<br>
+**skcb_copy(location | player, [options])** Copies the selected region into the clipboard.<br>
+**skcb_paste(location | player, [options])** Pastes a schematic from the player's clipboard.<br>
 **skcb_load(filename, [player])** Loads a schematic into the clipboard from file.<br>
 **skcb_save(filename, [overwrite], [player])** Saves a schematic in the clipboard to file.<br>
 **skcb_rotate([player,] y, [x, z])** Rotates the clipboard by the given degrees for each corresponding axis.<br>

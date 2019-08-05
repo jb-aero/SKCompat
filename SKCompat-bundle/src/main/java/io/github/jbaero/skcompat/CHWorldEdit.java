@@ -23,6 +23,7 @@ import com.laytonsmith.abstraction.MCConsoleCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.annotations.api;
+import com.laytonsmith.core.ArgumentValidation;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
 import com.laytonsmith.core.constructs.*;
@@ -483,6 +484,8 @@ public class CHWorldEdit {
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
 
 			Static.checkPlugin("WorldEdit", t);
+			boolean entities = false;
+			boolean biomes = false;
 			MCCommandSender sender = null;
 			MCLocation loc = null;
 			if(args[0] instanceof CArray) {
@@ -491,6 +494,16 @@ public class CHWorldEdit {
 				sender = SKCompat.myGetPlayer(args[0], t);
 			}
 			SKCommandSender user = getSKPlayer(sender, t);
+
+			if(args.length == 2) {
+				CArray options = Static.getArray(args[1], t);
+				if (options.containsKey("entities")) {
+					entities = ArgumentValidation.getBooleanObject(options.get("entities", t), t);
+				}
+				if (options.containsKey("biomes")) {
+					biomes = ArgumentValidation.getBooleanObject(options.get("biomes", t), t);
+				}
+			}
 
 			LocalSession session = user.getLocalSession();
 			EditSession editSession = user.getEditSession(false);
@@ -503,6 +516,8 @@ public class CHWorldEdit {
 				}
 				clipboard.setOrigin(pos);
 				ForwardExtentCopy copy = new ForwardExtentCopy(editSession, region, clipboard, region.getMinimumPoint());
+				copy.setCopyingEntities(entities);
+				copy.setCopyingBiomes(biomes);
 				Operations.complete(copy);
 				user.getLocalSession().setClipboard(new ClipboardHolder(clipboard));
 			} catch (WorldEditException wee) {
@@ -518,15 +533,18 @@ public class CHWorldEdit {
 
 		@Override
 		public Integer[] numArgs() {
-			return new Integer[]{1};
+			return new Integer[]{1, 2};
 		}
 
 		@Override
 		public String docs() {
-			return "void {location | player} Copies the selected region into the clipboard."
+			return "void {location | player, [options]} Copies the selected region into the clipboard."
 					+ " If a location is specified it will use the console's clipboard"
 					+ " and the location will be used as the origin point for the clipboard."
-					+ " If ~console is explicitly specified instead, it will use the last set position as the origin.";
+					+ " If ~console is explicitly specified instead, it will use the last set position as the origin."
+					+ " An associative array of options can be provided, all of which default to false."
+					+ " If 'entities' is true, entities within the schematic will be pasted."
+					+ " If 'biomes' is true, the biomes within the schematic with be pasted.";
 		}
 	}
 
@@ -754,7 +772,9 @@ public class CHWorldEdit {
 			boolean airless = false,
 					fastMode = false,
 					origin = false,
-					select = false;
+					select = false,
+					entities = false,
+					biomes = false;
 			SKCommandSender user;
 			if (args[0] instanceof CArray) {
 				user = getSKPlayer(null, t);
@@ -765,16 +785,22 @@ public class CHWorldEdit {
 			if (args.length >= 2) {
 				CArray options = Static.getArray(args[1], t);
 				if (options.containsKey("airless")) {
-					airless = Static.getBoolean(options.get("airless", t), t);
+					airless = ArgumentValidation.getBooleanObject(options.get("airless", t), t);
 				}
 				if (options.containsKey("fastmode")) {
-					fastMode = Static.getBoolean(options.get("fastmode", t), t);
+					fastMode = ArgumentValidation.getBooleanObject(options.get("fastmode", t), t);
 				}
 				if (options.containsKey("origin")) {
-					origin = Static.getBoolean(options.get("origin", t), t);
+					origin = ArgumentValidation.getBooleanObject(options.get("origin", t), t);
 				}
 				if (options.containsKey("select")) {
-					select = Static.getBoolean(options.get("select", t), t);
+					select = ArgumentValidation.getBooleanObject(options.get("select", t), t);
+				}
+				if (options.containsKey("entities")) {
+					entities = ArgumentValidation.getBooleanObject(options.get("entities", t), t);
+				}
+				if (options.containsKey("biomes")) {
+					biomes = ArgumentValidation.getBooleanObject(options.get("biomes", t), t);
 				}
 			}
 			EditSession editSession = user.getEditSession(fastMode);
@@ -790,6 +816,8 @@ public class CHWorldEdit {
 						.createPaste(editSession)
 						.to(to)
 						.ignoreAirBlocks(airless)
+						.copyEntities(entities)
+						.copyBiomes(biomes)
 						.build();
 				Operations.completeLegacy(operation);
 				if (select) {
@@ -826,7 +854,7 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {location, [array] | player, [array]}"
+			return "void {location | player, [options]}"
 					+ " Pastes a schematic from the player's clipboard if a player is provided,"
 					+ " or from the console's clipboard if a location is given, as if a player was standing there."
 					+ " An associative array of options can be provided, all of which default to false."
@@ -834,7 +862,8 @@ public class CHWorldEdit {
 					+ " If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste."
 					+ " If 'origin' is true, the schematic will be pasted at the original location it was copied from."
 					+ " If 'select' is true, the pasted blocks will be automatically selected."
-					+ " Both ignoreAir and entities default to false.";
+					+ " If 'entities' is true, entities within the schematic will be pasted."
+					+ " If 'biomes' is true, the biomes within the schematic with be pasted.";
 		}
 	}
 
