@@ -7,7 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>CHWorldGuard</artifactId>
-  <version>3.1.0</version>
+  <version>3.1.1</version>
   <build>
     <plugins>
       <plugin>
@@ -44,7 +44,8 @@
                   <artifact>io.github.jbaero:SKCompat</artifact>
                   <includes>
                     <include>io/github/jbaero/skcompat/SKCompat*</include>
-                    <include>io/github/jbaero/skcompat/LazyAbstraction*</include>
+                    <include>io/github/jbaero/skcompat/SKWorldGuard*</include>
+                    <include>io/github/jbaero/skcompat/SKRegion*</include>
                     <include>io/github/jbaero/skcompat/CHWorldGuard*</include>
                   </includes>
                 </filter>

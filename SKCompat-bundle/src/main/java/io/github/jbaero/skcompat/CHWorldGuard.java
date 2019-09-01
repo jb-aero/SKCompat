@@ -25,7 +25,6 @@ import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
-import com.laytonsmith.abstraction.bukkit.entities.BukkitMCPlayer;
 import com.laytonsmith.annotations.api;
 import com.laytonsmith.core.MSVersion;
 import com.laytonsmith.core.ObjectGenerator;
@@ -40,7 +39,6 @@ import com.laytonsmith.core.constructs.CVoid;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
-import com.laytonsmith.core.environments.InvalidEnvironmentException;
 import com.laytonsmith.core.exceptions.CRE.CRECastException;
 import com.laytonsmith.core.exceptions.CRE.CREFormatException;
 import com.laytonsmith.core.exceptions.CRE.CREInsufficientArgumentsException;
@@ -65,29 +63,19 @@ import com.sk89q.worldguard.protection.flags.BooleanFlag;
 import com.sk89q.worldguard.protection.flags.DoubleFlag;
 import com.sk89q.worldguard.protection.flags.EnumFlag;
 import com.sk89q.worldguard.protection.flags.Flag;
-import com.sk89q.worldguard.protection.flags.FlagContext;
 import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.IntegerFlag;
-import com.sk89q.worldguard.protection.flags.InvalidFlagFormat;
 import com.sk89q.worldguard.protection.flags.LocationFlag;
-import com.sk89q.worldguard.protection.flags.RegionGroup;
-import com.sk89q.worldguard.protection.flags.RegionGroupFlag;
 import com.sk89q.worldguard.protection.flags.SetFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StringFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.managers.storage.StorageException;
-import com.sk89q.worldguard.protection.regions.GlobalProtectedRegion;
-import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
-import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
 import io.github.jbaero.skcompat.SKCompat.SKFunction;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
@@ -104,17 +92,6 @@ public class CHWorldGuard {
 
 	public static String docs() {
 		return "Provides various methods for hooking into WorldGuard";
-	}
-
-	private static LazyAbstraction abstraction = null;
-	static LazyAbstraction getAbstraction() {
-		return abstraction;
-	}
-
-	static {
-		if (abstraction == null && Static.getServer().getPluginManager().getPlugin("WorldGuard") != null) {
-			abstraction = new LazyAbstraction();
-		}
 	}
 
 	@api
@@ -158,9 +135,8 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
-			String worldName = args[1].val();
+			MCWorld world = Static.getWorld(args[1], t);
 			int index = -1;
 
 			if (args.length == 3) {
@@ -173,7 +149,7 @@ public class CHWorldGuard {
 						this.getName() + " expects the index to be between -1 and " + maxIndex, t);
 			}
 
-			getAbstraction().lookupRegion(regionName, worldName, t);
+			SKRegion region = SKWorldGuard.GetRegion(world, regionName, t);
 
 			CArray ret = new CArray(t);
 
@@ -181,7 +157,7 @@ public class CHWorldGuard {
 			if (index == 0 || index == -1) {
 
 				CArray pointSet = new CArray(t);
-				for (MCLocation l : getAbstraction().getBounds()) {
+				for (MCLocation l : region.getBounds()) {
 					CArray point = new CArray(t);
 					point.push(new CInt(l.getBlockX(), t), t);
 					point.push(new CInt(l.getBlockY(), t), t);
@@ -199,13 +175,13 @@ public class CHWorldGuard {
 				CArray players = new CArray(t);
 				CArray names = new CArray(t);
 				CArray groups = new CArray(t);
-				for (UUID member : getAbstraction().getOwnerPlayers()) {
+				for (UUID member : region.getOwnerPlayers()) {
 					players.push(new CString(member.toString(), t), t);
 				}
-				for (String name : getAbstraction().getOwnerNames()) {
+				for (String name : region.getOwnerNames()) {
 					names.push(new CString(name, t), t);
 				}
-				for (String member : getAbstraction().getOwnerGroups()) {
+				for (String member : region.getOwnerGroups()) {
 					groups.push(new CString(member, t), t);
 				}
 				ownerSet.set("players", players, t);
@@ -221,13 +197,13 @@ public class CHWorldGuard {
 				CArray players = new CArray(t);
 				CArray names = new CArray(t);
 				CArray groups = new CArray(t);
-				for (UUID member : getAbstraction().getMemberPlayers()) {
+				for (UUID member : region.getMemberPlayers()) {
 					players.push(new CString(member.toString(), t), t);
 				}
-				for (String name : getAbstraction().getMemberNames()) {
+				for (String name : region.getMemberNames()) {
 					names.push(new CString(name, t), t);
 				}
-				for (String member : getAbstraction().getMemberGroups()) {
+				for (String member : region.getMemberGroups()) {
 					groups.push(new CString(member, t), t);
 				}
 				memberSet.set("players", players, t);
@@ -239,7 +215,7 @@ public class CHWorldGuard {
 			if (index == 3 || index == -1) {
 
 				CArray flagSet = new CArray(t);
-				for (Map.Entry<String, String> flag : getAbstraction().getFlags().entrySet()) {
+				for (Map.Entry<String, String> flag : region.getFlags().entrySet()) {
 					CArray fl = new CArray(t,
 							new CString(flag.getKey(), t),
 							new CString(flag.getValue(), t));
@@ -250,11 +226,11 @@ public class CHWorldGuard {
 			}
 
 			if (index == 4 || index == -1) {
-				ret.push(new CInt(getAbstraction().getPriority(), t), t);
+				ret.push(new CInt(region.getPriority(), t), t);
 			}
 
 			if (index == 5 || index == -1) {
-				ret.push(new CDouble(getAbstraction().getVolume(), t), t);
+				ret.push(new CDouble(region.getVolume(), t), t);
 			}
 
 			if (ret.size() == 1) {
@@ -297,12 +273,8 @@ public class CHWorldGuard {
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			String region1 = args[1].val();
 			List<ProtectedRegion> checkRegions = new ArrayList<>();
-			Static.checkPlugin("WorldGuard", t);
-			World world = Bukkit.getServer().getWorld(args[0].val());
-			if (world == null) {
-				throw new CREPluginInternalException("Unknown world specified", t);
-			}
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			MCWorld world = Static.getServer().getWorld(args[0].val());
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 			if (args[2] instanceof CArray) {
 				CArray arg = (CArray) args[2];
 				for (int i = 0; i < arg.size(); i++) {
@@ -372,12 +344,8 @@ public class CHWorldGuard {
 			List<ProtectedRegion> getRegions;
 			CArray listRegions = new CArray(t);
 
-			Static.checkPlugin("WorldGuard", t);
-			World world = Bukkit.getServer().getWorld(args[0].val());
-			if (world == null) {
-				throw new CREPluginInternalException("Unknown world specified", t);
-			}
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			MCWorld world = Static.getServer().getWorld(args[0].val());
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			if (args.length == 2) {
 				checkRegions.addAll(mgr.getRegions().values());
@@ -452,15 +420,15 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
 			CArray arr = new CArray(t);
 			if (args.length == 1) {
-				for (String region : getAbstraction().allRegions(args[0].val(), t)) {
+				MCWorld world = Static.getWorld(args[0], t);
+				for (String region : SKWorldGuard.GetRegionManager(world, t).getRegions().keySet()) {
 					arr.push(new CString(region, t), t);
 				}
 			} else {
 				for (MCWorld world : Static.getServer().getWorlds()) {
-					for (String region : getAbstraction().allRegions(world.getName(), t)) {
+					for (String region : SKWorldGuard.GetRegionManager(world, t).getRegions().keySet()) {
 						arr.push(new CString(region, t), t);
 					}
 				}
@@ -500,10 +468,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
 			MCPlayer m = null;
-
 			if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
 				m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
 			}
@@ -517,7 +482,7 @@ public class CHWorldGuard {
 
 			CArray regions = new CArray(t);
 
-			for (String region : getAbstraction().regionsAt(m.getLocation())) {
+			for (String region : SKWorldGuard.RegionsAt(m.getLocation())) {
 				regions.push(new CString(region, t), t);
 			}
 
@@ -556,9 +521,6 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-			World world;
-
 			if (!(args[0] instanceof CArray)) {
 				throw new CRECastException(this.getName() + " needs a locationarray", t);
 			}
@@ -575,8 +537,8 @@ public class CHWorldGuard {
 				throw new CREInsufficientArgumentsException(this.getName() + " needs a world", t);
 			}
 
-			world = Bukkit.getServer().getWorld(loc.getWorld().getName());
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			MCWorld world = Static.getServer().getWorld(loc.getWorld().getName());
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 			BlockVector3 pt = BlockVector3.at(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
 			ApplicableRegionSet set = mgr.getApplicableRegions(pt);
 
@@ -640,12 +602,8 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-			World world = Bukkit.getServer().getWorld(args[1].val());
-			if (world == null) {
-				throw new CREPluginInternalException("Unknown world specified", t);
-			}
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			MCWorld world = Static.getServer().getWorld(args[1].val());
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion region = mgr.getRegion(args[0].val());
 
@@ -683,12 +641,10 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
 			MCWorld w = null;
 			String region;
 			CArray points;
-			List<BlockVector3> verticies = new ArrayList<>();
+			List<BlockVector3> vertices = new ArrayList<>();
 
 			if ((args.length == 3) || (args.length == 2 && "__global__".equalsIgnoreCase(args[1].val()))) {
 
@@ -745,11 +701,11 @@ public class CHWorldGuard {
 							z = Static.getNumber(point.get("z", t), t);
 						}
 
-						verticies.add(BlockVector3.at(x, y, z));
+						vertices.add(BlockVector3.at(x, y, z));
 					}
 				}
 
-				if (verticies.isEmpty()) {
+				if (vertices.isEmpty()) {
 					throw new CREPluginInternalException("Expecting an array of LocationArrays but found no valid Location arrays.", t);
 				}
 
@@ -796,31 +752,28 @@ public class CHWorldGuard {
 				throw new CREInvalidWorldException("No world specified.", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager((World) w.getHandle(), t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(w, t);
 
-			ProtectedRegion regionExists = mgr.getRegion(region);
-
-			if (regionExists != null) {
+			if (mgr.hasRegion(region)) {
 				throw new CREPluginInternalException(String.format("The region (%s) already exists in world (%s),"
 						+ " and cannot be created again.", region, w.getName()), t);
 			}
 
 			ProtectedRegion newRegion;
-
 			if ("__global__".equalsIgnoreCase(region)) {
-				newRegion = new GlobalProtectedRegion(region);
+				newRegion = SKWorldGuard.CreateProtectedRegion(region);
 			} else {
-				if (verticies.size() == 2) {
-					newRegion = new ProtectedCuboidRegion(region, verticies.get(0), verticies.get(1));
+				if (vertices.size() == 2) {
+					newRegion = SKWorldGuard.CreateProtectedRegion(region, vertices);
 				} else {
 
 					List<BlockVector2> pointsPoly = new ArrayList<>();
 					int minY = 0;
 					int maxY = 0;
 
-					for (int i = 0; i < verticies.size(); i++) {
+					for (int i = 0; i < vertices.size(); i++) {
 
-						BlockVector3 vector = verticies.get(i);
+						BlockVector3 vector = vertices.get(i);
 
 						int x = vector.getBlockX();
 						int y = vector.getBlockY();
@@ -838,7 +791,7 @@ public class CHWorldGuard {
 							}
 						}
 					}
-					newRegion = new ProtectedPolygonalRegion(region, pointsPoly, minY, maxY);
+					newRegion = SKWorldGuard.CreateProtectedRegion(region, pointsPoly, minY, maxY);
 				}
 			}
 
@@ -846,10 +799,9 @@ public class CHWorldGuard {
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while creating protected region", t, e);
 			}
-
 			return CVoid.VOID;
 		}
 	}
@@ -879,9 +831,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = null;
+			MCWorld world = null;
 			String region;
 
 			if (args.length == 2) {
@@ -895,22 +845,22 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+					world = Static.getServer().getWorld(m.getWorld().getName());
 				}
 			} else {
 				region = args[1].val();
-				world = Bukkit.getServer().getWorld(args[0].val());
+				world = Static.getServer().getWorld(args[0].val());
 			}
 
 			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
+				throw new CREInvalidWorldException("No world specified", t);
 			}
 
 			if ("__global__".equalsIgnoreCase(region)) {
 				throw new CREPluginInternalException("You cannot change position of __global__ region.", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion oldRegion = mgr.getRegion(region);
 
@@ -927,8 +877,6 @@ public class CHWorldGuard {
 
 			int minY = 0;
 			int maxY = 0;
-
-			ProtectedRegion newRegion;
 
 			CArray arg = (CArray) args[args.length - 1];
 
@@ -952,10 +900,11 @@ public class CHWorldGuard {
 				}
 			}
 
+			ProtectedRegion newRegion;
 			if (arg.size() == 2) {
-				newRegion = new ProtectedCuboidRegion(region, points.get(0), points.get(1));
+				newRegion = SKWorldGuard.CreateProtectedRegion(region, points);
 			} else {
-				newRegion = new ProtectedPolygonalRegion(region, points2D, minY, maxY);
+				newRegion = SKWorldGuard.CreateProtectedRegion(region, points2D, minY, maxY);
 			}
 
 			mgr.addRegion(newRegion);
@@ -966,16 +915,15 @@ public class CHWorldGuard {
 			newRegion.setPriority(oldRegion.getPriority());
 			try {
 				newRegion.setParent(oldRegion.getParent());
-			} catch (ProtectedRegion.CircularInheritanceException ex) {
-				// This won't happen because the settings will be the same
+			} catch (Exception ex) {
+				// CircularInheritanceException won't happen because the settings will be the same
 			}
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while redefining protected region", t, e);
 			}
-
 			return CVoid.VOID;
 		}
 	}
@@ -1005,9 +953,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = null;
+			MCWorld world = null;
 			String oldRegionName;
 			String newRegionName;
 
@@ -1023,16 +969,16 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+					world = Static.getServer().getWorld(m.getWorld().getName());
 				}
 			} else {
 				oldRegionName = args[1].val();
 				newRegionName = args[2].val();
-				world = Bukkit.getServer().getWorld(args[0].val());
+				world = Static.getServer().getWorld(args[0].val());
 			}
 
 			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
+				throw new CREInvalidWorldException("No world specified", t);
 			}
 
 			if ("__global__".equalsIgnoreCase(oldRegionName)) {
@@ -1043,7 +989,7 @@ public class CHWorldGuard {
 				throw new CREPluginInternalException("You cannot change name of any region to __global__.", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion oldRegion = mgr.getRegion(oldRegionName);
 
@@ -1052,14 +998,7 @@ public class CHWorldGuard {
 						oldRegionName, world.getName()), t);
 			}
 
-			ProtectedRegion newRegion;
-
-			if (oldRegion instanceof ProtectedCuboidRegion) {
-				newRegion = new ProtectedCuboidRegion(newRegionName, oldRegion.getMinimumPoint(), oldRegion.getMaximumPoint());
-			} else {
-				newRegion = new ProtectedPolygonalRegion(newRegionName, oldRegion.getPoints(), oldRegion.getMinimumPoint().getBlockY(), oldRegion.getMaximumPoint().getBlockY());
-			}
-
+			ProtectedRegion newRegion = SKWorldGuard.CreateProtectedRegion(newRegionName, oldRegion);
 			mgr.addRegion(newRegion);
 
 			newRegion.setMembers(oldRegion.getMembers());
@@ -1068,17 +1007,17 @@ public class CHWorldGuard {
 			newRegion.setPriority(oldRegion.getPriority());
 			try {
 				newRegion.setParent(oldRegion.getParent());
-			} catch (ProtectedRegion.CircularInheritanceException ignore) {
+			} catch (Exception ignore) {
+				//ProtectedRegion.CircularInheritanceException
 			}
 
 			mgr.removeRegion(oldRegionName);
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while renaming protected region", t, e);
 			}
-
 			return CVoid.VOID;
 		}
 	}
@@ -1108,9 +1047,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = null;
+			MCWorld world = null;
 			String region;
 
 			if (args.length == 1) {
@@ -1124,18 +1061,18 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+					world = Static.getServer().getWorld(m.getWorld().getName());
 				}
 			} else {
 				region = args[1].val();
-				world = Bukkit.getServer().getWorld(args[0].val());
+				world = Static.getServer().getWorld(args[0].val());
 			}
 
 			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
+				throw new CREInvalidWorldException("No world specified", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -1147,7 +1084,7 @@ public class CHWorldGuard {
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while removing protected region", t, e);
 			}
 
@@ -1180,9 +1117,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = null;
+			MCWorld world = null;
 			String region;
 
 			if (args.length == 1) {
@@ -1196,18 +1131,18 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+					world = Static.getServer().getWorld(m.getWorld().getName());
 				}
 			} else {
 				region = args[1].val();
-				world = Bukkit.getServer().getWorld(args[0].val());
+				world = Static.getServer().getWorld(args[0].val());
 			}
 
 			if (world == null) {
 				throw new CREInvalidWorldException("Unknown world specified", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -1244,9 +1179,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = null;
+			MCWorld world = null;
 			MCPlayer m = null;
 			String[] owners = null;
 			String region = args[0].val();
@@ -1258,14 +1191,14 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+					world = Static.getServer().getWorld(m.getWorld().getName());
 					owners = new String[1];
 					owners[0] = m.getName();
 				}
 
 			} else if (args.length == 2) {
 
-				world = Bukkit.getServer().getWorld(args[0].val());
+				world = Static.getServer().getWorld(args[0].val());
 
 				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
 					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
@@ -1278,7 +1211,7 @@ public class CHWorldGuard {
 
 			} else {
 
-				world = Bukkit.getServer().getWorld(args[1].val());
+				world = Static.getServer().getWorld(args[1].val());
 
 				if (args[2] instanceof CArray) {
 
@@ -1296,20 +1229,24 @@ public class CHWorldGuard {
 			}
 
 			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
+				throw new CREInvalidWorldException("No world specified", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
 				if ("__global__".equalsIgnoreCase(region)) {
-					regionExists = new GlobalProtectedRegion(region);
+					regionExists = SKWorldGuard.CreateProtectedRegion(region);
 					mgr.addRegion(regionExists);
 				} else {
 					throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
 				}
+			}
+
+			if(owners == null) {
+				throw new CREInsufficientArgumentsException("New owners not specified.", t);
 			}
 
 			for (String owner : owners) {
@@ -1319,7 +1256,7 @@ public class CHWorldGuard {
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while adding owner(s) to protected region", t, e);
 			}
 
@@ -1352,9 +1289,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = null;
+			MCWorld world = null;
 			MCPlayer m = null;
 			String[] owners = null;
 			String region = args[0].val();
@@ -1366,14 +1301,14 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+					world = Static.getServer().getWorld(m.getWorld().getName());
 					owners = new String[1];
 					owners[0] = m.getName();
 				}
 
 			} else if (args.length == 2) {
 
-				world = Bukkit.getServer().getWorld(args[0].val());
+				world = Static.getServer().getWorld(args[0].val());
 
 				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
 					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
@@ -1386,7 +1321,7 @@ public class CHWorldGuard {
 
 			} else {
 
-				world = Bukkit.getServer().getWorld(args[1].val());
+				world = Static.getServer().getWorld(args[1].val());
 
 				if (args[2] instanceof CArray) {
 
@@ -1404,15 +1339,19 @@ public class CHWorldGuard {
 			}
 
 			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
+				throw new CREInvalidWorldException("No world specified", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
 				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
+			}
+
+			if(owners == null) {
+				throw new CREInsufficientArgumentsException("Owners not specified.", t);
 			}
 
 			for (String owner : owners) {
@@ -1422,7 +1361,7 @@ public class CHWorldGuard {
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while deleting owner(s) from protected region", t, e);
 			}
 
@@ -1461,17 +1400,13 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
 			String worldName = args[1].val();
 			List<UUID> ownersPlayers = new ArrayList<>();
 			List<String> ownersNames = new ArrayList<>();
 			List<String> ownersGroups = new ArrayList<>();
-			World world = Bukkit.getServer().getWorld(worldName);
-			if (world == null) {
-				throw new CREPluginInternalException("Unknown world specified", t);
-			}
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			MCWorld world = Static.getServer().getWorld(worldName);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 			ProtectedRegion region = mgr.getRegion(regionName);
 			if (region == null) {
 				throw new CREPluginInternalException("Region could not be found!", t);
@@ -1526,9 +1461,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = null;
+			MCWorld world = null;
 			MCPlayer m = null;
 			String[] members = null;
 			String region = args[0].val();
@@ -1540,14 +1473,14 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+					world = Static.getServer().getWorld(m.getWorld().getName());
 					members = new String[1];
 					members[0] = m.getName();
 				}
 
 			} else if (args.length == 2) {
 
-				world = Bukkit.getServer().getWorld(args[0].val());
+				world = Static.getServer().getWorld(args[0].val());
 
 				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
 					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
@@ -1560,7 +1493,7 @@ public class CHWorldGuard {
 
 			} else {
 
-				world = Bukkit.getServer().getWorld(args[1].val());
+				world = Static.getServer().getWorld(args[1].val());
 
 				if (args[2] instanceof CArray) {
 
@@ -1578,20 +1511,24 @@ public class CHWorldGuard {
 			}
 
 			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
+				throw new CREInvalidWorldException("No world specified", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
 				if ("__global__".equalsIgnoreCase(region)) {
-					regionExists = new GlobalProtectedRegion(region);
+					regionExists = SKWorldGuard.CreateProtectedRegion(region);
 					mgr.addRegion(regionExists);
 				} else {
 					throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
 				}
+			}
+
+			if(members == null) {
+				throw new CREInsufficientArgumentsException("Members not specified.", t);
 			}
 
 			for (String member : members) {
@@ -1601,7 +1538,7 @@ public class CHWorldGuard {
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while adding member(s) to protected region", t, e);
 			}
 
@@ -1634,9 +1571,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = null;
+			MCWorld world = null;
 			MCPlayer m = null;
 			String[] members = null;
 			String region = args[0].val();
@@ -1648,14 +1583,14 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+					world = Static.getServer().getWorld(m.getWorld().getName());
 					members = new String[1];
 					members[0] = m.getName();
 				}
 
 			} else if (args.length == 2) {
 
-				world = Bukkit.getServer().getWorld(args[0].val());
+				world = Static.getServer().getWorld(args[0].val());
 
 				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
 					m = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
@@ -1668,7 +1603,7 @@ public class CHWorldGuard {
 
 			} else {
 
-				world = Bukkit.getServer().getWorld(args[1].val());
+				world = Static.getServer().getWorld(args[1].val());
 
 				if (args[2] instanceof CArray) {
 
@@ -1686,15 +1621,19 @@ public class CHWorldGuard {
 			}
 
 			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
+				throw new CREInvalidWorldException("No world specified", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
 				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
+			}
+
+			if(members == null) {
+				throw new CREInsufficientArgumentsException("Members not specified.", t);
 			}
 
 			for (String member : members) {
@@ -1704,7 +1643,7 @@ public class CHWorldGuard {
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while deleting members(s) from protected region", t, e);
 			}
 
@@ -1743,17 +1682,13 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
 			String worldName = args[1].val();
 			List<UUID> membersPlayers = new ArrayList<>();
 			List<String> membersNames = new ArrayList<>();
 			List<String> membersGroups = new ArrayList<>();
-			World world = Bukkit.getServer().getWorld(worldName);
-			if (world == null) {
-				throw new CREPluginInternalException("Unknown world specified", t);
-			}
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			MCWorld world = Static.getServer().getWorld(worldName);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 			ProtectedRegion region = mgr.getRegion(regionName);
 			if (region == null) {
 				throw new CREPluginInternalException("Region could not be found!", t);
@@ -1799,9 +1734,9 @@ public class CHWorldGuard {
 		@Override
 		public String docs() {
 			return "void {world, region, flagName, flagValue, [group]} Add/change/remove flag for selected region. FlagName should be any"
-					+ " supported flag from [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags this list]. For the flagValue, use types which"
+					+ " supported flag from [https://worldguard.readthedocs.io/en/latest/regions/flags/ this list]. For the flagValue, use types which"
 					+ " are supported by WorldGuard. Add group argument if you want to add WorldGuard group flag (read more about group"
-					+ " flag types [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags#Group here]). Set flagValue as null (and don't set"
+					+ " flag types [http://worldguard.enginehub.org/en/latest/regions/flags/#region-groups here]). Set flagValue as null (and don't set"
 					+ " group) to delete the flag from the region.";
 		}
 
@@ -1812,109 +1747,49 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = Bukkit.getServer().getWorld(args[0].val());
-
-			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
-			}
+			MCWorld world = Static.getServer().getWorld(args[0].val());
 
 			MCCommandSender sender = env.getEnv(CommandHelperEnvironment.class).GetCommandSender();
 			String regionName = args[1].val();
 			String flagName = args[2].val();
 			String flagValue = null;
-			RegionGroup groupValue = null;
 
 			if (args.length >= 4 && !(args[3] instanceof CNull) && !"".equals(args[3].val())) {
 				flagValue = args[3].val();
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
-			ProtectedRegion region = mgr.getRegion(regionName);
-
-			if (region == null) {
+			if (mgr.getRegion(regionName) == null) {
 				if ("__global__".equalsIgnoreCase(regionName)) {
-					region = new GlobalProtectedRegion(regionName);
-					mgr.addRegion(region);
+					SKWorldGuard.GetRegionManager(world, t).addRegion(SKWorldGuard.CreateProtectedRegion(regionName));
 				} else {
 					throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", regionName, world.getName()), t);
 				}
 			}
 
-			Flag<?> foundFlag = null;
-
-			for (Flag<?> flag : WorldGuard.getInstance().getFlagRegistry().getAll()) {
-				if (flag.getName().replace("-", "").equalsIgnoreCase(flagName.replace("-", ""))) {
-					foundFlag = flag;
-					break;
+			SKRegion region = SKWorldGuard.GetRegion(world, regionName, t);
+			if (flagValue != null) {
+				region.setFlag(flagName, sender, flagValue, t);
+			} else if (args.length < 5) {
+				region.clearFlag(flagName, t);
+				if (SKWorldGuard.GetFlag(flagName, t).getRegionGroupFlag() != null) {
+					region.clearGroupFlag(flagName, t);
 				}
-			}
-
-			if (foundFlag == null) {
-				throw new CREPluginInternalException(String.format("Unknown flag specified: (%s).", flagName), t);
 			}
 
 			if (args.length == 5) {
 				String group = args[4].val();
-				RegionGroupFlag groupFlag = foundFlag.getRegionGroupFlag();
-				if (groupFlag == null) {
-					throw new CREPluginInternalException(String.format("Region flag (%s) does not have a group flag.", flagName), t);
-				}
-
-				try {
-					groupValue = groupFlag.parseInput(FlagContext.create()
-							.setSender(WorldGuardPlugin.inst().wrapCommandSender((CommandSender) sender.getHandle()))
-							.setInput(group).build());
-				} catch (InvalidFlagFormat e) {
-					throw new CREPluginInternalException(String.format("Unknown group (%s).", group), t);
-				}
-
-			}
-
-			if (flagValue != null) {
-				try {
-					setFlag(t, region, foundFlag, (CommandSender) sender.getHandle(), flagValue);
-
-				} catch (InvalidEnvironmentException e) {
-					throw new CREPluginInternalException(e.getMessage(), t);
-				} catch (InvalidFlagFormat e) {
-					throw new CREPluginInternalException(String.format("Unknown flag value specified: (%s).", flagValue), t);
-				}
-			} else if (args.length < 5) {
-				region.setFlag(foundFlag, null);
-
-				RegionGroupFlag groupFlag = foundFlag.getRegionGroupFlag();
-				if (groupFlag != null) {
-					region.setFlag(groupFlag, null);
-				}
-			}
-
-			if (groupValue != null) {
-				RegionGroupFlag groupFlag = foundFlag.getRegionGroupFlag();
-
-				if (groupValue == groupFlag.getDefault()) {
-					region.setFlag(groupFlag, null);
-				} else {
-					region.setFlag(groupFlag, groupValue);
-				}
+				region.setGroupFlag(flagName, sender, group, t);
 			}
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while defining flags", t, e);
 			}
 
 			return CVoid.VOID;
-		}
-
-		private <V> void setFlag(Target t, ProtectedRegion region, Flag<V> flag, CommandSender sender, String value)
-				throws InvalidFlagFormat {
-			region.setFlag(flag, flag.parseInput(FlagContext.create()
-					.setSender(WorldGuardPlugin.inst().wrapCommandSender(sender))
-					.setInput(value).build()));
 		}
 	}
 
@@ -1934,7 +1809,7 @@ public class CHWorldGuard {
 		@Override
 		public String docs() {
 			return "mixed {locationArray, flagName, [player]} Check state of selected flag in defined location."
-					+ " FlagName should be any supported flag from [http://wiki.sk89q.com/wiki/WorldGuard/Regions/Flags this list]."
+					+ " FlagName should be any supported flag from [https://worldguard.readthedocs.io/en/latest/regions/flags/ this list]."
 					+ " Player defaults to the current player.";
 		}
 
@@ -1946,8 +1821,6 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
 			if ("build".equalsIgnoreCase(args[1].val())) {
 				throw new CREPluginInternalException(String.format("Can't use build flag with %s method. This is an limitation of WorldGuard.", this.getName()), t);
 			}
@@ -1969,112 +1842,77 @@ public class CHWorldGuard {
 
 			MCLocation l = ObjectGenerator.GetGenerator().location(args[0], w, t);
 
-			Flag<?> foundFlag = null;
-
-			for (Flag<?> flag : WorldGuard.getInstance().getFlagRegistry().getAll()) {
-				if (flag.getName().replace("-", "").equalsIgnoreCase(args[1].val().replace("-", ""))) {
-					foundFlag = flag;
-					break;
-				}
-			}
-
-			if (foundFlag == null) {
-				throw new CREPluginInternalException(String.format("Unknown flag specified: (%s).", args[1].val()), t);
-			}
-
-			RegionManager mgr = getAbstraction().getRegionManager(Bukkit.getServer().getWorld(l.getWorld().getName()), t);
+			Flag<?> foundFlag = SKWorldGuard.GetFlag(args[1].val(), t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(l.getWorld(), t);
 
 			ApplicableRegionSet set = mgr.getApplicableRegions(BukkitAdapter.asBlockVector((Location) l.getHandle()));
 			if (foundFlag instanceof StateFlag) {
-				if (p == null) {
-					return CBoolean.get(set.testState(null, (StateFlag) foundFlag));
-				} else {
-					return CBoolean.get(set.testState(
-							WorldGuardPlugin.inst().wrapPlayer(((BukkitMCPlayer) p)._Player()), (StateFlag) foundFlag));
-				}
-			} else {
-				Object getFlag;
-
-				if (p == null) {
-					getFlag = set.queryValue(null, (Flag<?>) foundFlag);
-				} else {
-					getFlag = set.queryValue(
-							WorldGuardPlugin.inst().wrapPlayer(((BukkitMCPlayer) p)._Player()), (Flag<?>) foundFlag);
-				}
-
-				if (foundFlag instanceof BooleanFlag) {
-					Boolean value = ((BooleanFlag) foundFlag).unmarshal(getFlag);
-					if (value != null) {
-						return CBoolean.get(value);
-					} else {
-						return CNull.NULL;
-					}
-				} else if (foundFlag instanceof DoubleFlag) {
-					Double value = ((DoubleFlag) foundFlag).unmarshal(getFlag);
-					if (value != null) {
-						return new CDouble(value, t);
-					} else {
-						return CNull.NULL;
-					}
-				} else if (foundFlag instanceof EnumFlag) {
-					String value = ((EnumFlag<?>) foundFlag).unmarshal(getFlag).name();
-					if (value != null) {
-						return new CString(value, t);
-					} else {
-						return CNull.NULL;
-					}
-				} else if (foundFlag instanceof IntegerFlag) {
-					Integer value = ((IntegerFlag) foundFlag).unmarshal(getFlag);
-					if (value != null) {
-						return new CInt(value, t);
-					} else {
-						return CNull.NULL;
-					}
-				} else if (foundFlag instanceof LocationFlag) {
-					com.sk89q.worldedit.util.Location value = ((LocationFlag) foundFlag).unmarshal(getFlag);
-					if (value != null) {
-						return new CArray(t,
-								new CDouble(value.getX(), t),
-								new CDouble(value.getY(), t),
-								new CDouble(value.getZ(), t),
-								new CString(l.getWorld().getName(), t));
-					} else {
-						return CNull.NULL;
-					}
-				} else if (foundFlag instanceof SetFlag) {
-
-					CArray values = new CArray(t);
-
-					Set<?> setValue = ((SetFlag<?>) foundFlag).unmarshal(getFlag);
-
-					if (setValue != null) {
-						for (Object setFlag : setValue) {
-							if (setFlag instanceof String) {
-								String value = (String) setFlag;
-								values.push(new CString(value, t), t);
-							} else if (setFlag instanceof EntityType) {
-								String value = ((EntityType) setFlag).getName();
-								values.push(new CString(value, t), t);
-							} else {
-								ConfigRuntimeException.DoWarning("One of the element of flag has unknown type. This is a developer mistake, please file a ticket.");
-							}
-						}
-					}
-
-					return values;
-
-				} else if (foundFlag instanceof StringFlag) {
-					String value = ((StringFlag) foundFlag).unmarshal(getFlag);
-					if (value != null) {
-						return new CString(value, t);
-					} else {
-						return CNull.NULL;
-					}
-				}
-
-				throw new CRENotFoundException("The flag type is unknown. This is a developer mistake, please file a ticket.", t);
+				return CBoolean.get(SKWorldGuard.TestState(set, p, (StateFlag) foundFlag));
 			}
 
+			Object getFlag = SKWorldGuard.QueryValue(set, p, (Flag<?>) foundFlag);
+
+			if (foundFlag instanceof BooleanFlag) {
+				Boolean value = ((BooleanFlag) foundFlag).unmarshal(getFlag);
+				if (value != null) {
+					return CBoolean.get(value);
+				} else {
+					return CNull.NULL;
+				}
+			} else if (foundFlag instanceof DoubleFlag) {
+				Double value = ((DoubleFlag) foundFlag).unmarshal(getFlag);
+				if (value != null) {
+					return new CDouble(value, t);
+				} else {
+					return CNull.NULL;
+				}
+			} else if (foundFlag instanceof EnumFlag) {
+				return new CString(((EnumFlag<?>) foundFlag).unmarshal(getFlag).name(), t);
+			} else if (foundFlag instanceof IntegerFlag) {
+				Integer value = ((IntegerFlag) foundFlag).unmarshal(getFlag);
+				if (value != null) {
+					return new CInt(value, t);
+				} else {
+					return CNull.NULL;
+				}
+			} else if (foundFlag instanceof LocationFlag) {
+				com.sk89q.worldedit.util.Location value = ((LocationFlag) foundFlag).unmarshal(getFlag);
+				if (value != null) {
+					return new CArray(t,
+							new CDouble(value.getX(), t),
+							new CDouble(value.getY(), t),
+							new CDouble(value.getZ(), t),
+							new CString(l.getWorld().getName(), t));
+				} else {
+					return CNull.NULL;
+				}
+			} else if (foundFlag instanceof SetFlag) {
+				CArray values = new CArray(t);
+				Set<?> setValue = ((SetFlag<?>) foundFlag).unmarshal(getFlag);
+				if (setValue != null) {
+					for (Object setFlag : setValue) {
+						if (setFlag instanceof String) {
+							String value = (String) setFlag;
+							values.push(new CString(value, t), t);
+						} else if (setFlag instanceof EntityType) {
+							String value = ((EntityType) setFlag).getName();
+							values.push(new CString(value, t), t);
+						} else {
+							ConfigRuntimeException.DoWarning("One of the element of flag has unknown type. This is a developer mistake, please file a ticket.");
+						}
+					}
+				}
+				return values;
+
+			} else if (foundFlag instanceof StringFlag) {
+				String value = ((StringFlag) foundFlag).unmarshal(getFlag);
+				if (value != null) {
+					return new CString(value, t);
+				} else {
+					return CNull.NULL;
+				}
+			}
+			throw new CRENotFoundException("The flag type is unknown. This is a developer mistake, please file a ticket.", t);
 		}
 	}
 	
@@ -2105,14 +1943,13 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
 			String regionName = args[0].val();
-			String worldName = args[1].val();
+			MCWorld world = Static.getWorld(args[1], t);
 			
-			getAbstraction().lookupRegion(regionName, worldName, t);
+			SKRegion region = SKWorldGuard.GetRegion(world, regionName, t);
 			
 			CArray flagSet = new CArray(t);
-			for (Map.Entry<String, String> flag : getAbstraction().getFlags().entrySet()) {
+			for (Map.Entry<String, String> flag : region.getFlags().entrySet()) {
 				flagSet.set(flag.getKey(), flag.getValue(), t);
 			}
 			
@@ -2145,9 +1982,7 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
-			World world = null;
+			MCWorld world = null;
 			String region;
 			int priority;
 
@@ -2162,27 +1997,27 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Bukkit.getServer().getWorld(m.getWorld().getName());
+					world = Static.getServer().getWorld(m.getWorld().getName());
 				}
 
 				priority = Static.getInt32(args[1], t);
 
 			} else {
 				region = args[1].val();
-				world = Bukkit.getServer().getWorld(args[0].val());
+				world = Static.getServer().getWorld(args[0].val());
 
 				priority = Static.getInt32(args[2], t);
 			}
 
 			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
+				throw new CREInvalidWorldException("No world specified", t);
 			}
 
 			if ("__global__".equalsIgnoreCase(region)) {
 				throw new CREPluginInternalException("The region cannot be named __global__.", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
@@ -2194,7 +2029,7 @@ public class CHWorldGuard {
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while setting priority for protected region", t, e);
 			}
 
@@ -2227,17 +2062,10 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
-
 			String regionName;
 			String parentName;
 
-
-			World world = Bukkit.getServer().getWorld(args[0].val());
-
-			if (world == null) {
-				throw new CREInvalidWorldException("Unknown world specified", t);
-			}
+			MCWorld world = Static.getServer().getWorld(args[0].val());
 
 			regionName = args[1].val();
 
@@ -2245,7 +2073,7 @@ public class CHWorldGuard {
 				throw new CREPluginInternalException("You cannot set parents for a __global__ cuboid.", t);
 			}
 
-			RegionManager mgr = getAbstraction().getRegionManager(world, t);
+			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 
 			ProtectedRegion child = mgr.getRegion(regionName);
 
@@ -2256,7 +2084,8 @@ public class CHWorldGuard {
 			if (args.length == 2) {
 				try {
 					child.setParent(null);
-				} catch (ProtectedRegion.CircularInheritanceException ignore) {
+				} catch (Exception ignore) {
+					// ProtectedRegion.CircularInheritance
 				}
 			} else {
 				parentName = args[2].val();
@@ -2268,14 +2097,14 @@ public class CHWorldGuard {
 
 				try {
 					child.setParent(parent);
-				} catch (ProtectedRegion.CircularInheritanceException e) {
-					throw new CREPluginInternalException("Circular inheritance detected.", t);
+				} catch (Exception e) {
+					throw new CREPluginInternalException(e.getMessage(), t);
 				}
 			}
 
 			try {
 				mgr.save();
-			} catch (StorageException e) {
+			} catch (Exception e) {
 				throw new CREPluginInternalException("Error while setting parent for protected region", t, e);
 			}
 
@@ -2294,7 +2123,6 @@ public class CHWorldGuard {
 
 		@Override
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
-			Static.checkPlugin("WorldGuard", t);
 			MCPlayer p;
 			MCLocation loc;
 			if (args.length == 1) {

@@ -5,7 +5,7 @@ An extension to [CommandHelper](https://github.com/sk89q/CommandHelper) providin
 
 Download the correct version for your version of CommandHelper:
 <br>**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3)** (CommandHelper 3.3.2, Minecraft 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
-<br>**[SKCompat 3.1.0](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.4, Minecraft 1.13.2 - 1.14.x, WorldEdit/WorldGuard 7.0.x)
+<br>**[SKCompat 3.1.1](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.4, Minecraft 1.13.2 - 1.14.x, WorldEdit/WorldGuard 7.0.x)
 
 NOTE: CHWorldEdit provides functions for WorldEdit. CHWorldGuard provides functions for WorldGuard. SKCompat combines both, which means you only need to download one file.
 
