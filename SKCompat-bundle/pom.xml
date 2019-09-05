@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>SKCompat</artifactId>
-	<version>3.1.0</version>
+	<version>3.1.1</version>
 
 	<repositories>
 		<repository>
@@ -32,12 +32,12 @@
 		<dependency>
 			<groupId>com.sk89q.worldedit</groupId>
 			<artifactId>worldedit-bukkit</artifactId>
-			<version>7.0.0</version>
+			<version>7.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sk89q.worldguard</groupId>
 			<artifactId>worldguard-bukkit</artifactId>
-			<version>7.0.0</version>
+			<version>7.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 

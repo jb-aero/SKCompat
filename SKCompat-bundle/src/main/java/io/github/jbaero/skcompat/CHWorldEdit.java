@@ -19,10 +19,10 @@ package io.github.jbaero.skcompat;
 
 import com.laytonsmith.PureUtilities.Vector3D;
 import com.laytonsmith.abstraction.MCCommandSender;
-import com.laytonsmith.abstraction.MCConsoleCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.annotations.api;
+import com.laytonsmith.core.ArgumentValidation;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
 import com.laytonsmith.core.constructs.*;
@@ -34,49 +34,19 @@ import com.laytonsmith.core.exceptions.CancelCommandException;
 import com.laytonsmith.core.exceptions.ConfigRuntimeException;
 import com.laytonsmith.core.natives.interfaces.Mixed;
 import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.EmptyClipboardException;
-import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
-import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.WorldEditException;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.extension.input.InputParseException;
-import com.sk89q.worldedit.extension.input.ParserContext;
-import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
-import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
-import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
-import com.sk89q.worldedit.function.operation.Operation;
-import com.sk89q.worldedit.function.operation.Operations;
-import com.sk89q.worldedit.function.pattern.BlockPattern;
-import com.sk89q.worldedit.function.pattern.Pattern;
-import com.sk89q.worldedit.function.pattern.RandomPattern;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.math.transform.AffineTransform;
 import com.sk89q.worldedit.math.transform.Transform;
-import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.session.ClipboardHolder;
-import com.sk89q.worldedit.util.io.Closer;
-import com.sk89q.worldedit.util.io.file.FilenameException;
-import com.sk89q.worldedit.world.block.BlockStateHolder;
-import com.sk89q.worldedit.world.block.BlockTypes;
-import org.bukkit.Location;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class CHWorldEdit {
 
@@ -84,62 +54,7 @@ public class CHWorldEdit {
 		return "Provides various methods for hooking into WorldEdit.";
 	}
 
-	// reserved LocalPlayer for the Console
-	private static SKConsole console;
 
-	public static SKCommandSender getSKPlayer(MCCommandSender sender, Target t) {
-		SKCommandSender ret;
-		if (sender == null || sender instanceof MCConsoleCommandSender) {
-			if (console == null) {
-				console = new SKConsole();
-			}
-			ret = console;
-		} else if (sender instanceof MCPlayer) {
-			ret = new SKPlayer((MCPlayer) sender);
-		} else {
-			throw new CRECastException("Sender type not yet supported: " + sender.getClass().getName(), t);
-		}
-		ret.setTarget(t);
-		return ret;
-	}
-
-	public static BlockVector3 vtov(Vector3D vec) {
-		return BlockVector3.at(vec.X(), vec.Y(), vec.Z());
-	}
-
-	public static Vector3D vtov(BlockVector3 vec) {
-		return new Vector3D(vec.getX(), vec.getY(), vec.getZ());
-	}
-
-	public static WeightedBlockPattern generateBlockPattern(Mixed source, SKCommandSender user, Target t) {
-		ParserContext context = new ParserContext();
-		context.setActor(user);
-		CArray src = Static.getArray(source, t);
-		if (src.containsKey("block")) {
-			double weight = 1D;
-			if (src.containsKey("weight")) {
-				weight = Static.getDouble(src.get("weight", t), t);
-			}
-			try {
-				BlockStateHolder block = WorldEdit.getInstance().getBlockFactory().parseFromInput(src.get("block", t).val(), context);
-				return new WeightedBlockPattern(block, weight);
-			} catch(InputParseException ex) {
-				throw new CREFormatException(ex.getMessage(), t);
-			}
-		} else {
-			throw new CREFormatException("Block name required", t);
-		}
-	}
-
-	public static Pattern generateBlockPattern(String source, SKCommandSender user, Target t) {
-		ParserContext context = new ParserContext();
-		context.setActor(user);
-		try {
-			return WorldEdit.getInstance().getPatternFactory().parseFromInput(source, context);
-		} catch(InputParseException ex) {
-			throw new CREFormatException(ex.getMessage(), t);
-		}
-	}
 
 	@api(environments = CommandHelperEnvironment.class)
 	public static class sk_pos1 extends SKCompat.SKFunction {
@@ -209,24 +124,23 @@ public class CHWorldEdit {
 	
 	private static Mixed sk_posX_exec(Target t, Environment env, boolean primary, 
 				AbstractFunction caller, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
-		Static.checkPlugin("WorldEdit", t);
 		MCCommandSender m = null;
 		Mixed rawPos = null;
 		if (args.length == 2) { // If sk_posX(player, locationArray).
-			m = SKCompat.myGetPlayer(args[0], t);
+			m = SKWorldEdit.GetPlayer(args[0], t);
 			rawPos = args[1];
 		} else if (args.length == 1) {
 			if (args[0] instanceof CArray) { // If sk_posX(locationArray).
 				rawPos = args[0];
 			} else { // If sk_posX(player). sk_posX(null) ends up here too, this is desired since player "null" exists.
-				m = SKCompat.myGetPlayer(args[0], t);
+				m = SKWorldEdit.GetPlayer(args[0], t);
 			}
 		}
 		if (m == null) {
 			m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
 		}
 		
-		SKCommandSender user = getSKPlayer(m, t);
+		SKCommandSender user = SKWorldEdit.GetSKPlayer(m, t);
 		
 		if (rawPos != null) {
 			
@@ -330,7 +244,7 @@ public class CHWorldEdit {
 			BlockVector3 pos = (primary ? getPos1((CuboidRegionSelector) sel, t) : getPos2((CuboidRegionSelector) sel, t));
 			
 			// Return the position converted to a CArray or CNull if no position is set.
-			return (pos == null ? CNull.NULL : ObjectGenerator.GetGenerator().vector(vtov(pos)));
+			return (pos == null ? CNull.NULL : ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(pos)));
 			
 		}
 	}
@@ -338,7 +252,7 @@ public class CHWorldEdit {
 	private static BlockVector3 getPos1(CuboidRegionSelector selector, Target t) {
 		try {
 			return selector.getPrimaryPosition();
-		} catch (IncompleteRegionException e) {
+		} catch (Exception e) {
 			return null; // The primary position is null.
 		}
 	}
@@ -348,7 +262,7 @@ public class CHWorldEdit {
 		// Return the secondary position from a complete selection if it is available.
 		try {
 			return selector.getRegion().getPos2();
-		} catch (IncompleteRegionException e) {
+		} catch (Exception e) {
 			// Region is incomplete. There is no way to know if position 2 is set without using reflection.
 		}
 		
@@ -407,39 +321,30 @@ public class CHWorldEdit {
 
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws ConfigRuntimeException {
-			Static.checkPlugin("WorldEdit", t);
 			MCCommandSender sender;
 			Mixed pat;
 			if (args.length == 2) {
-				sender = SKCompat.myGetPlayer(args[0], t);
+				sender = SKWorldEdit.GetPlayer(args[0], t);
 				pat = args[1];
 			} else {
 				sender = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
 				pat = args[0];
 			}
-			SKCommandSender user = getSKPlayer(sender, t);
+			SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
 
-			Pattern pattern;
+			SKPattern pattern = new SKPattern();
 			if (pat instanceof CArray) {
-				CArray pata = (CArray) pat;
-				if (pata.size() == 0) {
-					pattern = new BlockPattern(BlockTypes.AIR.getDefaultState());
-				} else if (pata.size() == 1) {
-					pattern = generateBlockPattern(pata.get(0, t), user, t);
-				} else {
-					pattern = new RandomPattern();
-					for (Mixed entry : pata.asList()) {
-						WeightedBlockPattern temp = generateBlockPattern(entry, user, t);
-						((RandomPattern) pattern).add(temp, temp.getWeight());
-					}
-				}
+				pattern.generateBlockPattern((CArray) pat, user, t);
+			} else if(pat instanceof CString) {
+				pattern.generateBlockPattern((CString) pat, user, t);
 			} else {
-				pattern = generateBlockPattern(pat.val(), user, t);
+				throw new CREFormatException("Invalid block pattern.", t);
 			}
+
 			EditSession editSession = user.getEditSession(false);
 			try {
-				editSession.setBlocks(user.getLocalSession().getSelection(user.getWorld()), pattern);
-			} catch (WorldEditException wee) {
+				editSession.setBlocks(user.getLocalSession().getSelection(user.getWorld()), pattern.getHandle());
+			} catch (Exception wee) {
 				throw new CREPluginInternalException(wee.getMessage(), t);
 			} finally {
 				editSession.flushSession();
@@ -481,33 +386,27 @@ public class CHWorldEdit {
 
 		@Override
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
-
-			Static.checkPlugin("WorldEdit", t);
+			boolean entities = false;
+			boolean biomes = false;
 			MCCommandSender sender = null;
 			MCLocation loc = null;
 			if(args[0] instanceof CArray) {
 				loc = ObjectGenerator.GetGenerator().location(args[0], null, t);
 			} else {
-				sender = SKCompat.myGetPlayer(args[0], t);
+				sender = SKWorldEdit.GetPlayer(args[0], t);
 			}
-			SKCommandSender user = getSKPlayer(sender, t);
 
-			LocalSession session = user.getLocalSession();
-			EditSession editSession = user.getEditSession(false);
-			try {
-				Region region = session.getSelection(user.getWorld());
-				BlockArrayClipboard clipboard = new BlockArrayClipboard(region);
-				BlockVector3 pos = session.getPlacementPosition(user);
-				if(loc != null) {
-					pos = BukkitAdapter.asBlockVector((Location) loc.getHandle());
+			if(args.length == 2) {
+				CArray options = Static.getArray(args[1], t);
+				if (options.containsKey("entities")) {
+					entities = ArgumentValidation.getBooleanObject(options.get("entities", t), t);
 				}
-				clipboard.setOrigin(pos);
-				ForwardExtentCopy copy = new ForwardExtentCopy(editSession, region, clipboard, region.getMinimumPoint());
-				Operations.complete(copy);
-				user.getLocalSession().setClipboard(new ClipboardHolder(clipboard));
-			} catch (WorldEditException wee) {
-				throw new CREPluginInternalException(wee.getMessage(), t);
+				if (options.containsKey("biomes")) {
+					biomes = ArgumentValidation.getBooleanObject(options.get("biomes", t), t);
+				}
 			}
+
+			SKClipboard.Copy(sender, loc, entities, biomes, t);
 			return CVoid.VOID;
 		}
 
@@ -518,15 +417,18 @@ public class CHWorldEdit {
 
 		@Override
 		public Integer[] numArgs() {
-			return new Integer[]{1};
+			return new Integer[]{1, 2};
 		}
 
 		@Override
 		public String docs() {
-			return "void {location | player} Copies the selected region into the clipboard."
+			return "void {location | player, [options]} Copies the selected region into the clipboard."
 					+ " If a location is specified it will use the console's clipboard"
 					+ " and the location will be used as the origin point for the clipboard."
-					+ " If ~console is explicitly specified instead, it will use the last set position as the origin.";
+					+ " If ~console is explicitly specified instead, it will use the last set position as the origin."
+					+ " An associative array of options can be provided, all of which default to false."
+					+ " If 'entities' is true, entities within the schematic will be pasted."
+					+ " If 'biomes' is true, the biomes within the schematic with be pasted.";
 		}
 	}
 
@@ -541,41 +443,12 @@ public class CHWorldEdit {
 
 		@Override
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
-
-			Static.checkPlugin("WorldEdit", t);
-			WorldEdit worldEdit = WorldEdit.getInstance();
 			String filename = args[0].val();
 			MCCommandSender sender = null;
 			if (args.length == 2) {
-				sender = SKCompat.myGetPlayer(args[1], t);
+				sender = SKWorldEdit.GetPlayer(args[1], t);
 			}
-			SKCommandSender user = getSKPlayer(sender, t);
-
-			File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
-			File f;
-
-			try {
-				f = worldEdit.getSafeOpenFile(user, dir, filename, "schem", "schematic");
-			} catch (FilenameException fne) {
-				throw new CREFormatException(fne.getMessage(), t);
-			}
-
-			try (Closer closer = Closer.create()) {
-				FileInputStream fis = closer.register(new FileInputStream(f));
-				BufferedInputStream bis = closer.register(new BufferedInputStream(fis));
-				ClipboardReader reader;
-				if (f.getName().endsWith(".schem")) {
-					reader = closer.register(BuiltInClipboardFormat.SPONGE_SCHEMATIC.getReader(bis));
-				} else {
-					// legacy schematic format
-					reader = closer.register(BuiltInClipboardFormat.MCEDIT_SCHEMATIC.getReader(bis));
-				}
-
-				Clipboard clipboard = reader.read();
-				user.getLocalSession().setClipboard(new ClipboardHolder(clipboard));
-			} catch (IOException e) {
-				throw new CREIOException("Schematic could not read or it does not exist: " + e.getMessage(), t);
-			}
+			SKClipboard.Load(sender, filename, t);
 			return CVoid.VOID;
 		}
 
@@ -608,44 +481,12 @@ public class CHWorldEdit {
 
 		@Override
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
-
-			Static.checkPlugin("WorldEdit", t);
-			WorldEdit worldEdit = WorldEdit.getInstance();
 			String filename = args[0].val();
 			MCCommandSender sender = null;
-			
 			if(args.length > 1) {
-				sender = SKCompat.myGetPlayer(args[1], t);
+				sender = SKWorldEdit.GetPlayer(args[1], t);
 			}
-
-			SKCommandSender user = getSKPlayer(sender, t);
-
-			Clipboard clipboard;
-			try {
-				clipboard = user.getLocalSession().getClipboard().getClipboard();
-			} catch (EmptyClipboardException e) {
-				throw new CRENotFoundException("The clipboard is empty, copy something to it first!", t);
-			}
-
-			File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
-			
-			File f;
-
-			try {
-				f = worldEdit.getSafeSaveFile(user, dir, filename, "schem");
-			} catch (FilenameException fne) {
-				throw new CREFormatException(fne.getMessage(), t);
-			}
-
-			try(Closer closer = Closer.create()) {
-				f.createNewFile();
-				FileOutputStream fos = closer.register(new FileOutputStream(f));
-				BufferedOutputStream bos = closer.register(new BufferedOutputStream(fos));
-				ClipboardWriter writer = closer.register(BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(bos));
-				writer.write(clipboard);
-			} catch (IOException e) {
-				throw new CREIOException("Schematic could not read or it does not exist: " + e.getMessage(), t);
-			}
+			SKClipboard.Save(sender, filename, t);
 			return CVoid.VOID;
 		}
 
@@ -679,7 +520,6 @@ public class CHWorldEdit {
 
 		@Override
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
-			Static.checkPlugin("WorldEdit", t);
 			int yaxis = 0,
 					xaxis = 0,
 					zaxis = 0;
@@ -696,7 +536,7 @@ public class CHWorldEdit {
 					zaxis = Static.getInt32(args[3], t);
 				case 2:
 					yaxis = Static.getInt32(args[1], t);
-					sender = SKCompat.myGetPlayer(args[0], t);
+					sender = SKWorldEdit.GetPlayer(args[0], t);
 					break;
 			}
 
@@ -704,19 +544,7 @@ public class CHWorldEdit {
 				throw new CREIllegalArgumentException("Axes must be multiples of 90 degrees.", t);
 			}
 
-			SKCommandSender user = getSKPlayer(sender, t);
-			LocalSession session = user.getLocalSession();
-			
-			try {
-				ClipboardHolder holder = session.getClipboard();
-				AffineTransform transform = new AffineTransform();
-				transform = transform.rotateY(-yaxis);
-				transform = transform.rotateX(-xaxis);
-				transform = transform.rotateZ(-zaxis);
-				holder.setTransform(holder.getTransform().combine(transform));
-			} catch (EmptyClipboardException e) {
-				throw new CRENotFoundException("The clipboard is empty, copy something to it first!", t);
-			}
+			SKClipboard.Rotate(sender, xaxis, yaxis, zaxis, t);
 			return CVoid.VOID;
 		}
 
@@ -750,67 +578,40 @@ public class CHWorldEdit {
 
 		@Override
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
-			Static.checkPlugin("WorldEdit", t);
 			boolean airless = false,
 					fastMode = false,
 					origin = false,
-					select = false;
-			SKCommandSender user;
+					select = false,
+					entities = false,
+					biomes = false;
+			MCCommandSender sender = null;
 			if (args[0] instanceof CArray) {
-				user = getSKPlayer(null, t);
-				user.setLocation(ObjectGenerator.GetGenerator().location(args[0], null, t));
+				SKWorldEdit.GetSKPlayer(null, t).setLocation(ObjectGenerator.GetGenerator().location(args[0], null, t));
 			} else {
-				user = getSKPlayer(SKCompat.myGetPlayer(args[0], t), t);
+				sender = SKWorldEdit.GetPlayer(args[0], t);
 			}
 			if (args.length >= 2) {
 				CArray options = Static.getArray(args[1], t);
 				if (options.containsKey("airless")) {
-					airless = Static.getBoolean(options.get("airless", t), t);
+					airless = ArgumentValidation.getBooleanObject(options.get("airless", t), t);
 				}
 				if (options.containsKey("fastmode")) {
-					fastMode = Static.getBoolean(options.get("fastmode", t), t);
+					fastMode = ArgumentValidation.getBooleanObject(options.get("fastmode", t), t);
 				}
 				if (options.containsKey("origin")) {
-					origin = Static.getBoolean(options.get("origin", t), t);
+					origin = ArgumentValidation.getBooleanObject(options.get("origin", t), t);
 				}
 				if (options.containsKey("select")) {
-					select = Static.getBoolean(options.get("select", t), t);
+					select = ArgumentValidation.getBooleanObject(options.get("select", t), t);
+				}
+				if (options.containsKey("entities")) {
+					entities = ArgumentValidation.getBooleanObject(options.get("entities", t), t);
+				}
+				if (options.containsKey("biomes")) {
+					biomes = ArgumentValidation.getBooleanObject(options.get("biomes", t), t);
 				}
 			}
-			EditSession editSession = user.getEditSession(fastMode);
-			LocalSession session = user.getLocalSession();
-			try {
-				// from com.sk89q.worldedit.command.ClipboardCommands.paste()
-				ClipboardHolder holder = session.getClipboard();
-				Clipboard clipboard = holder.getClipboard();
-				Region region = clipboard.getRegion();
-
-				BlockVector3 to = origin ? clipboard.getOrigin() : session.getPlacementPosition(user);
-				Operation operation = holder
-						.createPaste(editSession)
-						.to(to)
-						.ignoreAirBlocks(airless)
-						.build();
-				Operations.completeLegacy(operation);
-				if (select) {
-					BlockVector3 clipboardOffset = clipboard.getRegion().getMinimumPoint().subtract(clipboard.getOrigin());
-					Vector3 realTo = to.toVector3().add(holder.getTransform().apply(clipboardOffset.toVector3()));
-					Vector3 max = realTo.add(holder.getTransform().apply(region.getMaximumPoint().subtract(region.getMinimumPoint()).toVector3()));
-					RegionSelector selector = new CuboidRegionSelector(user.getWorld(), realTo.toBlockPoint(), max.toBlockPoint());
-					session.setRegionSelector(user.getWorld(), selector);
-					selector.learnChanges();
-					selector.explainRegionAdjust(user, session);
-				}
-			} catch (MaxChangedBlocksException e) {
-				throw new CRERangeException("Attempted to change more blocks than allowed.", t);
-			} catch (EmptyClipboardException e) {
-				throw new CRENotFoundException("The clipboard is empty, copy something to it first!", t);
-			} catch (WorldEditException ex) {
-				Logger.getLogger(CHWorldEdit.class.getName()).log(Level.SEVERE, null, ex);
-			} finally {
-				editSession.flushSession();
-			}
-
+			SKClipboard.Paste(sender, airless, biomes, entities, fastMode, origin, select, t);
 			return CVoid.VOID;
 		}
 
@@ -826,7 +627,7 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {location, [array] | player, [array]}"
+			return "void {location | player, [options]}"
 					+ " Pastes a schematic from the player's clipboard if a player is provided,"
 					+ " or from the console's clipboard if a location is given, as if a player was standing there."
 					+ " An associative array of options can be provided, all of which default to false."
@@ -834,7 +635,8 @@ public class CHWorldEdit {
 					+ " If 'fastmode' is true, the function will use WorldEdit's 'fastmode' to paste."
 					+ " If 'origin' is true, the schematic will be pasted at the original location it was copied from."
 					+ " If 'select' is true, the pasted blocks will be automatically selected."
-					+ " Both ignoreAir and entities default to false.";
+					+ " If 'entities' is true, entities within the schematic will be pasted."
+					+ " If 'biomes' is true, the biomes within the schematic with be pasted.";
 		}
 	}
 
@@ -849,12 +651,11 @@ public class CHWorldEdit {
 
 		@Override
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
-			Static.checkPlugin("WorldEdit", t);
 			MCCommandSender sender = null;
 			if(args.length == 1) {
-				sender = SKCompat.myGetPlayer(args[0], t);
+				sender = SKWorldEdit.GetPlayer(args[0], t);
 			}
-			SKCommandSender user = getSKPlayer(sender, t);
+			SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
 			user.getLocalSession().setClipboard(null);
 			return CVoid.VOID;
 		}
@@ -886,14 +687,13 @@ public class CHWorldEdit {
 
 		@Override
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
-			Static.checkPlugin("WorldEdit", t);
 			WorldEdit worldEdit = WorldEdit.getInstance();
 			String filename = args[0].val();
 			File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
 			File f;
 			try {
 				f = worldEdit.getSafeOpenFile(null, dir, filename, "schem");
-			} catch (FilenameException fne) {
+			} catch (Exception fne) {
 				throw new CREFormatException(fne.getMessage(), t);
 			}
 			
@@ -948,21 +748,19 @@ public class CHWorldEdit {
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			MCCommandSender sender;
-			Static.checkPlugin("WorldEdit", t);
-			
 			if (args.length == 0) {
 				sender = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
 			} else {
-				sender = SKCompat.myGetPlayer(args[0], t);
+				sender = SKWorldEdit.GetPlayer(args[0], t);
 			}
 			
-			SKCommandSender user = getSKPlayer(sender, t);
+			SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
 
 			LocalSession localSession = user.getLocalSession();
 			ClipboardHolder clipHolder;
 			try {
 				clipHolder = localSession.getClipboard();
-			} catch (EmptyClipboardException e) {
+			} catch (Exception e) {
 				return CNull.NULL; // Return null as the given player has an empty clipboard.
 			}
 			Clipboard clip = clipHolder.getClipboard();
@@ -970,12 +768,12 @@ public class CHWorldEdit {
 			
 			// Create return array.
 			CArray ret = new CArray(t);
-			CArray origin            = ObjectGenerator.GetGenerator().vector(vtov(clip.getOrigin())      );
-			CArray dimensions        = ObjectGenerator.GetGenerator().vector(vtov(clip.getDimensions())  );
-			CArray minPointOriginal  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMinimumPoint()));
-			CArray maxPointOriginal  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMaximumPoint()));
-			CArray minPointRelative  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMinimumPoint().subtract(clip.getOrigin())));
-			CArray maxPointRelative  = ObjectGenerator.GetGenerator().vector(vtov(clip.getMaximumPoint().subtract(clip.getOrigin())));
+			CArray origin            = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(clip.getOrigin()));
+			CArray dimensions        = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(clip.getDimensions()));
+			CArray minPointOriginal  = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(clip.getMinimumPoint()));
+			CArray maxPointOriginal  = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(clip.getMaximumPoint()));
+			CArray minPointRelative  = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(clip.getMinimumPoint().subtract(clip.getOrigin())));
+			CArray maxPointRelative  = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(clip.getMaximumPoint().subtract(clip.getOrigin())));
 			CArray minPoint = new CArray(t);
 			CArray maxPoint = new CArray(t);
 			minPoint.set("original", minPointOriginal, t); // Original copy region world coords (//paste -o).
@@ -998,10 +796,10 @@ public class CHWorldEdit {
 			Vector3 minPointRelativeVec = affineTransform.apply(clip.getMinimumPoint().subtract(clip.getOrigin()).toVector3());
 			Vector3 maxPointRelativeVec = affineTransform.apply(clip.getMaximumPoint().subtract(clip.getOrigin()).toVector3());
 			
-			CArray minPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointOriginalVec.toBlockPoint()));
-			CArray maxPointOriginalCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointOriginalVec.toBlockPoint()));
-			CArray minPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(minPointRelativeVec.toBlockPoint()));
-			CArray maxPointRelativeCVec = ObjectGenerator.GetGenerator().vector(vtov(maxPointRelativeVec.toBlockPoint()));
+			CArray minPointOriginalCVec = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(minPointOriginalVec.toBlockPoint()));
+			CArray maxPointOriginalCVec = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(maxPointOriginalVec.toBlockPoint()));
+			CArray minPointRelativeCVec = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(minPointRelativeVec.toBlockPoint()));
+			CArray maxPointRelativeCVec = ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(maxPointRelativeVec.toBlockPoint()));
 			
 			minPoint.set("original", minPointOriginalCVec, t); // 'Original' copy region world coords (//paste -o) inc rotation & flip.
 			maxPoint.set("original", maxPointOriginalCVec, t); // 'Original' copy region world coords (//paste -o) inc rotation & flip.

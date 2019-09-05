@@ -5,20 +5,20 @@ An extension to [CommandHelper](https://github.com/sk89q/CommandHelper) providin
 
 Download the correct version for your version of CommandHelper:
 <br>**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3)** (CommandHelper 3.3.2, Minecraft 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
-<br>**[SKCompat 3.1.0](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.4, Minecraft 1.13.2 - 1.14.x, WorldEdit/WorldGuard 7.0.x)
+<br>**[SKCompat 3.1.1](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.4, Minecraft 1.13.2 - 1.14.x, WorldEdit/WorldGuard 7.0.x)
 
 NOTE: CHWorldEdit provides functions for WorldEdit. CHWorldGuard provides functions for WorldGuard. SKCompat combines both, which means you only need to download one file.
 
--> [How to See Documentation In-Game](DOCUMENTATION.md)
+-> [How to See Documentation In-Game](https://github.com/jb-aero/SKCompat/blob/master/DOCUMENTATION.md)
 
 ## Compact Function List
 ### WorldEdit
 
 **sk_pos1([player], array | [player] | array)** Sets the player's point 1 to the given location array.<br>
 **sk_pos2([player], array | [player] | array)** Sets the player's point 2 to the given location array.<br>
-**sk_set_block([player], pattern)** Sets the player's selection to blocks defined by the provided pattern.<br>
-**skcb_copy(location | player)** Copies the selected region into the clipboard.<br>
-**skcb_paste(location, [array] | player, [array])** Pastes a schematic from the player's clipboard.<br>
+**sk_setblock([player], pattern)** Sets the player's selection to blocks defined by the provided pattern.<br>
+**skcb_copy(location | player, [options])** Copies the selected region into the clipboard.<br>
+**skcb_paste(location | player, [options])** Pastes a schematic from the player's clipboard.<br>
 **skcb_load(filename, [player])** Loads a schematic into the clipboard from file.<br>
 **skcb_save(filename, [overwrite], [player])** Saves a schematic in the clipboard to file.<br>
 **skcb_rotate([player,] y, [x, z])** Rotates the clipboard by the given degrees for each corresponding axis.<br>

@@ -7,7 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>CHWorldEdit</artifactId>
-  <version>3.1.0</version>
+  <version>3.1.1</version>
   <build>
     <plugins>
       <plugin>
@@ -46,7 +46,8 @@
                     <include>io/github/jbaero/skcompat/**</include>
                   </includes>
                   <excludes>
-                    <exclude>io/github/jbaero/skcompat/LazyAbstraction*</exclude>
+                    <exclude>io/github/jbaero/skcompat/SKWorldGuard*</exclude>
+                    <exclude>io/github/jbaero/skcompat/SKRegion*</exclude>
                     <exclude>io/github/jbaero/skcompat/CHWorldGuard*</exclude>
                   </excludes>
                 </filter>
