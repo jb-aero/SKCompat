@@ -1,21 +1,24 @@
 package io.github.jbaero.skcompat;
 
+import com.laytonsmith.PureUtilities.Common.ReflectionUtils;
 import com.laytonsmith.abstraction.MCLocation;
-import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.core.MSLog;
 import com.laytonsmith.core.LogLevel;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
 import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.EditSessionFactory;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.entity.BaseEntity;
+import com.sk89q.worldedit.entity.Player;
 import com.sk89q.worldedit.extension.platform.AbstractPlayerActor;
 import com.sk89q.worldedit.extent.inventory.BlockBag;
 import com.sk89q.worldedit.extent.inventory.BlockBagException;
 import com.sk89q.worldedit.session.SessionKey;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.world.World;
 import com.sk89q.worldedit.world.block.BlockState;
 
 /**
@@ -55,18 +58,23 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 
 	@Override
 	public boolean hasPermission(String string) {
-		// TODO: console can have permissions set
 		return true;
 	}
 
 	public abstract void setLocation(MCLocation loc);
 
-	public abstract MCWorld getMCWorld();
-
 	public abstract LocalSession getLocalSession();
 
 	public EditSession getEditSession(boolean fastMode) {
-		EditSession editor = WorldEdit.getInstance().getEditSessionFactory().getEditSession(getWorld(), -1, null, this);
+		EditSessionFactory factory = WorldEdit.getInstance().getEditSessionFactory();
+		EditSession editor;
+		try {
+			editor = factory.getEditSession(getWorld(), -1, null, this);
+		} catch (NoSuchMethodError err) {
+			// Probably WorldEdit 7.0.x
+			editor = (EditSession) ReflectionUtils.invokeMethod(EditSessionFactory.class, factory, "getEditSession",
+					new Class[]{World.class, int.class, BlockBag.class, Player.class}, new Object[]{getWorld(), -1, null, this});
+		}
 		editor.setFastMode(fastMode);
 		return editor;
 	}

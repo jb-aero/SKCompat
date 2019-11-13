@@ -2,11 +2,11 @@ package io.github.jbaero.skcompat;
 
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
-import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.StaticLayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCItemStack;
 import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.sk89q.worldedit.LocalSession;
+import com.sk89q.worldedit.internal.cui.CUIEvent;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.blocks.BaseItemStack;
@@ -53,11 +53,6 @@ public class SKPlayer extends SKCommandSender {
 	@Override
 	public void giveItem(BaseItemStack baseItemStack) {
 		player.getInventory().addItem(new BukkitMCItemStack(BukkitAdapter.adapt(baseItemStack)));
-	}
-
-	@Override
-	public MCWorld getMCWorld() {
-		return player.getWorld();
 	}
 
 	@Override

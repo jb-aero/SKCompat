@@ -17,6 +17,7 @@
  */
 package io.github.jbaero.skcompat;
 
+import com.laytonsmith.PureUtilities.Common.ReflectionUtils;
 import com.laytonsmith.PureUtilities.Vector3D;
 import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
@@ -36,6 +37,7 @@ import com.laytonsmith.core.natives.interfaces.Mixed;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.entity.Player;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector3;
@@ -53,8 +55,6 @@ public class CHWorldEdit {
 	public static String docs() {
 		return "Provides various methods for hooking into WorldEdit.";
 	}
-
-
 
 	@api(environments = CommandHelperEnvironment.class)
 	public static class sk_pos1 extends SKCompat.SKFunction {
@@ -183,7 +183,13 @@ public class CHWorldEdit {
 				
 				// Update WorldEdit CUI.
 				if (m instanceof MCPlayer) {
-					user.getLocalSession().dispatchCUISelection(user);
+					try {
+						user.getLocalSession().dispatchCUISelection(user);
+					} catch (NoSuchMethodError err) {
+						// Probably WorldEdit 7.0.x
+						ReflectionUtils.invokeMethod(LocalSession.class, user.getLocalSession(), "dispatchCUISelection",
+								new Class[]{Player.class}, new Object[]{user});
+					}
 				}
 				
 			} else { // Set a position.
@@ -215,7 +221,13 @@ public class CHWorldEdit {
 				
 				// Update WorldEdit CUI.
 				if (m instanceof MCPlayer) {
-					sel.explainRegionAdjust(user, user.getLocalSession());
+					try {
+						sel.explainRegionAdjust(user, user.getLocalSession());
+					} catch (NoSuchMethodError err) {
+						// Probably WorldEdit 7.0.x
+						ReflectionUtils.invokeMethod(CuboidRegionSelector.class, sel, "explainRegionAdjust",
+								new Class[]{Player.class, LocalSession.class}, new Object[]{user, user.getLocalSession()});
+					}
 				}
 			}
 			
@@ -692,11 +704,18 @@ public class CHWorldEdit {
 			File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
 			File f;
 			try {
-				f = worldEdit.getSafeOpenFile(null, dir, filename, "schem");
+				try {
+					f = worldEdit.getSafeOpenFile(null, dir, filename, "schem");
+				} catch (NoSuchMethodError err) {
+					// Probably WorldEdit 7.0.x
+					f = (File) ReflectionUtils.invokeMethod(WorldEdit.class, worldEdit, "getSafeOpenFile",
+							new Class[]{Player.class, File.class, String.class, String.class, String[].class},
+							new Object[]{null, dir, filename, "schem", null});
+				}
 			} catch (Exception fne) {
 				throw new CREFormatException(fne.getMessage(), t);
 			}
-			
+
 			return CBoolean.get(f.exists());
 		}
 
