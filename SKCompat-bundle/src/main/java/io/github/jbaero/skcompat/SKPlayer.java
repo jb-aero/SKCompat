@@ -102,4 +102,9 @@ public class SKPlayer extends SKCommandSender {
 	public boolean setLocation(Location loc) {
 		return player.teleport(new BukkitMCLocation(BukkitAdapter.adapt(loc)));
 	}
+
+	@Override
+	public void dispatchCUIEvent(CUIEvent event) {
+		BukkitAdapter.adapt((org.bukkit.entity.Player) player.getHandle()).dispatchCUIEvent(event);
+	}
 }
