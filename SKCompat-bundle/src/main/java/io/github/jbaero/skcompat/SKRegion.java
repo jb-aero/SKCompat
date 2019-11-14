@@ -104,7 +104,7 @@ public class SKRegion {
 		Flag<?> foundFlag = SKWorldGuard.GetFlag(flagName, t);
 		setFlag(foundFlag, sender, value, t);
 	}
-	
+
 	private <V> void setFlag(Flag<V> flag, MCCommandSender sender, String value, Target t) {
 		try {
 			this.region.setFlag(flag, flag.parseInput(FlagContext.create()

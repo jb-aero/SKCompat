@@ -2,8 +2,6 @@ package io.github.jbaero.skcompat;
 
 import com.laytonsmith.abstraction.MCConsoleCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
-import com.laytonsmith.abstraction.MCWorld;
-import com.laytonsmith.abstraction.StaticLayer;
 import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
 import com.laytonsmith.core.Static;
 import com.sk89q.worldedit.LocalSession;
@@ -51,11 +49,6 @@ public class SKConsole extends SKCommandSender {
 	}
 
 	@Override
-	public MCWorld getMCWorld() {
-		return location == null ? null : location.getWorld();
-	}
-
-	@Override
 	public World getWorld() {
 		if (location != null) {
 			return BukkitAdapter.adapt((org.bukkit.World) location.getWorld().getHandle());
@@ -71,11 +64,6 @@ public class SKConsole extends SKCommandSender {
 	@Override
 	public void giveItem(BaseItemStack baseItemStack) {
 		// do nothing
-	}
-
-	public void setWorld(MCWorld w) {
-		location = StaticLayer.GetLocation(w, location.getX(), location.getY(), location.getZ(),
-				location.getYaw(), location.getPitch());
 	}
 
 	@Override
