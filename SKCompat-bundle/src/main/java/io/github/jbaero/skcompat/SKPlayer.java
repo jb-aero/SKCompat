@@ -13,10 +13,12 @@ import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.util.HandSide;
 import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldedit.util.formatting.component.TextUtils;
 import com.sk89q.worldedit.world.World;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -106,5 +108,10 @@ public class SKPlayer extends SKCommandSender {
 	@Override
 	public void dispatchCUIEvent(CUIEvent event) {
 		BukkitAdapter.adapt((org.bukkit.entity.Player) player.getHandle()).dispatchCUIEvent(event);
+	}
+
+	@Override
+	public Locale getLocale() {
+		return TextUtils.getLocaleByMinecraftTag(((org.bukkit.entity.Player) player.getHandle()).getLocale());
 	}
 }

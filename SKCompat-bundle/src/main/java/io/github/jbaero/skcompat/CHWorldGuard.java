@@ -26,6 +26,7 @@ import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
 import com.laytonsmith.annotations.api;
+import com.laytonsmith.core.ArgumentValidation;
 import com.laytonsmith.core.MSVersion;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
@@ -142,7 +143,7 @@ public class CHWorldGuard {
 			int index = -1;
 
 			if (args.length == 3) {
-				index = Static.getInt32(args[2], t);
+				index = ArgumentValidation.getInt32(args[2], t);
 			}
 
 			int maxIndex = 5;
@@ -688,19 +689,19 @@ public class CHWorldGuard {
 						double z = 0;
 
 						if (!point.inAssociativeMode()) {
-							x = Static.getNumber(point.get(0, t), t);
-							y = Static.getNumber(point.get(1, t), t);
-							z = Static.getNumber(point.get(2, t), t);
+							x = ArgumentValidation.getNumber(point.get(0, t), t);
+							y = ArgumentValidation.getNumber(point.get(1, t), t);
+							z = ArgumentValidation.getNumber(point.get(2, t), t);
 						}
 
 						if (point.containsKey("x")) {
-							x = Static.getNumber(point.get("x", t), t);
+							x = ArgumentValidation.getNumber(point.get("x", t), t);
 						}
 						if (point.containsKey("y")) {
-							y = Static.getNumber(point.get("y", t), t);
+							y = ArgumentValidation.getNumber(point.get("y", t), t);
 						}
 						if (point.containsKey("z")) {
-							z = Static.getNumber(point.get("z", t), t);
+							z = ArgumentValidation.getNumber(point.get("z", t), t);
 						}
 
 						vertices.add(BlockVector3.at(x, y, z));
@@ -2056,13 +2057,13 @@ public class CHWorldGuard {
 					world = Static.getServer().getWorld(m.getWorld().getName());
 				}
 
-				priority = Static.getInt32(args[1], t);
+				priority = ArgumentValidation.getInt32(args[1], t);
 
 			} else {
 				region = args[1].val();
 				world = Static.getServer().getWorld(args[0].val());
 
-				priority = Static.getInt32(args[2], t);
+				priority = ArgumentValidation.getInt32(args[2], t);
 			}
 
 			if (world == null) {

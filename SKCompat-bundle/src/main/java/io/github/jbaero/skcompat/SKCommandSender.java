@@ -21,6 +21,8 @@ import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldedit.world.block.BlockState;
 
+import java.util.Locale;
+
 /**
  * @author jb_aero
  */
@@ -102,6 +104,11 @@ public abstract class SKCommandSender extends AbstractPlayerActor implements Ses
 	@Override
 	public BlockBag getInventoryBlockBag() {
 		return new ConsoleBlockBag();
+	}
+
+	@Override
+	public Locale getLocale() {
+		return WorldEdit.getInstance().getConfiguration().defaultLocale;
 	}
 
 	private static class ConsoleBlockBag extends BlockBag {
