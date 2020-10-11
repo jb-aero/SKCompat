@@ -46,6 +46,7 @@ NOTE: CHWorldEdit provides functions for WorldEdit. CHWorldGuard provides functi
 **sk_region_addmember(region, [world], [member(s)])** Add member(s) to a region.<br>
 **sk_region_remmember(region, [world], [member(s)])** Remove member(s) from a region.<br>
 **sk_region_members(region, world)** Returns an array of members of this region.<br>
+**sk_register_flag(name, type)** Registers a new flag (on startup only). Type must be BOOLEAN, DOUBLE, INTEGER, or STRING.<br>
 **sk_region_flag(world, region, flagName, flagValue, [group])** Add/change/remove flag in a region.<br>
 **sk_region_check_flag(locationArray, flagName, [player])** Check state of selected flag in defined location.<br>
 **sk_region_flags(region, world)** Returns an associative array with the flags of the region.<br>

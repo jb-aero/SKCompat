@@ -40,7 +40,9 @@ import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
 import com.laytonsmith.core.exceptions.CRE.CRECastException;
+import com.laytonsmith.core.exceptions.CRE.CREException;
 import com.laytonsmith.core.exceptions.CRE.CREFormatException;
+import com.laytonsmith.core.exceptions.CRE.CREIllegalArgumentException;
 import com.laytonsmith.core.exceptions.CRE.CREInsufficientArgumentsException;
 import com.laytonsmith.core.exceptions.CRE.CREInvalidPluginException;
 import com.laytonsmith.core.exceptions.CRE.CREInvalidWorldException;
@@ -1715,6 +1717,60 @@ public class CHWorldGuard {
 			members.set("names", names, t);
 			members.set("groups", groups, t);
 			return members;
+		}
+	}
+
+	@api
+	public static class sk_register_flag extends SKFunction {
+
+		@Override
+		public String getName() {
+			return "sk_register_flag";
+		}
+
+		@Override
+		public Integer[] numArgs() {
+			return new Integer[]{2};
+		}
+
+		@Override
+		public String docs() {
+			return "void {name, type} Registers a new flag (on startup only)."
+					+ " Type must be BOOLEAN, DOUBLE, INTEGER, or STRING.";
+		}
+
+		@Override
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREIllegalArgumentException.class, CREFormatException.class};
+		}
+
+		@Override
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
+			String flagName = args[0].val();
+			String flagType = args[1].val();
+
+			if(!Flag.isValidName(flagName)) {
+				throw new CREFormatException("Invalid flag name.", t);
+			}
+
+			if(WorldGuard.getInstance().getFlagRegistry().get(flagName) != null) {
+				throw new CREIllegalArgumentException("A flag already exists by the name " + flagName, t);
+			}
+
+			Flag<?> f;
+			try {
+				f = (Flag<?>) ReflectionUtils.newInstance(SKWorldGuard.GetFlagClass(flagType, t),
+						new Class[]{String.class}, new Object[]{flagName});
+			} catch (ReflectionUtils.ReflectionException ex) {
+				throw new CREException("Failed to create new flag.", t);
+			}
+
+			try {
+				WorldGuard.getInstance().getFlagRegistry().register(f);
+			} catch (Exception ex) {
+				throw new CREException(ex.getMessage(), t);
+			}
+			return CVoid.VOID;
 		}
 	}
 

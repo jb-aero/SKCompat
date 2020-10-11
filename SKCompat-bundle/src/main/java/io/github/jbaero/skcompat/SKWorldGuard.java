@@ -1,9 +1,11 @@
 package io.github.jbaero.skcompat;
 
+import com.laytonsmith.PureUtilities.Common.StringUtils;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.core.constructs.Target;
+import com.laytonsmith.core.exceptions.CRE.CREIllegalArgumentException;
 import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector2;
@@ -11,8 +13,7 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.flags.Flag;
-import com.sk89q.worldguard.protection.flags.StateFlag;
+import com.sk89q.worldguard.protection.flags.*;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.GlobalProtectedRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
@@ -90,7 +91,29 @@ public class SKWorldGuard {
 		}
 		return foundFlag;
 	}
-	
+
+	private enum FlagType {
+		BOOLEAN(BooleanFlag.class),
+		DOUBLE(DoubleFlag.class),
+		INTEGER(IntegerFlag.class),
+		STRING(StringFlag.class);
+
+		Class<?> flagClass;
+
+		FlagType(Class<?> flagClass) {
+			this.flagClass = flagClass;
+		}
+	}
+
+	public static Class<?> GetFlagClass(String flagType, Target t) {
+		try {
+			return FlagType.valueOf(flagType.toUpperCase()).flagClass;
+		} catch (IllegalArgumentException ex) {
+			throw new CREIllegalArgumentException("Invalid flag type: " + flagType + ". Must be one of: "
+					+ StringUtils.Join(FlagType.values(), ", ", ", or "), t);
+		}
+	}
+
 	public static boolean TestState(ApplicableRegionSet set, MCPlayer p, StateFlag flag) {
 		if(p == null) {
 			return set.testState(null, flag);
