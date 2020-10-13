@@ -25,7 +25,6 @@ import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.annotations.api;
 import com.laytonsmith.core.ArgumentValidation;
 import com.laytonsmith.core.ObjectGenerator;
-import com.laytonsmith.core.Static;
 import com.laytonsmith.core.constructs.*;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
@@ -409,7 +408,7 @@ public class CHWorldEdit {
 			}
 
 			if(args.length == 2) {
-				CArray options = Static.getArray(args[1], t);
+				CArray options = ArgumentValidation.getArray(args[1], t);
 				if (options.containsKey("entities")) {
 					entities = ArgumentValidation.getBooleanObject(options.get("entities", t), t);
 				}
@@ -538,16 +537,16 @@ public class CHWorldEdit {
 			MCCommandSender sender = null;
 			switch (args.length) {
 				case 3:
-					xaxis = Static.getInt32(args[1], t);
-					zaxis = Static.getInt32(args[2], t);
+					xaxis = ArgumentValidation.getInt32(args[1], t);
+					zaxis = ArgumentValidation.getInt32(args[2], t);
 				case 1:
-					yaxis = Static.getInt32(args[0], t);
+					yaxis = ArgumentValidation.getInt32(args[0], t);
 					break;
 				case 4:
-					xaxis = Static.getInt32(args[2], t);
-					zaxis = Static.getInt32(args[3], t);
+					xaxis = ArgumentValidation.getInt32(args[2], t);
+					zaxis = ArgumentValidation.getInt32(args[3], t);
 				case 2:
-					yaxis = Static.getInt32(args[1], t);
+					yaxis = ArgumentValidation.getInt32(args[1], t);
 					sender = SKWorldEdit.GetPlayer(args[0], t);
 					break;
 			}
@@ -603,7 +602,7 @@ public class CHWorldEdit {
 				sender = SKWorldEdit.GetPlayer(args[0], t);
 			}
 			if (args.length >= 2) {
-				CArray options = Static.getArray(args[1], t);
+				CArray options = ArgumentValidation.getArray(args[1], t);
 				if (options.containsKey("airless")) {
 					airless = ArgumentValidation.getBooleanObject(options.get("airless", t), t);
 				}

@@ -26,6 +26,7 @@ import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
 import com.laytonsmith.annotations.api;
+import com.laytonsmith.core.ArgumentValidation;
 import com.laytonsmith.core.MSVersion;
 import com.laytonsmith.core.ObjectGenerator;
 import com.laytonsmith.core.Static;
@@ -40,7 +41,9 @@ import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.environments.CommandHelperEnvironment;
 import com.laytonsmith.core.environments.Environment;
 import com.laytonsmith.core.exceptions.CRE.CRECastException;
+import com.laytonsmith.core.exceptions.CRE.CREException;
 import com.laytonsmith.core.exceptions.CRE.CREFormatException;
+import com.laytonsmith.core.exceptions.CRE.CREIllegalArgumentException;
 import com.laytonsmith.core.exceptions.CRE.CREInsufficientArgumentsException;
 import com.laytonsmith.core.exceptions.CRE.CREInvalidPluginException;
 import com.laytonsmith.core.exceptions.CRE.CREInvalidWorldException;
@@ -140,7 +143,7 @@ public class CHWorldGuard {
 			int index = -1;
 
 			if (args.length == 3) {
-				index = Static.getInt32(args[2], t);
+				index = ArgumentValidation.getInt32(args[2], t);
 			}
 
 			int maxIndex = 5;
@@ -686,19 +689,19 @@ public class CHWorldGuard {
 						double z = 0;
 
 						if (!point.inAssociativeMode()) {
-							x = Static.getNumber(point.get(0, t), t);
-							y = Static.getNumber(point.get(1, t), t);
-							z = Static.getNumber(point.get(2, t), t);
+							x = ArgumentValidation.getNumber(point.get(0, t), t);
+							y = ArgumentValidation.getNumber(point.get(1, t), t);
+							z = ArgumentValidation.getNumber(point.get(2, t), t);
 						}
 
 						if (point.containsKey("x")) {
-							x = Static.getNumber(point.get("x", t), t);
+							x = ArgumentValidation.getNumber(point.get("x", t), t);
 						}
 						if (point.containsKey("y")) {
-							y = Static.getNumber(point.get("y", t), t);
+							y = ArgumentValidation.getNumber(point.get("y", t), t);
 						}
 						if (point.containsKey("z")) {
-							z = Static.getNumber(point.get("z", t), t);
+							z = ArgumentValidation.getNumber(point.get("z", t), t);
 						}
 
 						vertices.add(BlockVector3.at(x, y, z));
@@ -1719,6 +1722,60 @@ public class CHWorldGuard {
 	}
 
 	@api
+	public static class sk_register_flag extends SKFunction {
+
+		@Override
+		public String getName() {
+			return "sk_register_flag";
+		}
+
+		@Override
+		public Integer[] numArgs() {
+			return new Integer[]{2};
+		}
+
+		@Override
+		public String docs() {
+			return "void {name, type} Registers a new flag (on startup only)."
+					+ " Type must be BOOLEAN, DOUBLE, INTEGER, or STRING.";
+		}
+
+		@Override
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREIllegalArgumentException.class, CREFormatException.class};
+		}
+
+		@Override
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
+			String flagName = args[0].val();
+			String flagType = args[1].val();
+
+			if(!Flag.isValidName(flagName)) {
+				throw new CREFormatException("Invalid flag name.", t);
+			}
+
+			if(WorldGuard.getInstance().getFlagRegistry().get(flagName) != null) {
+				throw new CREIllegalArgumentException("A flag already exists by the name " + flagName, t);
+			}
+
+			Flag<?> f;
+			try {
+				f = (Flag<?>) ReflectionUtils.newInstance(SKWorldGuard.GetFlagClass(flagType, t),
+						new Class[]{String.class}, new Object[]{flagName});
+			} catch (ReflectionUtils.ReflectionException ex) {
+				throw new CREException("Failed to create new flag.", t);
+			}
+
+			try {
+				WorldGuard.getInstance().getFlagRegistry().register(f);
+			} catch (Exception ex) {
+				throw new CREException(ex.getMessage(), t);
+			}
+			return CVoid.VOID;
+		}
+	}
+
+	@api
 	public static class sk_region_flag extends SKFunction {
 
 		@Override
@@ -2000,13 +2057,13 @@ public class CHWorldGuard {
 					world = Static.getServer().getWorld(m.getWorld().getName());
 				}
 
-				priority = Static.getInt32(args[1], t);
+				priority = ArgumentValidation.getInt32(args[1], t);
 
 			} else {
 				region = args[1].val();
 				world = Static.getServer().getWorld(args[0].val());
 
-				priority = Static.getInt32(args[2], t);
+				priority = ArgumentValidation.getInt32(args[2], t);
 			}
 
 			if (world == null) {
