@@ -1253,8 +1253,11 @@ public class CHWorldGuard {
 			}
 
 			for (String owner : owners) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(owner, t), "op");
-				regionExists.getOwners().addPlayer(o.getUniqueId());
+				if(owner.startsWith("g:")) {
+					regionExists.getOwners().addGroup(owner.substring(2));
+				} else {
+					regionExists.getOwners().addPlayer(Static.GetUser(owner, t).getUniqueID());
+				}
 			}
 
 			try {
@@ -1358,8 +1361,11 @@ public class CHWorldGuard {
 			}
 
 			for (String owner : owners) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(owner, t), "op");
-				regionExists.getOwners().removePlayer(o.getUniqueId());
+				if(owner.startsWith("g:")) {
+					regionExists.getOwners().removeGroup(owner.substring(2));
+				} else {
+					regionExists.getOwners().removePlayer(Static.GetUser(owner, t).getUniqueID());
+				}
 			}
 
 			try {
@@ -1535,8 +1541,11 @@ public class CHWorldGuard {
 			}
 
 			for (String member : members) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(member, t), "op");
-				regionExists.getMembers().addPlayer(o.getUniqueId());
+				if(member.startsWith("g:")) {
+					regionExists.getMembers().addGroup(member.substring(2));
+				} else {
+					regionExists.getMembers().addPlayer(Static.GetUser(member, t).getUniqueID());
+				}
 			}
 
 			try {
@@ -1640,8 +1649,11 @@ public class CHWorldGuard {
 			}
 
 			for (String member : members) {
-				OfflinePlayer o = (OfflinePlayer) ReflectionUtils.get(BukkitMCOfflinePlayer.class, Static.GetUser(member, t), "op");
-				regionExists.getMembers().removePlayer(o.getUniqueId());
+				if(member.startsWith("g:")) {
+					regionExists.getMembers().removeGroup(member.substring(2));
+				} else {
+					regionExists.getMembers().removePlayer(Static.GetUser(member, t).getUniqueID());
+				}
 			}
 
 			try {
