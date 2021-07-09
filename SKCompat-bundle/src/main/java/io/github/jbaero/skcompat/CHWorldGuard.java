@@ -24,7 +24,6 @@ import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
-import com.laytonsmith.abstraction.bukkit.BukkitMCOfflinePlayer;
 import com.laytonsmith.annotations.api;
 import com.laytonsmith.core.ArgumentValidation;
 import com.laytonsmith.core.MSVersion;
@@ -58,6 +57,8 @@ import com.laytonsmith.core.natives.interfaces.Mixed;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.registry.Keyed;
+import com.sk89q.worldedit.world.entity.EntityType;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -69,6 +70,7 @@ import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.IntegerFlag;
 import com.sk89q.worldguard.protection.flags.LocationFlag;
+import com.sk89q.worldguard.protection.flags.RegistryFlag;
 import com.sk89q.worldguard.protection.flags.SetFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StringFlag;
@@ -77,9 +79,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
 import io.github.jbaero.skcompat.SKCompat.SKFunction;
 import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -1977,6 +1977,13 @@ public class CHWorldGuard {
 				String value = ((StringFlag) foundFlag).unmarshal(getFlag);
 				if (value != null) {
 					return new CString(value, t);
+				} else {
+					return CNull.NULL;
+				}
+			} else if (foundFlag instanceof RegistryFlag) {
+				Keyed value = ((RegistryFlag<? extends Keyed>) foundFlag).unmarshal(getFlag);
+				if (value != null) {
+					return new CString(value.toString(), t);
 				} else {
 					return CNull.NULL;
 				}
