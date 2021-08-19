@@ -3,9 +3,12 @@ package io.github.jbaero.skcompat;
 import com.laytonsmith.PureUtilities.SimpleVersion;
 import com.laytonsmith.PureUtilities.Version;
 import com.laytonsmith.core.MSVersion;
+import com.laytonsmith.core.Static;
 import com.laytonsmith.core.extensions.AbstractExtension;
 import com.laytonsmith.core.extensions.MSExtension;
 import com.laytonsmith.core.functions.AbstractFunction;
+
+import java.util.logging.Level;
 
 /**
  * @author jb_aero
@@ -15,12 +18,12 @@ public class SKCompat extends AbstractExtension {
 
 	@Override
 	public void onStartup() {
-		System.out.println(PomData.NAME + " " + PomData.VERSION + " loaded.");
+		Static.getLogger().log(Level.INFO, PomData.NAME + " " + PomData.VERSION + " loaded.");
 	}
 
 	@Override
 	public void onShutdown() {
-		System.out.println(PomData.NAME + " " + PomData.VERSION + " unloaded.");
+		Static.getLogger().log(Level.INFO, PomData.NAME + " " + PomData.VERSION + " unloaded.");
 	}
 
 	@Override
