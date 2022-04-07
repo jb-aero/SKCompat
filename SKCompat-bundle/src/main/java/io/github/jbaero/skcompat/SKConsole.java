@@ -98,10 +98,16 @@ public class SKConsole extends SKCommandSender {
 
 	@Override
 	public void setPosition(Vector3 vector, float f, float f1) {
+		trySetPosition(vector, f, f);
+	}
+
+	@Override
+	public boolean trySetPosition(Vector3 vector, float f, float f1) {
 		location.setX(vector.getX());
 		location.setY(vector.getY());
 		location.setZ(vector.getZ());
 		location.setPitch(f);
 		location.setYaw(f1);
+		return true;
 	}
 }

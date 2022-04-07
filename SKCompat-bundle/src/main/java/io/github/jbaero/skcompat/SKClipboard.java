@@ -62,8 +62,10 @@ public class SKClipboard {
 			copy.setCopyingBiomes(biomes);
 			Operations.complete(copy);
 			user.getLocalSession().setClipboard(new ClipboardHolder(clipboard));
+		} catch (IncompleteRegionException ex) {
+			throw new CREPluginInternalException("Incomplete selection, expecting both pos1 and pos2 to be set.", t);
 		} catch (Exception wee) {
-			throw new CREPluginInternalException(wee.getMessage(), t);
+			throw new CREPluginInternalException(wee.getMessage(), t, wee);
 		}
 	}
 
@@ -225,7 +227,7 @@ public class SKClipboard {
 		} catch (Exception e) {
 			throw new CRERangeException("Attempted to change more blocks than allowed.", t);
 		} finally {
-			editSession.flushSession();
+			editSession.close();
 		}
 
 	}

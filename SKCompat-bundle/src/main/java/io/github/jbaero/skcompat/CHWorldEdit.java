@@ -352,13 +352,10 @@ public class CHWorldEdit {
 				throw new CREFormatException("Invalid block pattern.", t);
 			}
 
-			EditSession editSession = user.getEditSession(false);
-			try {
+			try (EditSession editSession = user.getEditSession(false)) {
 				editSession.setBlocks(user.getLocalSession().getSelection(user.getWorld()), pattern.getHandle());
 			} catch (Exception wee) {
 				throw new CREPluginInternalException(wee.getMessage(), t);
-			} finally {
-				editSession.flushSession();
 			}
 
 			return CVoid.VOID;

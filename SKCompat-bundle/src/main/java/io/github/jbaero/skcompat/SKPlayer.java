@@ -64,7 +64,12 @@ public class SKPlayer extends SKCommandSender {
 
 	@Override
 	public void setPosition(Vector3 vector, float v, float v1) {
-		player.teleport(StaticLayer.GetLocation(player.getWorld(), vector.getX(), vector.getY(), vector.getZ(), v, v1));
+		trySetPosition(vector, v, v1);
+	}
+
+	@Override
+	public boolean trySetPosition(Vector3 vector, float v, float v1) {
+		return player.teleport(StaticLayer.GetLocation(player.getWorld(), vector.getX(), vector.getY(), vector.getZ(), v, v1));
 	}
 
 	@Override
