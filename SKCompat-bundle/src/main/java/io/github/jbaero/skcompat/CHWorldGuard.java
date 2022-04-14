@@ -1411,9 +1411,6 @@ public class CHWorldGuard {
 		public Mixed exec(Target t, Environment env, Mixed... args) throws ConfigRuntimeException {
 			String regionName = args[0].val();
 			String worldName = args[1].val();
-			List<UUID> ownersPlayers = new ArrayList<>();
-			List<String> ownersNames = new ArrayList<>();
-			List<String> ownersGroups = new ArrayList<>();
 			MCWorld world = Static.getServer().getWorld(worldName);
 			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 			ProtectedRegion region = mgr.getRegion(regionName);
@@ -1421,9 +1418,9 @@ public class CHWorldGuard {
 				throw new CREPluginInternalException("Region could not be found!", t);
 			}
 
-			ownersPlayers.addAll(region.getOwners().getUniqueIds());
-			ownersNames.addAll(region.getOwners().getPlayers());
-			ownersGroups.addAll(region.getOwners().getGroups());
+			List<UUID> ownersPlayers = new ArrayList<>(region.getOwners().getUniqueIds());
+			List<String> ownersNames = new ArrayList<>(region.getOwners().getPlayers());
+			List<String> ownersGroups = new ArrayList<>(region.getOwners().getGroups());
 
 			CArray owners = CArray.GetAssociativeArray(t);
 			CArray players = new CArray(t);
@@ -1699,9 +1696,6 @@ public class CHWorldGuard {
 		public Mixed exec(Target t, Environment env, Mixed... args) throws ConfigRuntimeException {
 			String regionName = args[0].val();
 			String worldName = args[1].val();
-			List<UUID> membersPlayers = new ArrayList<>();
-			List<String> membersNames = new ArrayList<>();
-			List<String> membersGroups = new ArrayList<>();
 			MCWorld world = Static.getServer().getWorld(worldName);
 			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 			ProtectedRegion region = mgr.getRegion(regionName);
@@ -1709,9 +1703,9 @@ public class CHWorldGuard {
 				throw new CREPluginInternalException("Region could not be found!", t);
 			}
 
-			membersPlayers.addAll(region.getMembers().getUniqueIds());
-			membersNames.addAll(region.getMembers().getPlayers());
-			membersGroups.addAll(region.getMembers().getGroups());
+			List<UUID> membersPlayers = new ArrayList<>(region.getMembers().getUniqueIds());
+			List<String> membersNames = new ArrayList<>(region.getMembers().getPlayers());
+			List<String> membersGroups = new ArrayList<>(region.getMembers().getGroups());
 
 			CArray members = CArray.GetAssociativeArray(t);
 			CArray players = new CArray(t);

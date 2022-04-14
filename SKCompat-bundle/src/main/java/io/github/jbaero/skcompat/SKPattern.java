@@ -1,5 +1,6 @@
 package io.github.jbaero.skcompat;
 
+import com.laytonsmith.core.ArgumentValidation;
 import com.laytonsmith.core.Static;
 import com.laytonsmith.core.constructs.CArray;
 import com.laytonsmith.core.constructs.CString;
@@ -48,13 +49,13 @@ public class SKPattern {
 		for (Mixed entry : source.asList()) {
 			ParserContext context = new ParserContext();
 			context.setActor(user);
-			CArray src = Static.getArray(entry, t);
+			CArray src = ArgumentValidation.getArray(entry, t);
 			if (!src.containsKey("block")) {
 				throw new CREFormatException("Block name required", t);
 			}
 			double weight = 1D;
 			if (src.containsKey("weight")) {
-				weight = Static.getDouble(src.get("weight", t), t);
+				weight = ArgumentValidation.getDouble(src.get("weight", t), t);
 			}
 			try {
 				Pattern p = WorldEdit.getInstance().getBlockFactory().parseFromInput(src.get("block", t).val(), context);
