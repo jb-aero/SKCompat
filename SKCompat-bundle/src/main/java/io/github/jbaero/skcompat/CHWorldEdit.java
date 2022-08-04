@@ -373,13 +373,83 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {[player], pattern} Sets the user's selection to blocks defined by the provided pattern."
-					+ " The pattern can be a string in the format given to worldedit commands, or it can be"
-					+ " a normal array of associative arrays. If the array is empty, the entire selection will be"
-					+ " set to air. The inner arrays consist of a required 'block' field describing the block's"
-					+ " material and properties, and an optional decimal 'weight' field."
+			return "void {[player], pattern} Sets the current selection to blocks defined by the provided block pattern."
+					+ " The pattern can be a string in the format given to WorldEdit commands, or it can be a normal"
+					+ " array of associative arrays. The inner arrays consist of a required 'block' field describing"
+					+ " the block's array material and properties, and an optional decimal 'weight' field."
 					+ " If weight is not given it defaults to 1. The weight represents that block's chance"
-					+ " of being selected for the next random block setting.";
+					+ " of being selected for the next random block setting."
+					+ " If the pattern array is empty, the entire selection will be set to air.";
+		}
+	}
+
+	@api(environments = CommandHelperEnvironment.class)
+	public static class sk_replace_blocks extends SKCompat.SKFunction {
+
+		@Override
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CREInvalidPluginException.class, CREPluginInternalException.class,
+					CREPlayerOfflineException.class, CREFormatException.class, CRECastException.class};
+		}
+
+		@Override
+		public Mixed exec(Target t, Environment env, Mixed... args) throws ConfigRuntimeException {
+			MCCommandSender sender;
+			Mixed pat;
+			String maskInput;
+			if (args.length == 3) {
+				sender = SKWorldEdit.GetPlayer(args[0], t);
+				maskInput = args[1].val();
+				pat = args[2];
+			} else {
+				sender = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				maskInput = args[0].val();
+				pat = args[1];
+			}
+			SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
+
+			SKPattern pattern = new SKPattern();
+			if (pat instanceof CArray) {
+				pattern.generateBlockPattern((CArray) pat, user, t);
+			} else if(pat instanceof CString) {
+				pattern.generateBlockPattern((CString) pat, user, t);
+			} else {
+				throw new CREFormatException("Invalid block pattern.", t);
+			}
+
+			SKMask mask = new SKMask();
+			mask.generateMask(maskInput, user, t);
+
+			try (EditSession editSession = user.getEditSession(false)) {
+				editSession.replaceBlocks(user.getLocalSession().getSelection(user.getWorld()),
+						mask.getHandle(), pattern.getHandle());
+			} catch (Exception wee) {
+				throw new CREPluginInternalException(wee.getMessage(), t);
+			}
+
+			return CVoid.VOID;
+		}
+
+		@Override
+		public String getName() {
+			return "sk_replace_blocks";
+		}
+
+		@Override
+		public Integer[] numArgs() {
+			return new Integer[]{2, 3};
+		}
+
+		@Override
+		public String docs() {
+			return "void {[player], mask, pattern} Replaces blocks matching the mask with a block pattern."
+					+ " The mask and pattern can be a string in the format given to WorldEdit commands."
+					+ " Patterns can also be a normal array of associative arrays."
+					+ " The inner arrays consist of a required 'block' field describing the block's material and"
+					+ " properties, and an optional decimal 'weight' field."
+					+ " If weight is not given it defaults to 1. The weight represents that block's chance of being"
+					+ " selected for the next random block setting."
+					+ " If the pattern array is empty, the entire selection will be set to air.";
 		}
 	}
 

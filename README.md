@@ -1,7 +1,7 @@
 SKCompat
 ========
 
-An extension to [CommandHelper](https://github.com/sk89q/CommandHelper) providing access to features of other plugins in the sk89q family. Currently supports WorldEdit and WorldGuard.
+An extension to [CommandHelper](https://github.com/EngineHub/CommandHelper) providing access to features of other plugins in the sk89q family. Currently supports WorldEdit and WorldGuard.
 
 Download or compile the correct version for your server:
 <br>**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3)** (CommandHelper 3.3.2, Minecraft 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
@@ -14,9 +14,12 @@ NOTE: CHWorldEdit provides functions for WorldEdit. CHWorldGuard provides functi
 ## Compact Function List
 ### WorldEdit
 
+In these WorldEdit functions, the player argument can be `null` or `'~console'` to use the console as a user.
+
 **sk_pos1([player], array | [player] | array)** Sets the player's point 1 to the given location array.<br>
 **sk_pos2([player], array | [player] | array)** Sets the player's point 2 to the given location array.<br>
-**sk_setblock([player], pattern)** Sets the player's selection to blocks defined by the provided pattern.<br>
+**sk_setblock([player], pattern)** Sets the current selection to blocks defined by the provided block pattern.<br>
+**sk_replace_blocks([player], mask, pattern)** Replaces blocks matching the mask in the current selection with a block pattern.
 **skcb_copy(location | player, [options])** Copies the selected region into the clipboard.<br>
 **skcb_paste(location | player, [options])** Pastes a schematic from the player's clipboard.<br>
 **skcb_load(filename, [player])** Loads a schematic into the clipboard from file.<br>
