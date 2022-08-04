@@ -14,20 +14,20 @@ NOTE: CHWorldEdit provides functions for WorldEdit. CHWorldGuard provides functi
 ## Compact Function List
 ### WorldEdit
 
-In these WorldEdit functions, the player argument can be `null` or `'~console'` to use the console as a user.
+In these WorldEdit functions, user refers to console or player, where console is `null` or `'~console'`.
 
-**sk_pos1([player], array | [player] | array)** Sets the player's point 1 to the given location array.<br>
-**sk_pos2([player], array | [player] | array)** Sets the player's point 2 to the given location array.<br>
-**sk_setblock([player], pattern)** Sets the current selection to blocks defined by the provided block pattern.<br>
-**sk_replace_blocks([player], mask, pattern)** Replaces blocks matching the mask in the current selection with a block pattern.
-**skcb_copy(location | player, [options])** Copies the selected region into the clipboard.<br>
-**skcb_paste(location | player, [options])** Pastes a schematic from the player's clipboard.<br>
-**skcb_load(filename, [player])** Loads a schematic into the clipboard from file.<br>
-**skcb_save(filename, [overwrite], [player])** Saves a schematic in the clipboard to file.<br>
-**skcb_rotate([player,] y, [x, z])** Rotates the clipboard by the given degrees for each corresponding axis.<br>
-**skcb_clear([player])** Clears the clipboard for the specified player.<br>
+**sk_pos1([user], array | [user] | array)** Sets the user's point 1 to the given location array.<br>
+**sk_pos2([user], array | [user] | array)** Sets the user's point 2 to the given location array.<br>
+**sk_setblock([user], pattern)** Sets the current selection to blocks defined by the provided block pattern.<br>
+**sk_replace_blocks([user], mask, pattern)** Replaces blocks matching the mask in the current selection with a block pattern.<br>
+**skcb_copy(location | user, [options])** Copies the selected region into the clipboard.<br>
+**skcb_paste(location | user, [options])** Pastes a schematic from the user's clipboard.<br>
+**skcb_load(filename, [user])** Loads a schematic into the clipboard from file.<br>
+**skcb_save(filename, [overwrite], [user])** Saves a schematic in the clipboard to file.<br>
+**skcb_rotate([user,] y, [x, z])** Rotates the clipboard by the given degrees for each corresponding axis.<br>
+**skcb_clear([user])** Clears the clipboard for the specified user.<br>
 **sk_schematic_exists(filename)** Returns whether a schematic by that name exists.<br>
-**sk_clipboard_info([player])** Returns an array with selection info of the give player's clipboard.
+**sk_clipboard_info([user])** Returns an array with selection info of the give user's clipboard.
 
 ### WorldGuard
 

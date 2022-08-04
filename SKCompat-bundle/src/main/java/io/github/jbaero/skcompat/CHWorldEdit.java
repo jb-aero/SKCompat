@@ -75,11 +75,11 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[player], array | [player] | array} Sets the player's point 2 to the given location array."
+			return "mixed {[user], array | [player] | array} Sets the user's point 2 to the given location array."
 					+ " If the array is null, the point will be cleared."
-					+ " If no array is given, current point 2 of the player will be returned as an array in format"
+					+ " If no array is given, current point 2 of the user will be returned as an array in format"
 					+ " array(0:xVal, 1:yVal, 2:zVal, x:xVal, y:yVal, z:zVal) or null when the point has not been set."
-					+ " In case " + this.getName() + "(null) is called, the argument will be treated as player.";
+					+ " In case " + this.getName() + "(null) is called, the argument will be treated as user.";
 		}
 
 		@Override
@@ -103,11 +103,11 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[player], array | [player] | array} Sets the player's point 2 to the given location array."
+			return "mixed {[user], array | [player] | array} Sets the user's point 2 to the given location array."
 					+ " If the array is null, the point will be cleared."
 					+ " If no array is given, current point 2 of the player will be returned as an array in format"
 					+ " array(0:xVal, 1:yVal, 2:zVal, x:xVal, y:yVal, z:zVal) or null when the point has not been set."
-					+ " In case " + this.getName() + "(null) is called, the argument will be treated as player.";
+					+ " In case " + this.getName() + "(null) is called, the argument will be treated as user.";
 		}
 
 		@Override
@@ -373,7 +373,7 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {[player], pattern} Sets the current selection to blocks defined by the provided block pattern."
+			return "void {[user], pattern} Sets the current selection to blocks defined by the provided block pattern."
 					+ " The pattern can be a string in the format given to WorldEdit commands, or it can be a normal"
 					+ " array of associative arrays. The inner arrays consist of a required 'block' field describing"
 					+ " the block's array material and properties, and an optional decimal 'weight' field."
@@ -442,7 +442,7 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {[player], mask, pattern} Replaces blocks matching the mask with a block pattern."
+			return "void {[user], mask, pattern} Replaces blocks matching the mask with a block pattern."
 					+ " The mask and pattern can be a string in the format given to WorldEdit commands."
 					+ " Patterns can also be a normal array of associative arrays."
 					+ " The inner arrays consist of a required 'block' field describing the block's material and"
@@ -500,7 +500,7 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {location | player, [options]} Copies the selected region into the clipboard."
+			return "void {location | user, [options]} Copies the selected region into the clipboard."
 					+ " If a location is specified it will use the console's clipboard"
 					+ " and the location will be used as the origin point for the clipboard."
 					+ " If ~console is explicitly specified instead, it will use the last set position as the origin."
@@ -542,7 +542,7 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {filename, [player]} Loads a schematic into the clipboard from file."
+			return "void {filename, [user]} Loads a schematic into the clipboard from file."
 					+ " It will use the directory specified in WorldEdit's config."
 					+ " By default it will use the console's clipboard, but will use a player's if specified.";
 		}
@@ -580,7 +580,7 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {filename, [player]} Saves a schematic in the clipboard to file."
+			return "void {filename, [user]} Saves a schematic in the clipboard to file."
 					+ " It will use the directory specified in WorldEdit's config."
 					+ " By default it will use the console's clipboard, but will use a player's if specified.";
 		}
@@ -638,7 +638,7 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {[player,] int y-axis, [int x-axis, int z-axis]}"
+			return "void {[user,] int y-axis, [int x-axis, int z-axis]}"
 					+ " Rotates the clipboard by the given (multiple of 90) degrees for each corresponding axis."
 					+ " To skip an axis, simply give it a value of 0. If a player is supplied, theirs will be rotated,"
 					+ " otherwise the console will be used.";
@@ -705,8 +705,8 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {location | player, [options]}"
-					+ " Pastes a schematic from the player's clipboard if a player is provided,"
+			return "void {location | user, [options]}"
+					+ " Pastes a schematic from the user's clipboard if a user is provided,"
 					+ " or from the console's clipboard if a location is given, as if a player was standing there."
 					+ " An associative array of options can be provided, all of which default to false."
 					+ " If 'airless' is true, air blocks from the schematic will not replace blocks in the world."
@@ -750,7 +750,7 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "void {[player]} Clears the clipboard for the specified player or console.";
+			return "void {[user]} Clears the clipboard for the specified player or console.";
 		}
 	}
 
@@ -820,7 +820,7 @@ public class CHWorldEdit {
 		
 		@Override
 		public String docs() {
-			return "array {[player]} Returns an array with selection info of the give players clipboard (or null when the clipboard is empty)."
+			return "array {[user]} Returns an array with selection info of the given user's clipboard (or null when the clipboard is empty)."
 					+ "The returned array is in format: {origin:{x,y,z}, dimensions:{x,y,z}, minPoints{original:{x,y,z}, relative:{x,y,z}}"
 					+ ", maxPoints{original:{x,y,z}, relative:{x,y,z}}}.";
 		}
