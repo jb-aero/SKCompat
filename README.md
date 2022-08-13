@@ -41,7 +41,7 @@ In these WorldEdit functions, user refers to console or player, where console is
 **sk_schematic_exists(filename)** Returns whether a schematic by that name exists.<br>
 **sk_clipboard_info([user])** Returns an array with selection info of the give user's clipboard.
 
-### WorldGuard
+#### WorldGuard
 
 **sk_all_regions([world])** Returns all the regions in all worlds, or just the one world.<br>
 **sk_region_info(region, world, [value])** Returns information about the a region in the given world.<br>
