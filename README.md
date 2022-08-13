@@ -16,8 +16,8 @@ NOTE: CHWorldEdit provides functions for WorldEdit. CHWorldGuard provides functi
 
 In these WorldEdit functions, user refers to console or player, where console is `null` or `'~console'`.
 
-**sk_pos1([user], array | [user] | array)** Sets the user's point 1 to the given location array.<br>
-**sk_pos2([user], array | [user] | array)** Sets the user's point 2 to the given location array.<br>
+**sk_pos1([user], array | [user] | array)** Sets or gets the user's point 1.<br>
+**sk_pos2([user], array | [user] | array)** Sets or gets the user's point 2.<br>
 **sk_setblock([user], pattern)** Sets the current selection to blocks defined by the provided block pattern.<br>
 **sk_replace_blocks([user], mask, pattern)** Replaces blocks matching the mask in the current selection with a block pattern.<br>
 **skcb_copy(location | user, [options])** Copies the selected region into the clipboard.<br>

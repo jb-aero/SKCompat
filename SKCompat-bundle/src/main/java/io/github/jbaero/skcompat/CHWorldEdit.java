@@ -75,10 +75,12 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[user], array | [player] | array} Sets the user's point 2 to the given location array."
+			return "mixed {[user], array | [user] | array} Sets or gets the user's point 1."
+					+ " If an array is given, sets the user's point 1 to the given location array."
 					+ " If the array is null, the point will be cleared."
-					+ " If no array is given, current point 2 of the user will be returned as an array in format"
-					+ " array(0:xVal, 1:yVal, 2:zVal, x:xVal, y:yVal, z:zVal) or null when the point has not been set."
+					+ " If no array is given, current point 1 of the user will be returned as an array in format"
+					+ " array(0: xVal, 1: yVal, 2: zVal, x: xVal, y: yVal, z: zVal)"
+					+ " or null when the point has not been set."
 					+ " In case " + this.getName() + "(null) is called, the argument will be treated as user.";
 		}
 
@@ -103,10 +105,12 @@ public class CHWorldEdit {
 
 		@Override
 		public String docs() {
-			return "mixed {[user], array | [player] | array} Sets the user's point 2 to the given location array."
+			return "mixed {[user], array | [user] | array} Sets or gets the user's point 2."
+					+ " If an array is given, sets the user's point 2 to the given location array."
 					+ " If the array is null, the point will be cleared."
-					+ " If no array is given, current point 2 of the player will be returned as an array in format"
-					+ " array(0:xVal, 1:yVal, 2:zVal, x:xVal, y:yVal, z:zVal) or null when the point has not been set."
+					+ " If no array is given, current point 2 of the user will be returned as an array in format"
+					+ " array(0: xVal, 1: yVal, 2: zVal, x: xVal, y: yVal, z: zVal)"
+					+ " or null when the point has not been set."
 					+ " In case " + this.getName() + "(null) is called, the argument will be treated as user.";
 		}
 
