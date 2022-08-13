@@ -1,18 +1,30 @@
-SKCompat
-========
+# SKCompat
 
-An extension to [CommandHelper](https://github.com/EngineHub/CommandHelper) providing access to features of other plugins in the sk89q family. Currently supports WorldEdit and WorldGuard.
+An extension to [CommandHelper](https://github.com/EngineHub/CommandHelper) providing access to functionality in WorldEdit and WorldGuard.
 
-Download or compile the correct version for your server:
-<br>**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3)** (CommandHelper 3.3.2, Minecraft 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
-<br>**[SKCompat 3.1.4](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.4 - 3.3.5, Minecraft 1.13.2 - 1.18.2, WorldEdit 7.2.x, WorldGuard 7.0.x)
+**CHWorldEdit** provides functions for WorldEdit. **CHWorldGuard** provides functions for WorldGuard. **SKCompat** combines both, which means you only need to download one file.
+See **[CHRegionChange](https://letsbuild.net/jenkins/job/CHRegionChange/)** for a WorldGuard event that fires on region boundary crossings.
 
-NOTE: CHWorldEdit provides functions for WorldEdit. CHWorldGuard provides functions for WorldGuard. SKCompat combines both, which means you only need to download one file.
+## Builds
 
--> [How to See Documentation In-Game](https://github.com/jb-aero/SKCompat/blob/master/DOCUMENTATION.md)
+### Latest
 
-## Compact Function List
-### WorldEdit
+**[SKCompat 3.1.4](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.4 - 3.3.5, Spigot 1.13.2 - 1.19.2, WorldEdit 7.2.x, WorldGuard 7.0.x)
+
+### Legacy
+
+If you need a build for an older version of CommandHelper, you will have to compile it yourself at this commit.
+
+**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3)** (CommandHelper 3.3.2, Spigot 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
+
+## Documentation
+
+Full function documentation can be seen using VSCode with the MethodScript extension when SKCompat is installed.
+Alternatively, [here's a guide](https://github.com/jb-aero/SKCompat/blob/master/DOCUMENTATION.md) to create a command to
+see documentation in-game.
+
+### Compact Function Reference
+#### WorldEdit
 
 In these WorldEdit functions, user refers to console or player, where console is `null` or `'~console'`.
 
