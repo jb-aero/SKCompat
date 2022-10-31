@@ -118,9 +118,9 @@ public class CHWorldGuard {
 		@Override
 		public String docs() {
 			return "array {region, world, [value]} Given a region name, returns an array of information about that region."
-					+ " ---- If value is set, it should be an integer of one of the following indexes, and only that information for that index"
-					+ " will be returned. Otherwise if value is not specified (or is -1), it returns an array of"
-					+ " information with the following pieces of information in the specified index:<ul>"
+					+ " ---- If value is set, it should be an integer of one of the following indexes, and only that"
+					+ " information for that index will be returned. Otherwise if value is not specified (or is -1), it"
+					+ " returns an array of information with the following pieces of information in the specified index:<ul>"
 					+ " <li>0 - An array of points that define this region</li>"
 					+ " <li>1 - An array of owners of this region</li>"
 					+ " <li>2 - An array of members of this region</li>"
@@ -263,8 +263,8 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "boolean {world, region1, array(region2, [regionN...])} Returns true or false whether or not the specified regions overlap."
-					+ " Third parameter may be a single region or an array of regions.";
+			return "boolean {world, region1, array(region2, [regionN...])} Returns true or false whether or not the"
+					+ " specified regions overlap. Third parameter may be a single region or an array of regions.";
 		}
 
 		@Override
@@ -331,8 +331,9 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "array {world, first_region, [other_region(s)]} Returns an array of regions names which intersect with defined region."
-					+ " You can pass a single region, an array of regions to verify or omit this parameter and all regions in selected world will be checked.";
+			return "array {world, first_region, [other_region(s)]} Returns an array of regions names which intersect"
+					+ " with defined region. You can pass a single region, an array of regions to verify or omit this"
+					+ " parameter and all regions in selected world will be checked.";
 		}
 
 		@Override
@@ -358,7 +359,8 @@ public class CHWorldGuard {
 					for (int i = 0; i < arg.size(); i++) {
 						ProtectedRegion region = mgr.getRegion(arg.get(i, t).val());
 						if (region == null) {
-							throw new CREPluginInternalException(String.format("Region %s could not be found!", arg.get(i, t).val()), t);
+							throw new CREPluginInternalException(String.format("Region %s could not be found!",
+									arg.get(i, t).val()), t);
 						}
 						checkRegions.add(region);
 					}
@@ -460,8 +462,9 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "mixed {[player]} Returns the list regions that player is in. If no player specified, then the current player is used."
-					+ " If region is found, an array of region names are returned, else an empty array is returned";
+			return "mixed {[player]} Returns the list regions that player is in. If no player specified, then the"
+					+ " current player is used. If region is found, an array of region names are returned, else an"
+					+ " empty array is returned.";
 		}
 
 		@Override
@@ -611,7 +614,8 @@ public class CHWorldGuard {
 			ProtectedRegion region = mgr.getRegion(args[0].val());
 
 			if (region == null) {
-				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", args[0].val(), args[1].val()), t);
+				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+						args[0].val(), args[1].val()), t);
 			}
 
 			return new CInt(region.volume(), t);
@@ -633,8 +637,9 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {[world], name, array(locationArrayPos1, locationArrayPos2, [[locationArrayPosN]...])|[world], '__global__'}"
-					+ " Create region of the given name in the given world. You can omit list of points if you want to create a __global__ region.";
+			return "void {[world], name, array(locationArray, [...])} Create region of the given name in the given world."
+					+ " Requires at least two locations. Three or more will create a polygonal region."
+					+ " You can omit the array of locations if you want to create a '__global__' region.";
 		}
 
 		@Override
@@ -824,7 +829,9 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {[world], name, array(vectorArrayPos1, vectorArrayPos2, [[vectorArrayPosN]...])} Updates the location of a given region to the new location. Other properties of the region, like owners, members, priority, etc are unaffected.";
+			return "void {[world], name, array(vectorArrayPos1, vectorArrayPos2, [[vectorArrayPosN]...])} Updates the"
+					+ " boundaries of a given region. Other properties of the region, like owners, members, priority,"
+					+ " etc are unaffected.";
 		}
 
 		@Override
@@ -868,7 +875,8 @@ public class CHWorldGuard {
 			ProtectedRegion oldRegion = mgr.getRegion(region);
 
 			if (oldRegion == null) {
-				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
+				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+						region, world.getName()), t);
 			}
 
 			if (!(args[args.length - 1] instanceof CArray)) {
@@ -946,7 +954,8 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {[world], oldName, newName} Rename the existing region. Other properties of the region, like owners, members, priority, etc are unaffected.";
+			return "void {[world], oldName, newName} Rename the existing region. Other properties of the region, like"
+					+ " owners, members, priority, etc are unaffected.";
 		}
 
 		@Override
@@ -1080,7 +1089,8 @@ public class CHWorldGuard {
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
-				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
+				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+						region, world.getName()), t);
 			}
 
 			mgr.removeRegion(region);
@@ -1172,7 +1182,7 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {region, [world], [owner1] | region, [world], [array(owner1, ownerN, ...)]} Add owner(s) to given region.";
+			return "void {region, [world], [owner] | region, [world], [array(owner, [...])]} Add owner(s) to given region.";
 		}
 
 		@Override
@@ -1244,7 +1254,8 @@ public class CHWorldGuard {
 					regionExists = SKWorldGuard.CreateProtectedRegion(region);
 					mgr.addRegion(regionExists);
 				} else {
-					throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
+					throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+							region, world.getName()), t);
 				}
 			}
 
@@ -1285,7 +1296,7 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {region, [world], [owner1] | region, [world], [array(owner1, ownerN, ...)]} Remove owner(s) from given region.";
+			return "void {region, [world], [owner] | region, [world], [array(owner, [...])]} Remove owner(s) from given region.";
 		}
 
 		@Override
@@ -1353,7 +1364,8 @@ public class CHWorldGuard {
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
-				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
+				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+						region, world.getName()), t);
 			}
 
 			if(owners == null) {
@@ -1457,7 +1469,7 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {region, [world], [member1] | region, [world], [array(member1, memberN, ...)]} Add member(s) to given region.";
+			return "void {region, [world], [member] | region, [world], [array(member, [...])]} Add member(s) to given region.";
 		}
 
 		@Override
@@ -1529,7 +1541,8 @@ public class CHWorldGuard {
 					regionExists = SKWorldGuard.CreateProtectedRegion(region);
 					mgr.addRegion(regionExists);
 				} else {
-					throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
+					throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+							region, world.getName()), t);
 				}
 			}
 
@@ -1570,7 +1583,7 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {region, [world], [member1] | region, [world], [array(member1, memberN, ...)]} Remove member(s) from given region.";
+			return "void {region, [world], [member] | region, [world], [array(member, [...])]} Remove member(s) from given region.";
 		}
 
 		@Override
@@ -1638,7 +1651,8 @@ public class CHWorldGuard {
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
-				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
+				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+						region, world.getName()), t);
 			}
 
 			if(members == null) {
@@ -1742,7 +1756,7 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {name, type} Registers a new flag (on startup only)."
+			return "void {name, type} Registers a new flag on startup."
 					+ " Type must be BOOLEAN, DOUBLE, INTEGER, or STRING.";
 		}
 
@@ -1796,11 +1810,13 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "void {world, region, flagName, flagValue, [group]} Add/change/remove flag for selected region. FlagName should be any"
-					+ " supported flag from [https://worldguard.readthedocs.io/en/latest/regions/flags/ this list]. For the flagValue, use types which"
-					+ " are supported by WorldGuard. Add group argument if you want to add WorldGuard group flag (read more about group"
-					+ " flag types [http://worldguard.enginehub.org/en/latest/regions/flags/#region-groups here]). Set flagValue as null (and don't set"
-					+ " group) to delete the flag from the region.";
+			return "void {world, region, flagName, flagValue, [group]} Add/change/remove flag for selected region."
+					+ " FlagName should be any supported flag from"
+					+ " [https://worldguard.readthedocs.io/en/latest/regions/flags/ this list]. For the flagValue, use"
+					+ " types which are supported by WorldGuard. Add group argument if you want to add WorldGuard group"
+					+ " flag (read more about group flag types"
+					+ " [http://worldguard.enginehub.org/en/latest/regions/flags/#region-groups here]). Set flagValue"
+					+ " as null (and don't set group) to delete the flag from the region.";
 		}
 
 		@Override
@@ -1872,7 +1888,8 @@ public class CHWorldGuard {
 		@Override
 		public String docs() {
 			return "mixed {locationArray, flagName, [player]} Check state of selected flag in defined location."
-					+ " FlagName should be any supported flag from [https://worldguard.readthedocs.io/en/latest/regions/flags/ this list]."
+					+ " FlagName should be any supported flag from"
+					+ " [https://worldguard.readthedocs.io/en/latest/regions/flags/ this list]."
 					+ " Player defaults to the current player.";
 		}
 
@@ -1885,7 +1902,8 @@ public class CHWorldGuard {
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			if ("build".equalsIgnoreCase(args[1].val())) {
-				throw new CREPluginInternalException(String.format("Can't use build flag with %s method. This is an limitation of WorldGuard.", this.getName()), t);
+				throw new CREPluginInternalException(String.format("Can't use build flag with %s method."
+						+ " This is an limitation of WorldGuard.", this.getName()), t);
 			}
 
 			MCPlayer p = null;
@@ -1961,7 +1979,8 @@ public class CHWorldGuard {
 							String value = ((EntityType) setFlag).getName();
 							values.push(new CString(value, t), t);
 						} else {
-							ConfigRuntimeException.DoWarning("One of the element of flag has unknown type. This is a developer mistake, please file a ticket.");
+							ConfigRuntimeException.DoWarning("One of the element of flag has unknown type."
+									+ " This is a developer mistake, please file a ticket.");
 						}
 					}
 				}
@@ -2092,7 +2111,8 @@ public class CHWorldGuard {
 			ProtectedRegion regionExists = mgr.getRegion(region);
 
 			if (regionExists == null) {
-				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", region, world.getName()), t);
+				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+						region, world.getName()), t);
 			}
 
 			regionExists.setPriority(priority);
@@ -2148,7 +2168,8 @@ public class CHWorldGuard {
 			ProtectedRegion child = mgr.getRegion(regionName);
 
 			if (child == null) {
-				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", regionName, world.getName()), t);
+				throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+						regionName, world.getName()), t);
 			}
 
 			if (args.length == 2) {
@@ -2162,7 +2183,8 @@ public class CHWorldGuard {
 				ProtectedRegion parent = mgr.getRegion(parentName);
 
 				if (parent == null) {
-					throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).", parentName, world.getName()), t);
+					throw new CREPluginInternalException(String.format("The region (%s) does not exist in world (%s).",
+							parentName, world.getName()), t);
 				}
 
 				try {

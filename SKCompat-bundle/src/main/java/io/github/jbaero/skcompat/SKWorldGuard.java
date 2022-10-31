@@ -29,7 +29,8 @@ import java.util.List;
 public class SKWorldGuard {
 
 	public static RegionManager GetRegionManager(MCWorld world, Target t) {
-		RegionManager mgr = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt((World) world.getHandle()));
+		RegionManager mgr = WorldGuard.getInstance().getPlatform().getRegionContainer()
+				.get(BukkitAdapter.adapt((World) world.getHandle()));
 		if(mgr == null) {
 			throw new CREPluginInternalException("Could not find region manager for world: " + world.getName(), t);
 		}

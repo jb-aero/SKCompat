@@ -824,9 +824,9 @@ public class CHWorldEdit {
 		
 		@Override
 		public String docs() {
-			return "array {[user]} Returns an array with selection info of the given user's clipboard (or null when the clipboard is empty)."
-					+ "The returned array is in format: {origin:{x,y,z}, dimensions:{x,y,z}, minPoints{original:{x,y,z}, relative:{x,y,z}}"
-					+ ", maxPoints{original:{x,y,z}, relative:{x,y,z}}}.";
+			return "array {[user]} Returns an array with selection info of the given user's clipboard (or null when the"
+					+ " clipboard is empty). The returned array is in format: {origin:{x,y,z}, dimensions:{x,y,z},"
+					+ " minPoints{original:{x,y,z}, relative:{x,y,z}}, maxPoints{original:{x,y,z}, relative:{x,y,z}}}.";
 		}
 		
 		@Override
