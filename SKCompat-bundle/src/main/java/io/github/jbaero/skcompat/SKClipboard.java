@@ -1,6 +1,5 @@
 package io.github.jbaero.skcompat;
 
-import com.laytonsmith.PureUtilities.Common.ReflectionUtils;
 import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.core.constructs.Target;
@@ -45,14 +44,7 @@ public class SKClipboard {
 		try {
 			Region region = session.getSelection(user.getWorld());
 			BlockArrayClipboard clipboard = new BlockArrayClipboard(region);
-			BlockVector3 pos;
-			try {
-				pos = session.getPlacementPosition(user);
-			} catch (NoSuchMethodError err) {
-				// Probably WorldEdit 7.0.x
-				pos = (BlockVector3) ReflectionUtils.invokeMethod(LocalSession.class, session, "getPlacementPosition",
-						new Class[]{Player.class}, new Object[]{user});
-			}
+			BlockVector3 pos = session.getPlacementPosition(user);
 			if(loc != null) {
 				pos = BukkitAdapter.asBlockVector((Location) loc.getHandle());
 			}
@@ -76,14 +68,7 @@ public class SKClipboard {
 		File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
 		File f;
 		try {
-			try {
-				f = worldEdit.getSafeOpenFile(user, dir, filename, "schem", "schematic");
-			} catch (NoSuchMethodError err) {
-				// Probably WorldEdit 7.0.x
-				f = (File) ReflectionUtils.invokeMethod(WorldEdit.class, worldEdit, "getSafeOpenFile",
-						new Class[]{Player.class, File.class, String.class, String.class, String[].class},
-						new Object[]{user, dir, filename, "schem", new String[]{"schematic"}});
-			}
+			f = worldEdit.getSafeOpenFile(user, dir, filename, "schem", "schematic");
 		} catch (Exception fne) {
 			throw new CREFormatException(fne.getMessage(), t);
 		}
@@ -122,14 +107,7 @@ public class SKClipboard {
 		File f;
 
 		try {
-			try {
-				f = worldEdit.getSafeSaveFile(user, dir, filename, "schem");
-			} catch (NoSuchMethodError err) {
-				// Probably WorldEdit 7.0.x
-				f = (File) ReflectionUtils.invokeMethod(WorldEdit.class, worldEdit, "getSafeSaveFile",
-						new Class[]{Player.class, File.class, String.class, String.class, String[].class},
-						new Object[]{user, dir, filename, "schem", null});
-			}
+			f = worldEdit.getSafeSaveFile(user, dir, filename, "schem");
 		} catch (Exception fne) {
 			throw new CREFormatException(fne.getMessage(), t);
 		}
@@ -187,13 +165,7 @@ public class SKClipboard {
 			to = clipboard.getOrigin();
 		} else {
 			try {
-				try {
-					to = session.getPlacementPosition(user);
-				} catch (NoSuchMethodError err) {
-					// Probably WorldEdit 7.0.x
-					to = (BlockVector3) ReflectionUtils.invokeMethod(LocalSession.class, session, "getPlacementPosition",
-							new Class[]{Player.class}, new Object[]{user});
-				}
+				to = session.getPlacementPosition(user);
 			} catch (IncompleteRegionException e) {
 				throw new CRENotFoundException("Could not get paste location.", t);
 			}
@@ -216,13 +188,7 @@ public class SKClipboard {
 				RegionSelector selector = new CuboidRegionSelector(user.getWorld(), realTo.toBlockPoint(), max.toBlockPoint());
 				session.setRegionSelector(user.getWorld(), selector);
 				selector.learnChanges();
-				try {
-					selector.explainRegionAdjust(user, session);
-				} catch (NoSuchMethodError err) {
-					// Probably WorldEdit 7.0.x
-					ReflectionUtils.invokeMethod(CuboidRegionSelector.class, selector, "explainRegionAdjust",
-							new Class[]{Player.class, LocalSession.class}, new Object[]{user, session});
-				}
+				selector.explainRegionAdjust(user, session);
 			}
 		} catch (Exception e) {
 			throw new CRERangeException("Attempted to change more blocks than allowed.", t);

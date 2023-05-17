@@ -17,7 +17,6 @@
  */
 package io.github.jbaero.skcompat;
 
-import com.laytonsmith.PureUtilities.Common.ReflectionUtils;
 import com.laytonsmith.PureUtilities.Vector3D;
 import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
@@ -186,13 +185,7 @@ public class CHWorldEdit {
 				
 				// Update WorldEdit CUI.
 				if (m instanceof MCPlayer) {
-					try {
-						user.getLocalSession().dispatchCUISelection(user);
-					} catch (NoSuchMethodError err) {
-						// Probably WorldEdit 7.0.x
-						ReflectionUtils.invokeMethod(LocalSession.class, user.getLocalSession(), "dispatchCUISelection",
-								new Class[]{Player.class}, new Object[]{user});
-					}
+					localSession.dispatchCUISelection(user);
 				}
 				
 			} else { // Set a position.
@@ -224,13 +217,7 @@ public class CHWorldEdit {
 				
 				// Update WorldEdit CUI.
 				if (m instanceof MCPlayer) {
-					try {
-						sel.explainRegionAdjust(user, user.getLocalSession());
-					} catch (NoSuchMethodError err) {
-						// Probably WorldEdit 7.0.x
-						ReflectionUtils.invokeMethod(CuboidRegionSelector.class, sel, "explainRegionAdjust",
-								new Class[]{Player.class, LocalSession.class}, new Object[]{user, user.getLocalSession()});
-					}
+					sel.explainRegionAdjust(user, localSession);
 				}
 			}
 			
@@ -774,14 +761,7 @@ public class CHWorldEdit {
 			File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
 			File f;
 			try {
-				try {
-					f = worldEdit.getSafeOpenFile(null, dir, filename, "schem");
-				} catch (NoSuchMethodError err) {
-					// Probably WorldEdit 7.0.x
-					f = (File) ReflectionUtils.invokeMethod(WorldEdit.class, worldEdit, "getSafeOpenFile",
-							new Class[]{Player.class, File.class, String.class, String.class, String[].class},
-							new Object[]{null, dir, filename, "schem", null});
-				}
+				f = worldEdit.getSafeOpenFile(null, dir, filename, "schem");
 			} catch (Exception fne) {
 				throw new CREFormatException(fne.getMessage(), t);
 			}
