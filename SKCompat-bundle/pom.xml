@@ -28,6 +28,7 @@
 			<groupId>com.sk89q</groupId>
 			<artifactId>commandhelper</artifactId>
 			<version>3.3.5-SNAPSHOT</version>
+			<classifier>full</classifier>
 		</dependency>
 		<dependency>
 			<groupId>com.sk89q.worldedit</groupId>
