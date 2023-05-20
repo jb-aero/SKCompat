@@ -1,94 +1,74 @@
 package io.github.jbaero.skcompat;
 
-import com.laytonsmith.abstraction.MCConsoleCommandSender;
-import com.laytonsmith.abstraction.MCLocation;
-import com.laytonsmith.abstraction.bukkit.BukkitMCLocation;
-import com.laytonsmith.core.Static;
-import com.sk89q.worldedit.LocalSession;
-import com.sk89q.worldedit.math.Vector3;
-import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.util.HandSide;
+import com.sk89q.worldedit.extension.platform.AbstractNonPlayerActor;
+import com.sk89q.worldedit.extension.platform.Locatable;
+import com.sk89q.worldedit.extent.Extent;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.session.SessionKey;
 import com.sk89q.worldedit.util.Location;
-import com.sk89q.worldedit.world.World;
+import com.sk89q.worldedit.util.auth.AuthorizationException;
+import com.sk89q.worldedit.util.formatting.text.Component;
 import org.bukkit.Bukkit;
 
+import javax.annotation.Nullable;
+import java.util.Locale;
 import java.util.UUID;
 
-/**
- * @author jb_aero
- */
-public class SKConsole extends SKCommandSender {
+public class SKConsole extends AbstractNonPlayerActor implements Locatable {
 
 	private static final UUID uuid = UUID.fromString("43337e14-6cdc-45fc-b136-efd95f17a366");
-	private final MCConsoleCommandSender console;
-	private MCLocation location;
-	private LocalSession localSession;
+	private Location location;
 
 	public SKConsole() {
-		console = Static.getServer().getConsole();
-		setLocation(Static.getServer().getWorlds().get(0).getSpawnLocation());
+		location = BukkitAdapter.adapt(Bukkit.getWorlds().get(0).getSpawnLocation());
 	}
 
 	@Override
 	public Location getLocation() {
-		return new Location(getWorld(), location.getX(), location.getY(),
-				location.getZ(), location.getYaw(), location.getPitch());
-	}
-
-	@Override
-	public void setLocation(MCLocation loc) {
-		location = loc;
+		return location;
 	}
 
 	@Override
 	public boolean setLocation(Location loc) {
-		location = new BukkitMCLocation(BukkitAdapter.adapt(loc));
+		location = loc;
 		return true;
 	}
 
 	@Override
-	public World getWorld() {
-		if (location != null) {
-			return BukkitAdapter.adapt((org.bukkit.World) location.getWorld().getHandle());
-		}
-		return BukkitAdapter.adapt(Bukkit.getWorlds().get(0));
-	}
-
-	@Override
-	public BaseItemStack getItemInHand(HandSide handSide) {
-		return null;
-	}
-
-	@Override
-	public void giveItem(BaseItemStack baseItemStack) {
-		// do nothing
+	public Extent getExtent() {
+		return location.getExtent();
 	}
 
 	@Override
 	public String getName() {
-		return console.getName();
-	}
-
-	@Override
-	public LocalSession getLocalSession() {
-		if (localSession == null) {
-			localSession = WorldEdit.getInstance().getSessionManager().get(this);
-		}
-		return localSession;
-	}
-
-	@Override
-	public boolean isActive() {
-		return true;
+		return Bukkit.getConsoleSender().getName();
 	}
 
 	@Override
 	public void printRaw(String string) {
-		for (String part : string.split("\n")) {
-			console.sendMessage(part);
-		}
+	}
+
+	@Override
+	public void printDebug(String msg) {
+	}
+
+	@Override
+	public void print(String msg) {
+	}
+
+	@Override
+	public void printError(String msg) {
+	}
+
+	@Override
+	public void print(Component component) {
+		// Do nothing
+	}
+
+	@Override
+	public Locale getLocale() {
+		return WorldEdit.getInstance().getConfiguration().defaultLocale;
 	}
 
 	@Override
@@ -97,17 +77,43 @@ public class SKConsole extends SKCommandSender {
 	}
 
 	@Override
-	public void setPosition(Vector3 vector, float f, float f1) {
-		trySetPosition(vector, f, f);
+	public String[] getGroups() {
+		return new String[0];
 	}
 
 	@Override
-	public boolean trySetPosition(Vector3 vector, float f, float f1) {
-		location.setX(vector.getX());
-		location.setY(vector.getY());
-		location.setZ(vector.getZ());
-		location.setPitch(f);
-		location.setYaw(f1);
+	public void checkPermission(String permission) throws AuthorizationException {
+		// console has all permissions
+	}
+
+	@Override
+	public boolean hasPermission(String permission) {
 		return true;
+	}
+
+	@Override
+	public SessionKey getSessionKey() {
+		return new SessionKey() {
+			@Nullable
+			@Override
+			public String getName() {
+				return Bukkit.getConsoleSender().getName();
+			}
+
+			@Override
+			public boolean isActive() {
+				return true;
+			}
+
+			@Override
+			public boolean isPersistent() {
+				return true;
+			}
+
+			@Override
+			public UUID getUniqueId() {
+				return uuid;
+			}
+		};
 	}
 }

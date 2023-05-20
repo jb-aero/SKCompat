@@ -1,0 +1,92 @@
+/*
+	Runs SKCompat function tests on a Minecraft server.
+
+	Functions tested:
+	sk_pos1()
+	sk_pos2()
+	sk_setblock()
+	sk_replace_blocks()
+	sk_copy() TODO: options array
+	sk_paste() TODO: options array
+*/
+/runtests = >>>
+	if(player() == '~console') {
+		die('Must run this as a player for full tests to complete.');
+	}
+
+	proc _test(@result, @expected) {
+		if(@result != @expected) {
+			throw('Exception', "Found @result but expected @expected");
+		}
+	}
+	proc _test_subset(@result, @expected) {
+		if(!array_subset_of(@result, @expected)) {
+			throw('Exception', "Found @result but expected @expected");
+		}
+	}
+
+	msg('Testing sk_posx (player)');
+	@target = ptarget_space();
+	_test(sk_pos1(), null);
+	_test(sk_pos2(), null);
+	sk_pos1(@target);
+	_test_subset(sk_pos1(), @target);
+	_test(sk_pos2(), null);
+	sk_pos2(@target);
+	_test_subset(sk_pos2(), @target);
+	_test_subset(sk_pos1(), @target);
+	sk_pos1(player(), null);
+	_test(sk_pos1(), null);
+	_test_subset(sk_pos2(), @target);
+
+	msg('Testing sk_posx (console)');
+	_test(sk_pos1(null), null);
+	_test(sk_pos2(null), null);
+	sk_pos1(null, @target);
+	_test_subset(sk_pos1(null), @target);
+	_test(sk_pos2(null), null);
+	sk_pos2(null, @target);
+	_test_subset(sk_pos2(null), @target);
+	_test_subset(sk_pos1(null), @target);
+	sk_pos1(null, null);
+	_test(sk_pos1(null), null);
+	_test_subset(sk_pos2(null), @target);
+
+	msg('Testing sk_setblock (player)');
+	sk_pos1(player(), @target);
+	sk_pos2(player(), @target);
+	sk_setblock('diamond_block');
+	_test(get_block(@target), 'DIAMOND_BLOCK');
+
+	msg('Testing sk_setblock (console)');
+	sk_pos1(null, @target);
+	sk_pos2(null, @target);
+	sk_setblock(null, 'gold_block');
+	_test(get_block(@target), 'GOLD_BLOCK');
+
+	msg('Testing sk_replace_blocks (player)');
+	sk_pos1(player(), @target);
+	sk_pos2(@target);
+	sk_replace_blocks(player(), 'gold_block', 'iron_block');
+	_test(get_block(@target), 'IRON_BLOCK');
+
+	msg('Testing sk_replace_blocks (console)');
+	sk_pos1(null, @target);
+	sk_pos2(null, @target);
+	sk_replace_blocks(null, 'iron_block', 'emerald_block');
+	_test(get_block(@target), 'EMERALD_BLOCK');
+	
+	msg('Testing skcb_copy and skcb_paste (player)');
+	@location = entity_loc(puuid());
+	skcb_copy(player());
+	@location = location_shift(@location, 'up');
+	set_entity_loc(puuid(), @location);
+	skcb_paste(player());
+	_test(get_block(location_shift(@target, 'up')), 'EMERALD_BLOCK');
+
+	msg('Testing skcb_copy and skcb_paste (console)');
+	skcb_copy(@location);
+	@location = location_shift(@location, 'up', 2);
+	skcb_paste(@location);
+	_test(get_block(location_shift(@target, 'up', 2)), 'EMERALD_BLOCK');
+<<<

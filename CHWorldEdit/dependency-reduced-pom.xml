@@ -7,13 +7,20 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>CHWorldEdit</artifactId>
-  <version>3.1.4</version>
+  <version>3.2.0</version>
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.10.1</version>
+        <configuration>
+          <release>16</release>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>templating-maven-plugin</artifactId>
-        <version>1.0-alpha-3</version>
+        <version>1.0.0</version>
         <executions>
           <execution>
             <id>filter-src</id>
@@ -25,7 +32,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4.3</version>
+        <version>3.2.4</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -49,6 +56,7 @@
                     <exclude>io/github/jbaero/skcompat/SKWorldGuard*</exclude>
                     <exclude>io/github/jbaero/skcompat/SKRegion*</exclude>
                     <exclude>io/github/jbaero/skcompat/CHWorldGuard*</exclude>
+                    <exclude>io/github/jbaero/skcompat/PomData*</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -59,4 +67,3 @@
     </plugins>
   </build>
 </project>
-

@@ -9,7 +9,7 @@ import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.entity.Player;
+import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
@@ -26,7 +26,6 @@ import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.util.io.Closer;
-import org.bukkit.Location;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -34,26 +33,27 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class SKClipboard {
 
 	public static void Copy(MCCommandSender sender, MCLocation loc, boolean entities, boolean biomes, Target t) {
-		SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
-		LocalSession session = user.getLocalSession();
-		EditSession editSession = user.getEditSession(false);
+		Actor user = SKWorldEdit.GetActor(sender, t);
+		LocalSession session = SKWorldEdit.GetLocalSession(user);
+		EditSession editSession = SKWorldEdit.GetEditSession(user, false);
 		try {
-			Region region = session.getSelection(user.getWorld());
+			Region region = session.getSelection();
 			BlockArrayClipboard clipboard = new BlockArrayClipboard(region);
 			BlockVector3 pos = session.getPlacementPosition(user);
 			if(loc != null) {
-				pos = BukkitAdapter.asBlockVector((Location) loc.getHandle());
+				pos = BukkitAdapter.asBlockVector((org.bukkit.Location) loc.getHandle());
 			}
 			clipboard.setOrigin(pos);
 			ForwardExtentCopy copy = new ForwardExtentCopy(editSession, region, clipboard, region.getMinimumPoint());
 			copy.setCopyingEntities(entities);
 			copy.setCopyingBiomes(biomes);
 			Operations.complete(copy);
-			user.getLocalSession().setClipboard(new ClipboardHolder(clipboard));
+			session.setClipboard(new ClipboardHolder(clipboard));
 		} catch (IncompleteRegionException ex) {
 			throw new CREPluginInternalException("Incomplete selection, expecting both pos1 and pos2 to be set.", t);
 		} catch (Exception wee) {
@@ -63,12 +63,13 @@ public class SKClipboard {
 
 	public static void Load(MCCommandSender sender, String filename, Target t) {
 		WorldEdit worldEdit = WorldEdit.getInstance();
-		SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
+		Actor user = SKWorldEdit.GetActor(sender, t);
+		LocalSession session = SKWorldEdit.GetLocalSession(user);
 
-		File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
+		Path dir = worldEdit.getWorkingDirectoryPath(worldEdit.getConfiguration().saveDir);
 		File f;
 		try {
-			f = worldEdit.getSafeOpenFile(user, dir, filename, "schem", "schematic");
+			f = worldEdit.getSafeOpenFile(user, dir.toFile(), filename, "schem", "schematic");
 		} catch (Exception fne) {
 			throw new CREFormatException(fne.getMessage(), t);
 		}
@@ -85,7 +86,7 @@ public class SKClipboard {
 			}
 
 			Clipboard clipboard = reader.read();
-			user.getLocalSession().setClipboard(new ClipboardHolder(clipboard));
+			session.setClipboard(new ClipboardHolder(clipboard));
 		} catch (IOException e) {
 			throw new CREIOException("Schematic could not read or it does not exist: " + e.getMessage(), t);
 		}
@@ -93,21 +94,22 @@ public class SKClipboard {
 	
 	public static void Save(MCCommandSender sender, String filename, Target t) {
 		WorldEdit worldEdit = WorldEdit.getInstance();
-		SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
+		Actor user = SKWorldEdit.GetActor(sender, t);
+		LocalSession session = SKWorldEdit.GetLocalSession(user);
 
 		Clipboard clipboard;
 		try {
-			clipboard = user.getLocalSession().getClipboard().getClipboard();
+			clipboard = session.getClipboard().getClipboard();
 		} catch (Exception e) {
 			throw new CRENotFoundException("The clipboard is empty, copy something to it first!", t);
 		}
 
-		File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
+		Path dir = worldEdit.getWorkingDirectoryPath(worldEdit.getConfiguration().saveDir);
 
 		File f;
 
 		try {
-			f = worldEdit.getSafeSaveFile(user, dir, filename, "schem");
+			f = worldEdit.getSafeSaveFile(user, dir.toFile(), filename, "schem");
 		} catch (Exception fne) {
 			throw new CREFormatException(fne.getMessage(), t);
 		}
@@ -124,8 +126,8 @@ public class SKClipboard {
 	}
 	
 	public static void Rotate(MCCommandSender sender, int xaxis, int yaxis, int zaxis, Target t) {
-		SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
-		LocalSession session = user.getLocalSession();
+		Actor user = SKWorldEdit.GetActor(sender, t);
+		LocalSession session = SKWorldEdit.GetLocalSession(user);
 
 		ClipboardHolder holder;
 		try {
@@ -144,11 +146,9 @@ public class SKClipboard {
 	public static void Paste(MCCommandSender sender, boolean airless, boolean biomes, boolean entities, boolean fastMode, 
 				boolean origin, boolean select, Target t) {
 
-		SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
-
-		// from com.sk89q.worldedit.command.ClipboardCommands.paste()
-		EditSession editSession = user.getEditSession(fastMode);
-		LocalSession session = user.getLocalSession();
+		Actor user = SKWorldEdit.GetActor(sender, t);
+		LocalSession session = SKWorldEdit.GetLocalSession(user);
+		EditSession editSession = SKWorldEdit.GetEditSession(user, fastMode);
 
 		ClipboardHolder holder;
 		try {
@@ -185,8 +185,8 @@ public class SKClipboard {
 				BlockVector3 clipboardOffset = clipboard.getRegion().getMinimumPoint().subtract(clipboard.getOrigin());
 				Vector3 realTo = to.toVector3().add(holder.getTransform().apply(clipboardOffset.toVector3()));
 				Vector3 max = realTo.add(holder.getTransform().apply(region.getMaximumPoint().subtract(region.getMinimumPoint()).toVector3()));
-				RegionSelector selector = new CuboidRegionSelector(user.getWorld(), realTo.toBlockPoint(), max.toBlockPoint());
-				session.setRegionSelector(user.getWorld(), selector);
+				RegionSelector selector = new CuboidRegionSelector(editSession.getWorld(), realTo.toBlockPoint(), max.toBlockPoint());
+				session.setRegionSelector(editSession.getWorld(), selector);
 				selector.learnChanges();
 				selector.explainRegionAdjust(user, session);
 			}

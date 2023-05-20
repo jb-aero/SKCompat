@@ -35,7 +35,9 @@ import com.laytonsmith.core.natives.interfaces.Mixed;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.entity.Player;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.extension.platform.Locatable;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector3;
@@ -44,9 +46,11 @@ import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.session.ClipboardHolder;
+import com.sk89q.worldedit.world.World;
+import org.bukkit.Location;
 
 import java.io.File;
-import java.lang.reflect.Field;
+import java.nio.file.Path;
 
 public class CHWorldEdit {
 
@@ -129,28 +133,29 @@ public class CHWorldEdit {
 		MCCommandSender m = null;
 		Mixed rawPos = null;
 		if (args.length == 2) { // If sk_posX(player, locationArray).
-			m = SKWorldEdit.GetPlayer(args[0], t);
+			m = SKWorldEdit.GetSender(args[0], t);
 			rawPos = args[1];
 		} else if (args.length == 1) {
 			if (args[0] instanceof CArray) { // If sk_posX(locationArray).
 				rawPos = args[0];
 			} else { // If sk_posX(player). sk_posX(null) ends up here too, this is desired since player "null" exists.
-				m = SKWorldEdit.GetPlayer(args[0], t);
+				m = SKWorldEdit.GetSender(args[0], t);
 			}
 		}
 		if (m == null) {
 			m = env.getEnv(CommandHelperEnvironment.class).GetPlayer(); // Get the command sender (MCPlayer).
 		}
-		
-		SKCommandSender user = SKWorldEdit.GetSKPlayer(m, t);
-		
+
+		Actor user = SKWorldEdit.GetActor(m, t);
+		LocalSession localSession = SKWorldEdit.GetLocalSession(user);
+
 		if (rawPos != null) {
 			
 			// Set the new point.
 			if(rawPos instanceof CNull) { // Delete a position.
 
 				// Get the region selector.
-				RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
+				RegionSelector sel = localSession.getRegionSelector((World) ((Locatable) user).getExtent());
 				if (!(sel instanceof CuboidRegionSelector)) {
 					// If this happens and the selection of the user was not in the same world as the user, his/her
 					// selection will be erased by the "getRegionSelector(user.getWorld())" call.
@@ -158,31 +163,29 @@ public class CHWorldEdit {
 				}
 				
 				// Get the primary and secondary positions and return if this call doesn't change the selection.
-				BlockVector3 pos1 = getPos1((CuboidRegionSelector) sel, t);
+				BlockVector3 pos1 = ((CuboidRegionSelector) sel).getIncompleteRegion().getPos1();
 				if(primary && pos1 == null) {
 					return CVoid.VOID; // Selection did not change.
 				}
-				BlockVector3 pos2 = getPos2((CuboidRegionSelector) sel, t);
+				BlockVector3 pos2 = ((CuboidRegionSelector) sel).getIncompleteRegion().getPos2();
 				if(!primary && pos2 == null) {
 					return CVoid.VOID; // Selection did not change.
 				}
 				
-				// Clear the selection.
+				// Clear the selection and re-set the other position if it was set before.
 				sel.clear();
 				if(primary) {
 					pos1 = null;
+					if(pos2 != null) {
+						sel.selectSecondary(pos2, null);
+					}
 				} else {
 					pos2 = null;
+					if(pos1 != null) {
+						sel.selectPrimary(pos1, null);
+					}
 				}
-				
-				// Re-set the other position if it was set before.
-				if(pos1 != null) {
-					sel.selectPrimary(pos1, null);
-				}
-				if(pos2 != null) {
-					sel.selectSecondary(pos2, null);
-				}
-				
+
 				// Update WorldEdit CUI.
 				if (m instanceof MCPlayer) {
 					localSession.dispatchCUISelection(user);
@@ -193,7 +196,7 @@ public class CHWorldEdit {
 				BlockVector3 blockPos;
 				if(user instanceof SKConsole) {
 					MCLocation loc = ObjectGenerator.GetGenerator().location(rawPos, null, t);
-					user.setLocation(loc);
+					((Locatable) user).setLocation(BukkitAdapter.adapt((Location) loc.getHandle()));
 					blockPos = BlockVector3.at(Math.floor(loc.getX()), Math.floor(loc.getY()), Math.floor(loc.getZ()));
 				} else {
 					Vector3D v = ObjectGenerator.GetGenerator().vector(rawPos, t);
@@ -202,7 +205,7 @@ public class CHWorldEdit {
 				}
 
 				// Get the region selector.
-				RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
+				RegionSelector sel = localSession.getRegionSelector((World) ((Locatable) user).getExtent());
 				if (!(sel instanceof CuboidRegionSelector)) {
 					// If this happens and the selection of the user was not in the same world as the user, his/her
 					// selection will be erased by the "getRegionSelector(user.getWorld())" call.
@@ -230,12 +233,12 @@ public class CHWorldEdit {
 			// world since it will change the world and clear the users selection if the user is in another world.
 			
 			// Return null if the user does not have a selection in this world.
-			if (!user.getWorld().equals(user.getLocalSession().getSelectionWorld())) {
+			if (!((Locatable) user).getExtent().equals(localSession.getSelectionWorld())) {
 				return CNull.NULL;
 			}
 			
 			// Get the region selector.
-			RegionSelector sel = user.getLocalSession().getRegionSelector(user.getWorld());
+			RegionSelector sel = localSession.getRegionSelector(localSession.getSelectionWorld());
 			
 			// Check if the selector region type is supported.
 			if (!(sel instanceof CuboidRegionSelector)) {
@@ -243,48 +246,14 @@ public class CHWorldEdit {
 			}
 			
 			// Get the position.
-			BlockVector3 pos = (primary ? getPos1((CuboidRegionSelector) sel, t) : getPos2((CuboidRegionSelector) sel, t));
+			BlockVector3 pos = primary
+					? ((CuboidRegionSelector) sel).getIncompleteRegion().getPos1()
+					: ((CuboidRegionSelector) sel).getIncompleteRegion().getPos2();
 			
 			// Return the position converted to a CArray or CNull if no position is set.
-			return (pos == null ? CNull.NULL : ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(pos)));
+			return (pos == BlockVector3.ZERO ? CNull.NULL : ObjectGenerator.GetGenerator().vector(SKWorldEdit.vtov(pos)));
 			
 		}
-	}
-	
-	private static BlockVector3 getPos1(CuboidRegionSelector selector, Target t) {
-		try {
-			return selector.getPrimaryPosition();
-		} catch (Exception e) {
-			return null; // The primary position is null.
-		}
-	}
-	
-	private static BlockVector3 getPos2(CuboidRegionSelector selector, Target t) {
-		
-		// Return the secondary position from a complete selection if it is available.
-		try {
-			return selector.getRegion().getPos2();
-		} catch (Exception e) {
-			// Region is incomplete. There is no way to know if position 2 is set without using reflection.
-		}
-		
-		// Get the secondary position using reflection. This is necessary because there is no way to
-		// obtain the secondary position from CuboidRegionSelector. Getting it from the incomplete selection
-		// might return an outdated value which is not properly cleared by CuboidRegionSelector.clear().
-		BlockVector3 position2;
-		try {
-			Field position2Field = CuboidRegionSelector.class.getDeclaredField("position2");
-			position2Field.setAccessible(true);
-			position2 = (BlockVector3) position2Field.get(selector);
-		} catch (NoSuchFieldException | SecurityException
-				| IllegalArgumentException | IllegalAccessException e) {
-			throw new CREPluginInternalException("Getter for secondary position in CommandHelper extension "
-					+ PomData.NAME + " version " + PomData.VERSION + " is not compatible with WorldEdit version "
-					+ WorldEdit.getVersion(), t);
-		}
-		
-		// Return the secondary position (null if the position is not set).
-		return position2;
 	}
 	
 //	public static class sk_points extends SKFunction {
@@ -326,13 +295,13 @@ public class CHWorldEdit {
 			MCCommandSender sender;
 			Mixed pat;
 			if (args.length == 2) {
-				sender = SKWorldEdit.GetPlayer(args[0], t);
+				sender = SKWorldEdit.GetSender(args[0], t);
 				pat = args[1];
 			} else {
 				sender = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
 				pat = args[0];
 			}
-			SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
+			Actor user = SKWorldEdit.GetActor(sender, t);
 
 			SKPattern pattern = new SKPattern();
 			if (pat instanceof CArray) {
@@ -342,9 +311,9 @@ public class CHWorldEdit {
 			} else {
 				throw new CREFormatException("Invalid block pattern.", t);
 			}
-
-			try (EditSession editSession = user.getEditSession(false)) {
-				editSession.setBlocks(user.getLocalSession().getSelection(user.getWorld()), pattern.getHandle());
+			LocalSession localSession = SKWorldEdit.GetLocalSession(user);
+			try (EditSession editSession = SKWorldEdit.GetEditSession(user, false)) {
+				editSession.setBlocks(localSession.getSelection(), pattern.getHandle());
 			} catch (Exception wee) {
 				throw new CREPluginInternalException(wee.getMessage(), t);
 			}
@@ -389,7 +358,7 @@ public class CHWorldEdit {
 			Mixed pat;
 			String maskInput;
 			if (args.length == 3) {
-				sender = SKWorldEdit.GetPlayer(args[0], t);
+				sender = SKWorldEdit.GetSender(args[0], t);
 				maskInput = args[1].val();
 				pat = args[2];
 			} else {
@@ -397,7 +366,8 @@ public class CHWorldEdit {
 				maskInput = args[0].val();
 				pat = args[1];
 			}
-			SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
+			Actor user = SKWorldEdit.GetActor(sender, t);
+			LocalSession localSession = SKWorldEdit.GetLocalSession(user);
 
 			SKPattern pattern = new SKPattern();
 			if (pat instanceof CArray) {
@@ -411,9 +381,8 @@ public class CHWorldEdit {
 			SKMask mask = new SKMask();
 			mask.generateMask(maskInput, user, t);
 
-			try (EditSession editSession = user.getEditSession(false)) {
-				editSession.replaceBlocks(user.getLocalSession().getSelection(user.getWorld()),
-						mask.getHandle(), pattern.getHandle());
+			try (EditSession editSession = SKWorldEdit.GetEditSession(user, false)) {
+				editSession.replaceBlocks(localSession.getSelection(), mask.getHandle(), pattern.getHandle());
 			} catch (Exception wee) {
 				throw new CREPluginInternalException(wee.getMessage(), t);
 			}
@@ -462,7 +431,7 @@ public class CHWorldEdit {
 			if(args[0] instanceof CArray) {
 				loc = ObjectGenerator.GetGenerator().location(args[0], null, t);
 			} else {
-				sender = SKWorldEdit.GetPlayer(args[0], t);
+				sender = SKWorldEdit.GetSender(args[0], t);
 			}
 
 			if(args.length == 2) {
@@ -515,7 +484,7 @@ public class CHWorldEdit {
 			String filename = args[0].val();
 			MCCommandSender sender = null;
 			if (args.length == 2) {
-				sender = SKWorldEdit.GetPlayer(args[1], t);
+				sender = SKWorldEdit.GetSender(args[1], t);
 			}
 			SKClipboard.Load(sender, filename, t);
 			return CVoid.VOID;
@@ -553,7 +522,7 @@ public class CHWorldEdit {
 			String filename = args[0].val();
 			MCCommandSender sender = null;
 			if(args.length > 1) {
-				sender = SKWorldEdit.GetPlayer(args[1], t);
+				sender = SKWorldEdit.GetSender(args[1], t);
 			}
 			SKClipboard.Save(sender, filename, t);
 			return CVoid.VOID;
@@ -605,7 +574,7 @@ public class CHWorldEdit {
 					zaxis = ArgumentValidation.getInt32(args[3], t);
 				case 2:
 					yaxis = ArgumentValidation.getInt32(args[1], t);
-					sender = SKWorldEdit.GetPlayer(args[0], t);
+					sender = SKWorldEdit.GetSender(args[0], t);
 					break;
 			}
 
@@ -655,9 +624,10 @@ public class CHWorldEdit {
 					biomes = false;
 			MCCommandSender sender = null;
 			if (args[0] instanceof CArray) {
-				SKWorldEdit.GetSKPlayer(null, t).setLocation(ObjectGenerator.GetGenerator().location(args[0], null, t));
+				MCLocation l = ObjectGenerator.GetGenerator().location(args[0], null, t);
+				((Locatable) SKWorldEdit.GetActor(null, t)).setLocation(BukkitAdapter.adapt((org.bukkit.Location) l.getHandle()));
 			} else {
-				sender = SKWorldEdit.GetPlayer(args[0], t);
+				sender = SKWorldEdit.GetSender(args[0], t);
 			}
 			if (args.length >= 2) {
 				CArray options = ArgumentValidation.getArray(args[1], t);
@@ -722,10 +692,10 @@ public class CHWorldEdit {
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
 			MCCommandSender sender = null;
 			if(args.length == 1) {
-				sender = SKWorldEdit.GetPlayer(args[0], t);
+				sender = SKWorldEdit.GetSender(args[0], t);
 			}
-			SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
-			user.getLocalSession().setClipboard(null);
+			Actor user = SKWorldEdit.GetActor(sender, t);
+			SKWorldEdit.GetLocalSession(user).setClipboard(null);
 			return CVoid.VOID;
 		}
 
@@ -758,10 +728,10 @@ public class CHWorldEdit {
 		public Mixed exec(Target t, Environment environment, Mixed... args) throws ConfigRuntimeException {
 			WorldEdit worldEdit = WorldEdit.getInstance();
 			String filename = args[0].val();
-			File dir = worldEdit.getWorkingDirectoryFile(worldEdit.getConfiguration().saveDir);
+			Path dir = worldEdit.getWorkingDirectoryPath(worldEdit.getConfiguration().saveDir);
 			File f;
 			try {
-				f = worldEdit.getSafeOpenFile(null, dir, filename, "schem");
+				f = worldEdit.getSafeOpenFile(null, dir.toFile(), filename, "schem");
 			} catch (Exception fne) {
 				throw new CREFormatException(fne.getMessage(), t);
 			}
@@ -820,12 +790,11 @@ public class CHWorldEdit {
 			if (args.length == 0) {
 				sender = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
 			} else {
-				sender = SKWorldEdit.GetPlayer(args[0], t);
+				sender = SKWorldEdit.GetSender(args[0], t);
 			}
 			
-			SKCommandSender user = SKWorldEdit.GetSKPlayer(sender, t);
-
-			LocalSession localSession = user.getLocalSession();
+			Actor user = SKWorldEdit.GetActor(sender, t);
+			LocalSession localSession = SKWorldEdit.GetLocalSession(user);
 			ClipboardHolder clipHolder;
 			try {
 				clipHolder = localSession.getClipboard();

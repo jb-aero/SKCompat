@@ -1,7 +1,6 @@
 package io.github.jbaero.skcompat;
 
 import com.laytonsmith.core.ArgumentValidation;
-import com.laytonsmith.core.Static;
 import com.laytonsmith.core.constructs.CArray;
 import com.laytonsmith.core.constructs.CString;
 import com.laytonsmith.core.constructs.Target;
@@ -10,6 +9,8 @@ import com.laytonsmith.core.natives.interfaces.Mixed;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.extension.input.InputParseException;
 import com.sk89q.worldedit.extension.input.ParserContext;
+import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.extension.platform.Locatable;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.function.pattern.RandomPattern;
 import com.sk89q.worldedit.function.pattern.TypeApplyingPattern;
@@ -25,7 +26,7 @@ public class SKPattern {
 		return pattern;
 	}
 
-	public void generateBlockPattern(CString source, SKCommandSender user, Target t) {
+	public void generateBlockPattern(CString source, Actor user, Target t) {
 		ParserContext context = new ParserContext();
 		context.setActor(user);
 		try {
@@ -35,13 +36,13 @@ public class SKPattern {
 		}
 	}
 
-	public void generateBlockPattern(CArray source, SKCommandSender user, Target t) {
+	public void generateBlockPattern(CArray source, Actor user, Target t) {
 		if(source.isAssociative()) {
 			throw new CREFormatException("Expected a normal array", t);
 		}
 
 		if (source.size() == 0) {
-			pattern = new TypeApplyingPattern(user.getExtent(), BlockTypes.AIR.getDefaultState());
+			pattern = new TypeApplyingPattern(((Locatable) user).getExtent(), BlockTypes.AIR.getDefaultState());
 			return;
 		}
 

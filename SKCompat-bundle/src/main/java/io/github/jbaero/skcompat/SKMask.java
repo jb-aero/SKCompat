@@ -5,6 +5,8 @@ import com.laytonsmith.core.exceptions.CRE.CREFormatException;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.extension.input.InputParseException;
 import com.sk89q.worldedit.extension.input.ParserContext;
+import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.extension.platform.Locatable;
 import com.sk89q.worldedit.function.mask.Mask;
 
 public class SKMask {
@@ -17,10 +19,10 @@ public class SKMask {
 		return mask;
 	}
 
-	public void generateMask(String source, SKCommandSender user, Target t) {
+	public void generateMask(String source, Actor user, Target t) {
 		ParserContext context = new ParserContext();
 		context.setActor(user);
-		context.setExtent(user.getExtent());
+		context.setExtent(((Locatable) user).getExtent());
 		try {
 			mask = WorldEdit.getInstance().getMaskFactory().parseFromInput(source, context);
 		} catch(InputParseException ex) {

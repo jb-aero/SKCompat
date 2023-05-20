@@ -9,11 +9,13 @@ See **[CHRegionChange](https://letsbuild.net/jenkins/job/CHRegionChange/)** for 
 
 ### Latest
 
-**[SKCompat 3.1.4](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.4 - 3.3.5, Spigot 1.13.2 - 1.19.2, WorldEdit 7.2.x, WorldGuard 7.0.x)
+**[SKCompat 3.2.0](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.5, Spigot 1.16.5 - 1.19.4, WorldEdit 7.2.x, WorldGuard 7.0.x)
 
 ### Legacy
 
-If you need a build for an older version of CommandHelper, you will have to compile it yourself at this commit.
+**[SKCompat 3.1.4](https://letsbuild.net/jenkins/job/SKCompat/48/)** (CommandHelper 3.3.4 - 3.3.5, Spigot 1.13.2 - 1.19.4, WorldEdit 7.0.x - 7.2.x, WorldGuard 7.0.x)
+
+If you need a build for CommandHelper 3.3.2, binaries are no longer available and you will have to compile it yourself at this commit.
 
 **[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3)** (CommandHelper 3.3.2, Spigot 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
 

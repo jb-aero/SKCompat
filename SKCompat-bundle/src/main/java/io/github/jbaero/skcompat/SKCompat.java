@@ -8,8 +8,6 @@ import com.laytonsmith.core.extensions.AbstractExtension;
 import com.laytonsmith.core.extensions.MSExtension;
 import com.laytonsmith.core.functions.AbstractFunction;
 
-import java.util.logging.Level;
-
 /**
  * @author jb_aero
  */
@@ -18,12 +16,12 @@ public class SKCompat extends AbstractExtension {
 
 	@Override
 	public void onStartup() {
-		Static.getLogger().log(Level.INFO, PomData.NAME + " " + PomData.VERSION + " loaded.");
+		Static.getLogger().info(PomData.NAME + " " + PomData.VERSION + " loaded.");
 	}
 
 	@Override
 	public void onShutdown() {
-		Static.getLogger().log(Level.INFO, PomData.NAME + " " + PomData.VERSION + " unloaded.");
+		Static.getLogger().info(PomData.NAME + " " + PomData.VERSION + " unloaded.");
 	}
 
 	@Override

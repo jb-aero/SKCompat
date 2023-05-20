@@ -99,7 +99,7 @@ public class SKWorldGuard {
 		INTEGER(IntegerFlag.class),
 		STRING(StringFlag.class);
 
-		Class<?> flagClass;
+		final Class<?> flagClass;
 
 		FlagType(Class<?> flagClass) {
 			this.flagClass = flagClass;
