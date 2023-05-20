@@ -39,6 +39,11 @@
 			<artifactId>worldguard-bukkit</artifactId>
 			<version>7.0.7</version>
 		</dependency>
+		<dependency>
+			<groupId>org.spigotmc</groupId>
+			<artifactId>spigot-api</artifactId>
+			<version>1.17.1-R0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>
