@@ -107,6 +107,9 @@ public class SKWorldGuard {
 	}
 
 	public static Class<?> GetFlagClass(String flagType, Target t) {
+		if(flagType == null) {
+			return StringFlag.class;
+		}
 		try {
 			return FlagType.valueOf(flagType.toUpperCase()).flagClass;
 		} catch (IllegalArgumentException ex) {

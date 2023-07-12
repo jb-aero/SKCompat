@@ -24,6 +24,7 @@ import com.laytonsmith.abstraction.MCCommandSender;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
+import com.laytonsmith.abstraction.StaticLayer;
 import com.laytonsmith.annotations.api;
 import com.laytonsmith.core.ArgumentValidation;
 import com.laytonsmith.core.MSVersion;
@@ -74,6 +75,8 @@ import com.sk89q.worldguard.protection.flags.RegistryFlag;
 import com.sk89q.worldguard.protection.flags.SetFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StringFlag;
+import com.sk89q.worldguard.protection.flags.registry.SimpleFlagRegistry;
+import com.sk89q.worldguard.protection.flags.registry.UnknownFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
@@ -1744,6 +1747,8 @@ public class CHWorldGuard {
 	@api
 	public static class sk_register_flag extends SKFunction {
 
+		private static boolean dirtyFlags = false;
+
 		@Override
 		public String getName() {
 			return "sk_register_flag";
@@ -1751,13 +1756,15 @@ public class CHWorldGuard {
 
 		@Override
 		public Integer[] numArgs() {
-			return new Integer[]{2};
+			return new Integer[]{1, 2};
 		}
 
 		@Override
 		public String docs() {
-			return "void {name, type} Registers a new flag on startup."
-					+ " Type must be BOOLEAN, DOUBLE, INTEGER, or STRING.";
+			return "void {name, [type]} Registers a new region flag."
+					+ " If WorldGuard flags are already initialized and a new flag is being added,"
+					+ " this will force a WorldGuard config reload."
+					+ " Currently supported types are BOOLEAN, DOUBLE, INTEGER, and STRING (default).";
 		}
 
 		@Override
@@ -1768,26 +1775,53 @@ public class CHWorldGuard {
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			String flagName = args[0].val();
-			String flagType = args[1].val();
+			String flagType = null;
+			if(args.length == 2) {
+				flagType = args[1].val();
+			}
 
 			if(!Flag.isValidName(flagName)) {
 				throw new CREFormatException("Invalid flag name.", t);
 			}
 
-			if(WorldGuard.getInstance().getFlagRegistry().get(flagName) != null) {
-				throw new CREIllegalArgumentException("A flag already exists by the name " + flagName, t);
-			}
+			Class<?> flagClass = SKWorldGuard.GetFlagClass(flagType, t);
 
-			Flag<?> f;
+			Flag<?> flag;
 			try {
-				f = (Flag<?>) ReflectionUtils.newInstance(SKWorldGuard.GetFlagClass(flagType, t),
-						new Class[]{String.class}, new Object[]{flagName});
+				flag = (Flag<?>) ReflectionUtils.newInstance(flagClass, new Class[]{String.class}, new Object[]{flagName});
 			} catch (ReflectionUtils.ReflectionException ex) {
 				throw new CREException("Failed to create new flag.", t);
 			}
 
+			SimpleFlagRegistry registry = (SimpleFlagRegistry) WorldGuard.getInstance().getFlagRegistry();
+			Flag<?> existingFlag = registry.get(flagName);
+			if(existingFlag != null && !(existingFlag instanceof UnknownFlag)) {
+				if(!existingFlag.getClass().equals(flagClass)) {
+					throw new CREIllegalArgumentException("A different type of flag already exists with the name " + flagName, t);
+				}
+				// The flag is already registered.
+				return CVoid.VOID;
+			}
+
 			try {
-				WorldGuard.getInstance().getFlagRegistry().register(f);
+				if(!registry.isInitialized()) {
+					registry.register(flag);
+				} else {
+					// WorldGuard flag registry is already initialized. This might depend on plugin load order.
+					// Have to insert flag manually and reload region data.
+					Map<String, Flag<?>> flags = (Map<String, Flag<?>>) ReflectionUtils.get(SimpleFlagRegistry.class, registry, "flags");
+					// The flagName might already exist with an unknown flag type, so this overwrites that.
+					flags.put(flagName, flag);
+					// Reload is delayed to capture all subsequent flag registrations this tick.
+					dirtyFlags = true;
+					StaticLayer.GetConvertor().runOnMainThreadLater(null, () -> {
+						if(dirtyFlags) {
+							dirtyFlags = false;
+							Static.getLogger().info("Reloading WorldGuard region data for custom flags.");
+							WorldGuard.getInstance().getPlatform().getRegionContainer().reload();
+						}
+					});
+				}
 			} catch (Exception ex) {
 				throw new CREException(ex.getMessage(), t);
 			}
