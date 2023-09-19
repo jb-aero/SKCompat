@@ -10,13 +10,13 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>CHWorldGuard</artifactId>
-	<version>3.2.1</version>
+	<version>3.2.2</version>
 
 	<dependencies>
 		<dependency>
 			<groupId>io.github.jbaero</groupId>
 			<artifactId>SKCompat</artifactId>
-			<version>3.2.1</version>
+			<version>3.2.2</version>
 		</dependency>
 	</dependencies>
 
@@ -67,6 +67,7 @@
 										<include>io/github/jbaero/skcompat/SKCompat*</include>
 										<include>io/github/jbaero/skcompat/SKWorldGuard*</include>
 										<include>io/github/jbaero/skcompat/SKRegion*</include>
+										<include>io/github/jbaero/skcompat/SKFlags*</include>
 										<include>io/github/jbaero/skcompat/CHWorldGuard*</include>
 									</includes>
 									<excludes>

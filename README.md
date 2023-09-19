@@ -9,7 +9,7 @@ See **[CHRegionChange](https://letsbuild.net/jenkins/job/CHRegionChange/)** for 
 
 ### Latest
 
-**[SKCompat 3.2.1](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.5, Spigot 1.16.5 - 1.19.4, WorldEdit 7.2.x, WorldGuard 7.0.x)
+**[SKCompat 3.2.2](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.5, Spigot 1.16.5 - 1.20.1, WorldEdit 7.2.x, WorldGuard 7.0.x)
 
 ### Legacy
 
@@ -63,7 +63,7 @@ In these WorldEdit functions, user refers to console or player, where console is
 **sk_region_addmember(region, [world], [member(s)])** Add member(s) to a region.  
 **sk_region_remmember(region, [world], [member(s)])** Remove member(s) from a region.  
 **sk_region_members(region, world)** Returns an array of members of this region.  
-**sk_register_flag(name, [type])** Registers a new region flag. Type must be BOOLEAN, DOUBLE, INTEGER, or STRING (default).  
+**sk_register_flag(name, [type])** Registers a new region flag. Type must be BOOLEAN, DOUBLE, INTEGER, LOCATION or STRING (default).  
 **sk_region_flag(world, region, flagName, flagValue, [group])** Add/change/remove flag in a region.  
 **sk_region_check_flag(locationArray, flagName, [player])** Check state of selected flag in defined location.  
 **sk_region_flags(region, world)** Returns an associative array with the flags of the region.  

@@ -93,15 +93,19 @@ public class SKRegion {
 	}
 
 	public void clearFlag(String flagName, Target t) {
-		this.region.setFlag(SKWorldGuard.GetFlag(flagName, t), null);
+		this.region.setFlag(SKFlags.GetFlag(flagName, t), null);
 	}
 
 	public void clearGroupFlag(String flagName, Target t) {
-		this.region.setFlag(SKWorldGuard.GetFlag(flagName, t).getRegionGroupFlag(), null);
+		this.region.setFlag(SKFlags.GetFlag(flagName, t).getRegionGroupFlag(), null);
+	}
+
+	public <V> V getFlagValue(Flag<V> flag) {
+		return this.region.getFlag(flag);
 	}
 
 	public <V> void setFlag(String flagName, MCCommandSender sender, String value, Target t) {
-		Flag<?> foundFlag = SKWorldGuard.GetFlag(flagName, t);
+		Flag<?> foundFlag = SKFlags.GetFlag(flagName, t);
 		setFlag(foundFlag, sender, value, t);
 	}
 
@@ -118,7 +122,7 @@ public class SKRegion {
 	}
 
 	public void setGroupFlag(String flagName, MCCommandSender sender, String group, Target t) {
-		Flag<?> flag = SKWorldGuard.GetFlag(flagName, t);
+		Flag<?> flag = SKFlags.GetFlag(flagName, t);
 		RegionGroupFlag groupFlag = flag.getRegionGroupFlag();
 		if (groupFlag == null) {
 			throw new CREPluginInternalException(String.format("Region flag (%s) does not have a group flag.", flag.getName()), t);

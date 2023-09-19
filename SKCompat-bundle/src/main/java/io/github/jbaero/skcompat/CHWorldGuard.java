@@ -58,23 +58,13 @@ import com.laytonsmith.core.natives.interfaces.Mixed;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.registry.Keyed;
-import com.sk89q.worldedit.world.entity.EntityType;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.flags.BooleanFlag;
-import com.sk89q.worldguard.protection.flags.DoubleFlag;
-import com.sk89q.worldguard.protection.flags.EnumFlag;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.Flags;
-import com.sk89q.worldguard.protection.flags.IntegerFlag;
-import com.sk89q.worldguard.protection.flags.LocationFlag;
-import com.sk89q.worldguard.protection.flags.RegistryFlag;
-import com.sk89q.worldguard.protection.flags.SetFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
-import com.sk89q.worldguard.protection.flags.StringFlag;
 import com.sk89q.worldguard.protection.flags.registry.SimpleFlagRegistry;
 import com.sk89q.worldguard.protection.flags.registry.UnknownFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -88,7 +78,6 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -1764,7 +1753,7 @@ public class CHWorldGuard {
 			return "void {name, [type]} Registers a new region flag."
 					+ " If WorldGuard flags are already initialized and a new flag is being added,"
 					+ " this will force a WorldGuard config reload."
-					+ " Currently supported types are BOOLEAN, DOUBLE, INTEGER, and STRING (default).";
+					+ " Currently supported types are BOOLEAN, DOUBLE, INTEGER, LOCATION, and STRING (default).";
 		}
 
 		@Override
@@ -1775,28 +1764,20 @@ public class CHWorldGuard {
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			String flagName = args[0].val();
-			String flagType = null;
+			String flagType;
 			if(args.length == 2) {
 				flagType = args[1].val();
+			} else {
+				flagType = "STRING";
 			}
 
-			if(!Flag.isValidName(flagName)) {
-				throw new CREFormatException("Invalid flag name.", t);
-			}
-
-			Class<?> flagClass = SKWorldGuard.GetFlagClass(flagType, t);
-
-			Flag<?> flag;
-			try {
-				flag = (Flag<?>) ReflectionUtils.newInstance(flagClass, new Class[]{String.class}, new Object[]{flagName});
-			} catch (ReflectionUtils.ReflectionException ex) {
-				throw new CREException("Failed to create new flag.", t);
-			}
+			Flag<?> flag = SKFlags.CreateFlag(flagName, flagType, t);
 
 			SimpleFlagRegistry registry = (SimpleFlagRegistry) WorldGuard.getInstance().getFlagRegistry();
 			Flag<?> existingFlag = registry.get(flagName);
+
 			if(existingFlag != null && !(existingFlag instanceof UnknownFlag)) {
-				if(!existingFlag.getClass().equals(flagClass)) {
+				if(!flag.getClass().isInstance(existingFlag)) {
 					throw new CREIllegalArgumentException("A different type of flag already exists with the name " + flagName, t);
 				}
 				// The flag is already registered.
@@ -1813,14 +1794,15 @@ public class CHWorldGuard {
 					// The flagName might already exist with an unknown flag type, so this overwrites that.
 					flags.put(flagName, flag);
 					// Reload is delayed to capture all subsequent flag registrations this tick.
-					dirtyFlags = true;
-					StaticLayer.GetConvertor().runOnMainThreadLater(null, () -> {
-						if(dirtyFlags) {
+					if(!dirtyFlags) {
+						dirtyFlags = true;
+						StaticLayer.GetConvertor().runOnMainThreadLater(null, () -> {
 							dirtyFlags = false;
+							SKFlags.FLAG_CACHE.clear();
 							Static.getLogger().info("Reloading WorldGuard region data for custom flags.");
 							WorldGuard.getInstance().getPlatform().getRegionContainer().reload();
-						}
-					});
+						});
+					}
 				}
 			} catch (Exception ex) {
 				throw new CREException(ex.getMessage(), t);
@@ -1867,7 +1849,7 @@ public class CHWorldGuard {
 			String flagName = args[2].val();
 			String flagValue = null;
 
-			if (args.length >= 4 && !(args[3] instanceof CNull) && !"".equals(args[3].val())) {
+			if (args.length >= 4 && !(args[3] instanceof CNull) && !args[3].val().isEmpty()) {
 				flagValue = args[3].val();
 			}
 
@@ -1886,7 +1868,7 @@ public class CHWorldGuard {
 				region.setFlag(flagName, sender, flagValue, t);
 			} else if (args.length < 5) {
 				region.clearFlag(flagName, t);
-				if (SKWorldGuard.GetFlag(flagName, t).getRegionGroupFlag() != null) {
+				if (SKFlags.GetFlag(flagName, t).getRegionGroupFlag() != null) {
 					region.clearGroupFlag(flagName, t);
 				}
 			}
@@ -1921,8 +1903,8 @@ public class CHWorldGuard {
 
 		@Override
 		public String docs() {
-			return "mixed {locationArray, flagName, [player]} Check state of selected flag in defined location."
-					+ " FlagName should be any supported flag from"
+			return "mixed {locationArray, flagName, [player]} Gets the value of a flag at a location."
+					+ " The flagName should be any supported flag from"
 					+ " [https://worldguard.readthedocs.io/en/latest/regions/flags/ this list]."
 					+ " Player defaults to the current player.";
 		}
@@ -1936,8 +1918,7 @@ public class CHWorldGuard {
 		@Override
 		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
 			if ("build".equalsIgnoreCase(args[1].val())) {
-				throw new CREPluginInternalException(String.format("Can't use build flag with %s method."
-						+ " This is an limitation of WorldGuard.", this.getName()), t);
+				throw new CREPluginInternalException(String.format("Can't use build flag with %s function.", this.getName()), t);
 			}
 
 			MCPlayer p = null;
@@ -1957,7 +1938,7 @@ public class CHWorldGuard {
 
 			MCLocation l = ObjectGenerator.GetGenerator().location(args[0], w, t);
 
-			Flag<?> foundFlag = SKWorldGuard.GetFlag(args[1].val(), t);
+			Flag<?> foundFlag = SKFlags.GetFlag(args[1].val(), t);
 			RegionManager mgr = SKWorldGuard.GetRegionManager(l.getWorld(), t);
 
 			ApplicableRegionSet set = mgr.getApplicableRegions(BukkitAdapter.asBlockVector((Location) l.getHandle()));
@@ -1965,80 +1946,11 @@ public class CHWorldGuard {
 				return CBoolean.get(SKWorldGuard.TestState(set, p, (StateFlag) foundFlag));
 			}
 
-			Object getFlag = SKWorldGuard.QueryValue(set, p, (Flag<?>) foundFlag);
-
-			if (foundFlag instanceof BooleanFlag) {
-				Boolean value = ((BooleanFlag) foundFlag).unmarshal(getFlag);
-				if (value != null) {
-					return CBoolean.get(value);
-				} else {
-					return CNull.NULL;
-				}
-			} else if (foundFlag instanceof DoubleFlag) {
-				Double value = ((DoubleFlag) foundFlag).unmarshal(getFlag);
-				if (value != null) {
-					return new CDouble(value, t);
-				} else {
-					return CNull.NULL;
-				}
-			} else if (foundFlag instanceof EnumFlag) {
-				return new CString(((EnumFlag<?>) foundFlag).unmarshal(getFlag).name(), t);
-			} else if (foundFlag instanceof IntegerFlag) {
-				Integer value = ((IntegerFlag) foundFlag).unmarshal(getFlag);
-				if (value != null) {
-					return new CInt(value, t);
-				} else {
-					return CNull.NULL;
-				}
-			} else if (foundFlag instanceof LocationFlag) {
-				com.sk89q.worldedit.util.Location value = ((LocationFlag) foundFlag).unmarshal(getFlag);
-				if (value != null) {
-					return new CArray(t,
-							new CDouble(value.getX(), t),
-							new CDouble(value.getY(), t),
-							new CDouble(value.getZ(), t),
-							new CString(l.getWorld().getName(), t));
-				} else {
-					return CNull.NULL;
-				}
-			} else if (foundFlag instanceof SetFlag) {
-				CArray values = new CArray(t);
-				Set<?> setValue = ((SetFlag<?>) foundFlag).unmarshal(getFlag);
-				if (setValue != null) {
-					for (Object setFlag : setValue) {
-						if (setFlag instanceof String) {
-							String value = (String) setFlag;
-							values.push(new CString(value, t), t);
-						} else if (setFlag instanceof EntityType) {
-							String value = ((EntityType) setFlag).getName();
-							values.push(new CString(value, t), t);
-						} else {
-							ConfigRuntimeException.DoWarning("One of the element of flag has unknown type."
-									+ " This is a developer mistake, please file a ticket.");
-						}
-					}
-				}
-				return values;
-
-			} else if (foundFlag instanceof StringFlag) {
-				String value = ((StringFlag) foundFlag).unmarshal(getFlag);
-				if (value != null) {
-					return new CString(value, t);
-				} else {
-					return CNull.NULL;
-				}
-			} else if (foundFlag instanceof RegistryFlag) {
-				Keyed value = ((RegistryFlag<? extends Keyed>) foundFlag).unmarshal(getFlag);
-				if (value != null) {
-					return new CString(value.toString(), t);
-				} else {
-					return CNull.NULL;
-				}
-			}
-			throw new CRENotFoundException("The flag type is unknown. This is a developer mistake, please file a ticket.", t);
+			Object flagValue = SKWorldGuard.QueryValue(set, p, (Flag<?>) foundFlag);
+			return SKFlags.ConvertFlagValue(foundFlag, flagValue, t);
 		}
 	}
-	
+
 	@api
 	public static class sk_region_flags extends SKFunction {
 

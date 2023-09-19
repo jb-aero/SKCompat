@@ -1,11 +1,9 @@
 package io.github.jbaero.skcompat;
 
-import com.laytonsmith.PureUtilities.Common.StringUtils;
 import com.laytonsmith.abstraction.MCLocation;
 import com.laytonsmith.abstraction.MCPlayer;
 import com.laytonsmith.abstraction.MCWorld;
 import com.laytonsmith.core.constructs.Target;
-import com.laytonsmith.core.exceptions.CRE.CREIllegalArgumentException;
 import com.laytonsmith.core.exceptions.CRE.CREPluginInternalException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector2;
@@ -77,45 +75,6 @@ public class SKWorldGuard {
 		}
 
 		return ret;
-	}
-
-	public static Flag<?> GetFlag(String flagName, Target t) {
-		Flag<?> foundFlag = null;
-		for (Flag<?> flag : WorldGuard.getInstance().getFlagRegistry().getAll()) {
-			if (flag.getName().replace("-", "").equalsIgnoreCase(flagName.replace("-", ""))) {
-				foundFlag = flag;
-				break;
-			}
-		}
-		if (foundFlag == null) {
-			throw new CREPluginInternalException(String.format("Unknown flag specified: (%s).", flagName), t);
-		}
-		return foundFlag;
-	}
-
-	private enum FlagType {
-		BOOLEAN(BooleanFlag.class),
-		DOUBLE(DoubleFlag.class),
-		INTEGER(IntegerFlag.class),
-		STRING(StringFlag.class);
-
-		final Class<?> flagClass;
-
-		FlagType(Class<?> flagClass) {
-			this.flagClass = flagClass;
-		}
-	}
-
-	public static Class<?> GetFlagClass(String flagType, Target t) {
-		if(flagType == null) {
-			return StringFlag.class;
-		}
-		try {
-			return FlagType.valueOf(flagType.toUpperCase()).flagClass;
-		} catch (IllegalArgumentException ex) {
-			throw new CREIllegalArgumentException("Invalid flag type: " + flagType + ". Must be one of: "
-					+ StringUtils.Join(FlagType.values(), ", ", ", or "), t);
-		}
 	}
 
 	public static boolean TestState(ApplicableRegionSet set, MCPlayer p, StateFlag flag) {
