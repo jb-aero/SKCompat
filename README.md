@@ -3,21 +3,18 @@
 An extension to [CommandHelper](https://github.com/EngineHub/CommandHelper) providing access to functionality in WorldEdit and WorldGuard.
 
 **CHWorldEdit** provides functions for WorldEdit. **CHWorldGuard** provides functions for WorldGuard. **SKCompat** combines both, which means you only need to download one file.
-See **[CHRegionChange](https://letsbuild.net/jenkins/job/CHRegionChange/)** for a WorldGuard event that fires on region boundary crossings.
+See **[CHRegionChange](https://github.com/PseudoKnight/CHRegionChange)** for a WorldGuard event that fires on region boundary crossings.
 
 ## Builds
 
 ### Latest
 
-**[SKCompat 3.2.2](https://letsbuild.net/jenkins/job/SKCompat/lastSuccessfulBuild/)** (CommandHelper 3.3.5, Spigot 1.16.5 - 1.20.1, WorldEdit 7.2.x, WorldGuard 7.0.x)
+**[SKCompat 3.2.2](https://github.com/jb-aero/SKCompat/releases/tag/v3.2.2)** (CommandHelper 3.3.5, Spigot 1.16.5 - 1.20.1, WorldEdit 7.2.x, WorldGuard 7.0.x)
 
 ### Legacy
 
-**[SKCompat 3.1.4](https://letsbuild.net/jenkins/job/SKCompat/48/)** (CommandHelper 3.3.4 - 3.3.5, Spigot 1.13.2 - 1.19.4, WorldEdit 7.0.x - 7.2.x, WorldGuard 7.0.x)
-
-If you need a build for CommandHelper 3.3.2, binaries are no longer available and you will have to compile it yourself at this commit.
-
-**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/commit/058a9fd2bf812af7b76516d751edf89ce95936c3)** (CommandHelper 3.3.2, Spigot 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
+**[SKCompat 3.1.4](https://github.com/jb-aero/SKCompat/releases/tag/v3.1.4)** (CommandHelper 3.3.4 - 3.3.5, Spigot 1.13.2 - 1.19.4, WorldEdit 7.0.x - 7.2.x, WorldGuard 7.0.x)  
+**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/releases/tag/v2.1.1)** (CommandHelper 3.3.2, Spigot 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
 
 ## Documentation
 
