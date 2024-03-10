@@ -12,9 +12,7 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
-import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
+import com.sk89q.worldedit.extent.clipboard.io.*;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
@@ -40,8 +38,7 @@ public class SKClipboard {
 	public static void Copy(MCCommandSender sender, MCLocation loc, boolean entities, boolean biomes, Target t) {
 		Actor user = SKWorldEdit.GetActor(sender, t);
 		LocalSession session = SKWorldEdit.GetLocalSession(user);
-		EditSession editSession = SKWorldEdit.GetEditSession(user, false);
-		try {
+		try (EditSession editSession = SKWorldEdit.GetEditSession(user, false)) {
 			Region region = session.getSelection();
 			BlockArrayClipboard clipboard = new BlockArrayClipboard(region);
 			BlockVector3 pos = session.getPlacementPosition(user);
@@ -73,18 +70,15 @@ public class SKClipboard {
 		} catch (Exception fne) {
 			throw new CREFormatException(fne.getMessage(), t);
 		}
+		ClipboardFormat format = ClipboardFormats.findByFile(f);
+		if(format == null) {
+			throw new CREIOException("Schematic format could not be detected.", t);
+		}
 
 		try (Closer closer = Closer.create()) {
 			FileInputStream fis = closer.register(new FileInputStream(f));
 			BufferedInputStream bis = closer.register(new BufferedInputStream(fis));
-			ClipboardReader reader;
-			if (f.getName().endsWith(".schem")) {
-				reader = closer.register(BuiltInClipboardFormat.SPONGE_SCHEMATIC.getReader(bis));
-			} else {
-				// legacy schematic format
-				reader = closer.register(BuiltInClipboardFormat.MCEDIT_SCHEMATIC.getReader(bis));
-			}
-
+			ClipboardReader reader = closer.register(format.getReader(bis));
 			Clipboard clipboard = reader.read();
 			session.setClipboard(new ClipboardHolder(clipboard));
 		} catch (IOException e) {
@@ -118,7 +112,13 @@ public class SKClipboard {
 			f.createNewFile();
 			FileOutputStream fos = closer.register(new FileOutputStream(f));
 			BufferedOutputStream bos = closer.register(new BufferedOutputStream(fos));
-			ClipboardWriter writer = closer.register(BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(bos));
+			ClipboardWriter writer;
+			try {
+				writer = closer.register(BuiltInClipboardFormat.SPONGE_V3_SCHEMATIC.getWriter(bos));
+			} catch(NoSuchFieldError ex) {
+				// prior to 7.3.0
+				writer = closer.register(BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(bos));
+			}
 			writer.write(clipboard);
 		} catch (IOException e) {
 			throw new CREIOException("Schematic could not read or it does not exist: " + e.getMessage(), t);
@@ -148,7 +148,6 @@ public class SKClipboard {
 
 		Actor user = SKWorldEdit.GetActor(sender, t);
 		LocalSession session = SKWorldEdit.GetLocalSession(user);
-		EditSession editSession = SKWorldEdit.GetEditSession(user, fastMode);
 
 		ClipboardHolder holder;
 		try {
@@ -171,15 +170,14 @@ public class SKClipboard {
 			}
 		}
 
-		Operation operation = holder
-				.createPaste(editSession)
-				.to(to)
-				.ignoreAirBlocks(airless)
-				.copyEntities(entities)
-				.copyBiomes(biomes)
-				.build();
-
-		try {
+		try (EditSession editSession = SKWorldEdit.GetEditSession(user, fastMode)) {
+			Operation operation = holder
+					.createPaste(editSession)
+					.to(to)
+					.ignoreAirBlocks(airless)
+					.copyEntities(entities)
+					.copyBiomes(biomes)
+					.build();
 			Operations.completeLegacy(operation);
 			if (select) {
 				BlockVector3 clipboardOffset = clipboard.getRegion().getMinimumPoint().subtract(clipboard.getOrigin());
@@ -192,8 +190,6 @@ public class SKClipboard {
 			}
 		} catch (Exception e) {
 			throw new CRERangeException("Attempted to change more blocks than allowed.", t);
-		} finally {
-			editSession.close();
 		}
 
 	}

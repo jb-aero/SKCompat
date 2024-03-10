@@ -9,12 +9,12 @@ See **[CHRegionChange](https://github.com/PseudoKnight/CHRegionChange)** for a W
 
 ### Latest
 
-**[SKCompat 3.2.2](https://github.com/jb-aero/SKCompat/releases/tag/v3.2.2)** (CommandHelper 3.3.5, Spigot 1.16.5 - 1.20.1, WorldEdit 7.2.x, WorldGuard 7.0.x)
+**[SKCompat 3.2.3](https://github.com/jb-aero/SKCompat/releases/tag/v3.2.3)** (CommandHelper 3.3.5, Spigot 1.16.5 - 1.20.4, WorldEdit 7.2 - 7.3, WorldGuard 7.0)
 
 ### Legacy
 
-**[SKCompat 3.1.4](https://github.com/jb-aero/SKCompat/releases/tag/v3.1.4)** (CommandHelper 3.3.4 - 3.3.5, Spigot 1.13.2 - 1.19.4, WorldEdit 7.0.x - 7.2.x, WorldGuard 7.0.x)  
-**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/releases/tag/v2.1.1)** (CommandHelper 3.3.2, Spigot 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6.x)
+**[SKCompat 3.1.4](https://github.com/jb-aero/SKCompat/releases/tag/v3.1.4)** (CommandHelper 3.3.4 - 3.3.5, Spigot 1.13.2 - 1.19.4, WorldEdit 7.0 - 7.2, WorldGuard 7.0)  
+**[SKCompat 2.1.1](https://github.com/jb-aero/SKCompat/releases/tag/v2.1.1)** (CommandHelper 3.3.2, Spigot 1.7.10 - 1.12.2, WorldEdit/WorldGuard 6)
 
 ## Documentation
 
