@@ -12,19 +12,21 @@ import com.sk89q.worldedit.function.mask.Mask;
 public class SKMask {
 
 	Mask mask;
+	ParserContext parserContext;
 
-	public SKMask() {}
-	
+	public SKMask(Actor user) {
+		this.parserContext = new ParserContext();
+		this.parserContext.setActor(user);
+		this.parserContext.setExtent(((Locatable) user).getExtent());
+	}
+
 	public Mask getHandle() {
 		return mask;
 	}
 
-	public void generateMask(String source, Actor user, Target t) {
-		ParserContext context = new ParserContext();
-		context.setActor(user);
-		context.setExtent(((Locatable) user).getExtent());
+	public void generateMask(String source, Target t) {
 		try {
-			mask = WorldEdit.getInstance().getMaskFactory().parseFromInput(source, context);
+			mask = WorldEdit.getInstance().getMaskFactory().parseFromInput(source, parserContext);
 		} catch(InputParseException ex) {
 			throw new CREFormatException(ex.getMessage(), t);
 		}

@@ -6,6 +6,7 @@ import com.laytonsmith.core.constructs.CString;
 import com.laytonsmith.core.constructs.Target;
 import com.laytonsmith.core.exceptions.CRE.CREFormatException;
 import com.laytonsmith.core.natives.interfaces.Mixed;
+import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.extension.input.InputParseException;
 import com.sk89q.worldedit.extension.input.ParserContext;
@@ -19,37 +20,38 @@ import com.sk89q.worldedit.world.block.BlockTypes;
 public class SKPattern {
 
 	Pattern pattern;
+	ParserContext parserContext;
 
-	public SKPattern() {}
-	
+	public SKPattern(Actor user, LocalSession localSession) {
+		this.parserContext = new ParserContext();
+		this.parserContext.setActor(user);
+		this.parserContext.setSession(localSession);
+	}
+
 	public Pattern getHandle() {
 		return pattern;
 	}
 
-	public void generateBlockPattern(CString source, Actor user, Target t) {
-		ParserContext context = new ParserContext();
-		context.setActor(user);
+	public void generateBlockPattern(CString source, Target t) {
 		try {
-			pattern = WorldEdit.getInstance().getPatternFactory().parseFromInput(source.val(), context);
+			pattern = WorldEdit.getInstance().getPatternFactory().parseFromInput(source.val(), parserContext);
 		} catch(InputParseException ex) {
 			throw new CREFormatException(ex.getMessage(), t);
 		}
 	}
 
-	public void generateBlockPattern(CArray source, Actor user, Target t) {
+	public void generateBlockPattern(CArray source, Target t) {
 		if(source.isAssociative()) {
 			throw new CREFormatException("Expected a normal array", t);
 		}
 
 		if (source.size() == 0) {
-			pattern = new TypeApplyingPattern(((Locatable) user).getExtent(), BlockTypes.AIR.getDefaultState());
+			pattern = new TypeApplyingPattern(((Locatable) parserContext.getActor()).getExtent(), BlockTypes.AIR.getDefaultState());
 			return;
 		}
 
 		pattern = new RandomPattern();
 		for (Mixed entry : source.asList()) {
-			ParserContext context = new ParserContext();
-			context.setActor(user);
 			CArray src = ArgumentValidation.getArray(entry, t);
 			if (!src.containsKey("block")) {
 				throw new CREFormatException("Block name required", t);
@@ -59,7 +61,7 @@ public class SKPattern {
 				weight = ArgumentValidation.getDouble(src.get("weight", t), t);
 			}
 			try {
-				Pattern p = WorldEdit.getInstance().getBlockFactory().parseFromInput(src.get("block", t).val(), context);
+				Pattern p = WorldEdit.getInstance().getBlockFactory().parseFromInput(src.get("block", t).val(), parserContext);
 				((RandomPattern) pattern).add(p, weight);
 			} catch(InputParseException ex) {
 				throw new CREFormatException(ex.getMessage(), t);

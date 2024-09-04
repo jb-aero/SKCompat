@@ -302,16 +302,16 @@ public class CHWorldEdit {
 				pat = args[0];
 			}
 			Actor user = SKWorldEdit.GetActor(sender, t);
+			LocalSession localSession = SKWorldEdit.GetLocalSession(user);
 
-			SKPattern pattern = new SKPattern();
+			SKPattern pattern = new SKPattern(user, localSession);
 			if (pat instanceof CArray) {
-				pattern.generateBlockPattern((CArray) pat, user, t);
+				pattern.generateBlockPattern((CArray) pat, t);
 			} else if(pat instanceof CString) {
-				pattern.generateBlockPattern((CString) pat, user, t);
+				pattern.generateBlockPattern((CString) pat, t);
 			} else {
 				throw new CREFormatException("Invalid block pattern.", t);
 			}
-			LocalSession localSession = SKWorldEdit.GetLocalSession(user);
 			try (EditSession editSession = SKWorldEdit.GetEditSession(user, false)) {
 				editSession.setBlocks(localSession.getSelection(), pattern.getHandle());
 			} catch (Exception wee) {
@@ -369,17 +369,17 @@ public class CHWorldEdit {
 			Actor user = SKWorldEdit.GetActor(sender, t);
 			LocalSession localSession = SKWorldEdit.GetLocalSession(user);
 
-			SKPattern pattern = new SKPattern();
+			SKPattern pattern = new SKPattern(user, localSession);
 			if (pat instanceof CArray) {
-				pattern.generateBlockPattern((CArray) pat, user, t);
+				pattern.generateBlockPattern((CArray) pat, t);
 			} else if(pat instanceof CString) {
-				pattern.generateBlockPattern((CString) pat, user, t);
+				pattern.generateBlockPattern((CString) pat, t);
 			} else {
 				throw new CREFormatException("Invalid block pattern.", t);
 			}
 
-			SKMask mask = new SKMask();
-			mask.generateMask(maskInput, user, t);
+			SKMask mask = new SKMask(user);
+			mask.generateMask(maskInput, t);
 
 			try (EditSession editSession = SKWorldEdit.GetEditSession(user, false)) {
 				editSession.replaceBlocks(localSession.getSelection(), mask.getHandle(), pattern.getHandle());
