@@ -9,7 +9,7 @@ See **[CHRegionChange](https://github.com/PseudoKnight/CHRegionChange)** for a W
 
 ### Latest
 
-**[SKCompat 3.2.3](https://github.com/jb-aero/SKCompat/releases/tag/v3.2.3)** (CommandHelper 3.3.5, Spigot 1.16.5 - 1.20.4, WorldEdit 7.2 - 7.3, WorldGuard 7.0)
+**[SKCompat 3.3.0](https://github.com/jb-aero/SKCompat/releases/tag/v3.3.0)** (CommandHelper 3.3.5, Spigot 1.16.5 - 1.21.4, WorldEdit 7.2 - 7.3, WorldGuard 7.0)
 
 ### Legacy
 
@@ -46,6 +46,7 @@ In these WorldEdit functions, user refers to console or player, where console is
 **sk_region_info(region, world, [value])** Returns information about the a region in the given world.  
 **sk_region_overlaps(world, region1, array(region2, [regionN...]))** Returns whether or not the specified regions overlap.  
 **sk_region_intersect(world, first_region, [other_region(s)]}** Returns array of regions which intersect with first region.  
+**sk_region_contains([world], region, locationArray)** Returns whether the location is within the region.  
 **sk_current_regions([player])** Returns an array of regions a player is in.  
 **sk_regions_at(locationArray)** Returns a list of regions at the specified location.  
 **sk_region_volume(region, world)** Returns the volume of a region in the given world.  

@@ -524,18 +524,14 @@ public class CHWorldGuard {
 			}
 
 			MCWorld w = null;
-			MCCommandSender c = env.getEnv(CommandHelperEnvironment.class).GetCommandSender();
-			if (c instanceof MCPlayer) {
-				w = ((MCPlayer) c).getWorld();
+			MCPlayer p = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+			if(p != null) {
+				w = p.getWorld();
 			}
 
 			MCLocation loc = ObjectGenerator.GetGenerator().location(args[0], w, t);
 
-			if (loc.getWorld() == null) {
-				throw new CREInsufficientArgumentsException(this.getName() + " needs a world", t);
-			}
-
-			MCWorld world = Static.getServer().getWorld(loc.getWorld().getName());
+			MCWorld world = loc.getWorld();
 			RegionManager mgr = SKWorldGuard.GetRegionManager(world, t);
 			BlockVector3 pt = BlockVector3.at(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
 			ApplicableRegionSet set = mgr.getApplicableRegions(pt);
@@ -567,6 +563,64 @@ public class CHWorldGuard {
 			}
 
 			return new CArray(t);
+		}
+	}
+
+	@api(environments = CommandHelperEnvironment.class)
+	public static class sk_region_contains extends SKFunction {
+
+		@Override
+		public String getName() {
+			return "sk_region_contains";
+		}
+
+		@Override
+		public Version since() {
+			return MSVersion.V3_3_5;
+		}
+
+		@Override
+		public Integer[] numArgs() {
+			return new Integer[]{2, 3};
+		}
+
+		@Override
+		public String docs() {
+			return "boolean {[world], region, locationArray} Returns whether a location is within a region."
+					+ " If world is not provided, it will use the location array's world."
+					+ " If the location array does not have a world, it will use the current player's world."
+					+ " Returns false if the worlds do not match or a region by that name does not exist in the world.";
+		}
+
+		@Override
+		public Class<? extends CREThrowable>[] thrown() {
+			return new Class[]{CRECastException.class, CREInvalidWorldException.class};
+		}
+
+		@Override
+		public Mixed exec(Target t, Environment env, Mixed... args) throws CancelCommandException, ConfigRuntimeException {
+			MCWorld w = null;
+			MCLocation loc;
+			if(args.length == 3) {
+				w = Static.getWorld(args[0], t);
+				loc = ObjectGenerator.GetGenerator().location(args[2], w, t);
+				if(!loc.getWorld().equals(w)) {
+					return CBoolean.FALSE;
+				}
+			} else {
+				MCPlayer p = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				if(p != null) {
+					w = p.getWorld();
+				}
+				loc = ObjectGenerator.GetGenerator().location(args[1], w, t);
+				w = loc.getWorld();
+			}
+			RegionManager mgr = SKWorldGuard.GetRegionManager(w, t);
+			ProtectedRegion region = mgr.getRegion(args[args.length - 2].val());
+			if (region == null) {
+				return CBoolean.FALSE;
+			}
+			return CBoolean.get(region.contains(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
 		}
 	}
 
@@ -743,8 +797,9 @@ public class CHWorldGuard {
 			}
 
 			if (w == null) {
-				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-					w = env.getEnv(CommandHelperEnvironment.class).GetPlayer().getWorld();
+				MCPlayer p = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
+				if(p != null) {
+					w = p.getWorld();
 				}
 			}
 
@@ -775,6 +830,7 @@ public class CHWorldGuard {
 
 						BlockVector3 vector = vertices.get(i);
 
+						// changed to record in Mar 2024 for WorldEdit 7.3.0
 						int x = vector.getBlockX();
 						int y = vector.getBlockY();
 						int z = vector.getBlockZ();
@@ -847,7 +903,7 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Static.getServer().getWorld(m.getWorld().getName());
+					world = m.getWorld();
 				}
 			} else {
 				region = args[1].val();
@@ -973,7 +1029,7 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Static.getServer().getWorld(m.getWorld().getName());
+					world = m.getWorld();
 				}
 			} else {
 				oldRegionName = args[1].val();
@@ -1065,7 +1121,7 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Static.getServer().getWorld(m.getWorld().getName());
+					world = m.getWorld();
 				}
 			} else {
 				region = args[1].val();
@@ -1136,7 +1192,7 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Static.getServer().getWorld(m.getWorld().getName());
+					world = m.getWorld();
 				}
 			} else {
 				region = args[1].val();
@@ -1196,7 +1252,7 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Static.getServer().getWorld(m.getWorld().getName());
+					world = m.getWorld();
 					owners = new String[1];
 					owners[0] = m.getName();
 				}
@@ -1310,7 +1366,7 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Static.getServer().getWorld(m.getWorld().getName());
+					world = m.getWorld();
 					owners = new String[1];
 					owners[0] = m.getName();
 				}
@@ -1483,7 +1539,7 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Static.getServer().getWorld(m.getWorld().getName());
+					world = m.getWorld();
 					members = new String[1];
 					members[0] = m.getName();
 				}
@@ -1597,7 +1653,7 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Static.getServer().getWorld(m.getWorld().getName());
+					world = m.getWorld();
 					members = new String[1];
 					members[0] = m.getName();
 				}
@@ -1925,9 +1981,7 @@ public class CHWorldGuard {
 			MCWorld w = null;
 
 			if (args.length == 2) {
-				if (env.getEnv(CommandHelperEnvironment.class).GetCommandSender() instanceof MCPlayer) {
-					p = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
-				}
+				p = env.getEnv(CommandHelperEnvironment.class).GetPlayer();
 			} else {
 				p = Static.GetPlayer(args[2].val(), t);
 			}
@@ -2032,7 +2086,7 @@ public class CHWorldGuard {
 				}
 
 				if (m != null) {
-					world = Static.getServer().getWorld(m.getWorld().getName());
+					world = m.getWorld();
 				}
 
 				priority = ArgumentValidation.getInt32(args[1], t);
